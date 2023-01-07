@@ -3,7 +3,7 @@ package com.magomez.androidapps.jctravels.config;
 public class ApiConfig {
 
     public static final String API_VERSION = "v1";
-    public static final String BASE_URL = "/tavels-api/" + API_VERSION;
+    public static final String BASE_URL = "/travels-api/" + API_VERSION;
 
     private ApiConfig(){
         throw new UnsupportedOperationException("Cannot instantiate utilities class");
