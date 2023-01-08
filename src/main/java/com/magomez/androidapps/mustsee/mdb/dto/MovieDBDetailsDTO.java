@@ -1,11 +1,13 @@
 package com.magomez.androidapps.mustsee.mdb.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serial;
 import java.io.Serializable;
 
-public class MovieDetails implements Serializable {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class MovieDBDetailsDTO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -16,12 +18,12 @@ public class MovieDetails implements Serializable {
     private String title;
     @JsonProperty("original_title")
     private String originalTitle;
-    @JsonProperty("poster_path")
-    private String posterPath;
+    @JsonProperty("poster_url")
+    private String posterUrl;
     @JsonProperty("release_date")
     private String releaseDate;
-    @JsonProperty("vote_average")
-    private Double voteAverage;
+    @JsonProperty("average")
+    private Double average;
 
     public String getId() {
         return id;
@@ -47,12 +49,12 @@ public class MovieDetails implements Serializable {
         this.originalTitle = originalTitle;
     }
 
-    public String getPosterPath() {
-        return posterPath;
+    public String getPosterUrl() {
+        return posterUrl;
     }
 
-    public void setPosterPath(String posterPath) {
-        this.posterPath = posterPath;
+    public void setPosterUrl(String posterUrl) {
+        this.posterUrl = posterUrl;
     }
 
     public String getReleaseDate() {
@@ -63,11 +65,11 @@ public class MovieDetails implements Serializable {
         this.releaseDate = releaseDate;
     }
 
-    public Double getVoteAverage() {
-        return voteAverage;
+    public Double getAverage() {
+        return average;
     }
 
-    public void setVoteAverage(Double voteAverage) {
-        this.voteAverage = voteAverage;
+    public void setAverage(Double average) {
+        this.average = average;
     }
 }
