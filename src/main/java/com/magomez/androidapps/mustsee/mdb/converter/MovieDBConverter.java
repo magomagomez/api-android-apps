@@ -14,21 +14,24 @@ public class MovieDBConverter {
     private MovieDBConverter(){}
 
     public static MovieDBDetailsDTO toDto(MovieDBDetails source) {
+        if (Boolean.TRUE.equals(source.getAdult())) {
+            return null;
+        }
         MovieDBDetailsDTO dto = new MovieDBDetailsDTO();
         dto.setId(source.getId());
-        dto.setAverage(Precision.round(source.getVoteAverage(),1));
+        dto.setAverage(Precision.round(source.getVoteAverage(), 1));
         dto.setPosterUrl(URL + source.getPosterPath());
-        if(source.getOriginalName() != null){
+        if (source.getOriginalName() != null) {
             dto.setOriginalTitle(source.getOriginalName());
         } else {
             dto.setOriginalTitle(source.getOriginalTitle());
         }
-        if(source.getName() != null){
+        if (source.getName() != null) {
             dto.setTitle(source.getName());
         } else {
             dto.setTitle(source.getTitle());
         }
-        if(source.getFirstAirDate() != null){
+        if (source.getFirstAirDate() != null) {
             dto.setReleaseDate(source.getFirstAirDate());
         } else {
             dto.setReleaseDate(source.getReleaseDate());

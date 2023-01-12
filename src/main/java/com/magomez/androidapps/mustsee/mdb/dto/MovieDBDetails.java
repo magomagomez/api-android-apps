@@ -28,6 +28,8 @@ public class MovieDBDetails implements Serializable {
     private Double voteAverage;
     @JsonProperty("first_air_date")
     private String firstAirDate;
+    @JsonProperty("adult")
+    private Boolean adult;
 
     public String getId() {
         return id;
@@ -99,5 +101,13 @@ public class MovieDBDetails implements Serializable {
 
     public void setFirstAirDate(String firstAirDate) {
         this.firstAirDate = firstAirDate;
+    }
+
+    public Boolean getAdult() {
+        return adult;
+    }
+
+    public void setAdult(Boolean adult) {
+        this.adult = adult;
     }
 }
