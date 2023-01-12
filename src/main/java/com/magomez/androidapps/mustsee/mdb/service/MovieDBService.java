@@ -6,11 +6,7 @@ import com.magomez.androidapps.mustsee.mdb.dto.MovieDBDetails;
 import com.magomez.androidapps.mustsee.mdb.dto.MovieDBDetailsDTO;
 import com.magomez.androidapps.mustsee.mdb.dto.MovieDBDetailsList;
 import com.magomez.androidapps.mustsee.mdb.repository.MovieDBRepository;
-import net.bytebuddy.implementation.bytecode.Throw;
-import org.apache.http.HttpException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.crossstore.ChangeSetPersister;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
