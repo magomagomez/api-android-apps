@@ -1,13 +1,10 @@
 package com.magomez.androidapps.mustsee.mdb.converter;
 
-import com.magomez.androidapps.mustsee.Genre;
 import com.magomez.androidapps.mustsee.mdb.dto.MovieDBDetails;
 import com.magomez.androidapps.mustsee.mdb.dto.MovieDBDetailsDTO;
 import com.magomez.androidapps.mustsee.mdb.dto.MovieDBDetailsList;
 import org.apache.commons.math3.util.Precision;
-import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -28,16 +25,7 @@ public class MovieDBConverter {
         dto.setPosterUrl(URL + source.getPosterPath());
         dto.setOverview(source.getOverview());
         fillMovieOrTv(source, dto);
-        fillGenres(source,dto);
         return dto;
-    }
-
-    private static void fillGenres(MovieDBDetails source, MovieDBDetailsDTO dto){
-        List<String> genres = source.getGenreIds().stream()
-                .filter(g->Genre.get(g) != null)
-                .map(g-> Genre.get(g).toString())
-                .toList();
-        dto.setGenres(genres);
     }
 
     private static void fillMovieOrTv(MovieDBDetails source, MovieDBDetailsDTO dto) {
@@ -61,8 +49,7 @@ public class MovieDBConverter {
     }
 
     private static boolean validateWrongFilms(MovieDBDetails source) {
-        if(Boolean.TRUE.equals(source.getAdult()) || source.getPosterPath() == null ||
-                CollectionUtils.isEmpty(source.getGenreIds()) || source.getOverview() == null ||
+        if(Boolean.TRUE.equals(source.getAdult()) || source.getPosterPath() == null || source.getOverview() == null ||
                 source.getVoteCont() < MIN_VOTES){
             return true;
         }

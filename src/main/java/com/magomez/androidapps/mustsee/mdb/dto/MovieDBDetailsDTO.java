@@ -25,8 +25,6 @@ public class MovieDBDetailsDTO implements Serializable {
     private String releaseDate;
     @JsonProperty("average")
     private Double average;
-    @JsonProperty("genres")
-    private List<String> genres;
     @JsonProperty("overview")
     private String overview;
 
@@ -84,13 +82,5 @@ public class MovieDBDetailsDTO implements Serializable {
 
     public void setOverview(String overview) {
         this.overview = overview;
-    }
-
-    public List<String> getGenres() {
-        return genres;
-    }
-
-    public void setGenres(List<String> genres) {
-        this.genres = genres;
     }
 }

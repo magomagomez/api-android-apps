@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.List;
 
 public class MovieDBDetails implements Serializable {
 
@@ -31,8 +30,6 @@ public class MovieDBDetails implements Serializable {
     private String firstAirDate;
     @JsonProperty("adult")
     private Boolean adult;
-    @JsonProperty("genre_ids")
-    private List<Integer> genreIds;
     @JsonProperty("overview")
     private String overview;
     @JsonProperty("vote_count")
@@ -116,14 +113,6 @@ public class MovieDBDetails implements Serializable {
 
     public void setAdult(Boolean adult) {
         this.adult = adult;
-    }
-
-    public List<Integer> getGenreIds() {
-        return genreIds;
-    }
-
-    public void setGenreIds(List<Integer> genreIds) {
-        this.genreIds = genreIds;
     }
 
     public String getOverview() {
