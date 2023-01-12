@@ -27,24 +27,14 @@ public class MoviesDBController {
         this.movieDataBaseService = movieDataBaseService;
     }
 
-    @GetMapping(value ="/movies/{movieId}")
-    public MovieDBDetailsDTO getMovieDetails(@PathVariable Integer movieId) throws IOException {
-        return movieDataBaseService.getMovieDetails(movieId);
+    @GetMapping(value ="/films/{filmId}")
+    public MovieDBDetailsDTO getMovieDBDetails(@PathVariable Integer filmId) throws Exception {
+        return movieDataBaseService.getMovieDetails(filmId);
     }
 
-    @GetMapping(value ="/movies")
-    public List<MovieDBDetailsDTO> getMovies(@RequestParam(value = "search") String search) throws IOException {
+    @GetMapping(value ="/films")
+    public List<MovieDBDetailsDTO> getMoviesDB(@RequestParam(value = "search") String search) throws IOException {
         return movieDataBaseService.getMovies(search);
-    }
-
-    @GetMapping(value ="/tv/{tvId}")
-    public MovieDBDetailsDTO getTvShowsDetails(@PathVariable Integer tvId) throws IOException {
-        return movieDataBaseService.getTvShowDetails(tvId);
-    }
-
-    @GetMapping(value ="/tv")
-    public List<MovieDBDetailsDTO> getTvShows(@RequestParam(value = "search") String search) throws IOException {
-        return movieDataBaseService.getTvShows(search);
     }
 
 
