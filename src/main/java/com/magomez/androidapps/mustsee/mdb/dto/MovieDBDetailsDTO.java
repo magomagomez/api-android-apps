@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieDBDetailsDTO implements Serializable {
@@ -24,6 +25,10 @@ public class MovieDBDetailsDTO implements Serializable {
     private String releaseDate;
     @JsonProperty("average")
     private Double average;
+    @JsonProperty("genres")
+    private List<String> genres;
+    @JsonProperty("overview")
+    private String overview;
 
     public String getId() {
         return id;
@@ -71,5 +76,21 @@ public class MovieDBDetailsDTO implements Serializable {
 
     public void setAverage(Double average) {
         this.average = average;
+    }
+
+    public String getOverview() {
+        return overview;
+    }
+
+    public void setOverview(String overview) {
+        this.overview = overview;
+    }
+
+    public List<String> getGenres() {
+        return genres;
+    }
+
+    public void setGenres(List<String> genres) {
+        this.genres = genres;
     }
 }
