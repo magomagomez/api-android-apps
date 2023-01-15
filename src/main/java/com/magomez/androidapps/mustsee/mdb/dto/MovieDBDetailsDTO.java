@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieDBDetailsDTO implements Serializable {
@@ -14,7 +13,7 @@ public class MovieDBDetailsDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @JsonProperty("id")
-    private String id;
+    private Integer id;
     @JsonProperty("title")
     private String title;
     @JsonProperty("original_title")
@@ -28,11 +27,11 @@ public class MovieDBDetailsDTO implements Serializable {
     @JsonProperty("overview")
     private String overview;
 
-    public String getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

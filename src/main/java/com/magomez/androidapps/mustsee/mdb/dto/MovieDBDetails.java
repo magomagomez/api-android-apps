@@ -11,7 +11,7 @@ public class MovieDBDetails implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @JsonProperty("id")
-    private String id;
+    private Integer id;
     @JsonProperty("title")
     private String title;
     @JsonProperty("original_title")
@@ -35,11 +35,11 @@ public class MovieDBDetails implements Serializable {
     @JsonProperty("vote_count")
     private Integer voteCont;
 
-    public String getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
