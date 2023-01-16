@@ -2,6 +2,7 @@ package com.magomez.androidapps.mustsee.movies.converter;
 
 import com.magomez.androidapps.mustsee.movies.dto.Film;
 import com.magomez.androidapps.mustsee.movies.dto.FilmDTO;
+import com.magomez.androidapps.mustsee.movies.dto.Friend;
 
 import java.util.List;
 
@@ -20,7 +21,9 @@ public class MovieConverter {
         dto.setPosterUrl(source.getPosterUrl());
         dto.setIdExternal(source.getIdExternal());
         dto.setIdUser(source.getIdUser());
-        dto.setIdFriend(source.getIdFriend());
+        Friend friend = new Friend();
+        friend.setId(source.getIdFriend());
+        dto.setFriend(friend);
         dto.setPlatform(source.getPlatform());
         return dto;
     }

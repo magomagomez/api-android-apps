@@ -24,8 +24,8 @@ public class FilmDTO implements Serializable {
     private String platform;
     @JsonProperty("id_user")
     private Integer idUser;
-    @JsonProperty("id_friend")
-    private Integer idFriend;
+    @JsonProperty("friend")
+    private Friend friend;
     @JsonProperty("type")
     private Integer type;
 
@@ -77,12 +77,12 @@ public class FilmDTO implements Serializable {
         this.idUser = idUser;
     }
 
-    public Integer getIdFriend() {
-        return idFriend;
+    public Friend getFriend() {
+        return friend;
     }
 
-    public void setIdFriend(Integer idFriend) {
-        this.idFriend = idFriend;
+    public void setFriend(Friend friend) {
+        this.friend = friend;
     }
 
     public Integer getType() {
