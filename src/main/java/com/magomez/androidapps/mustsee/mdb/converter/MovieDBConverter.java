@@ -31,8 +31,10 @@ public class MovieDBConverter {
     private static void fillMovieOrTv(MovieDBDetails source, MovieDBDetailsDTO dto) {
         if (source.getOriginalName() != null) {
             dto.setOriginalTitle(source.getOriginalName());
+            dto.setFilmType(2);
         } else {
             dto.setOriginalTitle(source.getOriginalTitle());
+            dto.setFilmType(1);
         }
 
         if (source.getName() != null) {

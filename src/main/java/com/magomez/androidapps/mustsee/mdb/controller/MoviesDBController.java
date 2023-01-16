@@ -28,8 +28,9 @@ public class MoviesDBController {
     }
 
     @GetMapping(value ="/films/{filmId}")
-    public MovieDBDetailsDTO getMovieDBDetails(@PathVariable Integer filmId) throws Exception {
-        return movieDataBaseService.getMovieDetails(filmId);
+    public MovieDBDetailsDTO getMovieDBDetails(@PathVariable Integer filmId,
+                                               @RequestParam(value="film_type") Integer filmType) throws Exception {
+        return movieDataBaseService.getMovieDetails(filmId,filmType);
     }
 
     @GetMapping(value ="/films")

@@ -26,6 +26,8 @@ public class MovieDBDetailsDTO implements Serializable {
     private Double average;
     @JsonProperty("overview")
     private String overview;
+    @JsonProperty("film_type")
+    private Integer filmType;
 
     public Integer getId() {
         return id;
@@ -81,5 +83,13 @@ public class MovieDBDetailsDTO implements Serializable {
 
     public void setOverview(String overview) {
         this.overview = overview;
+    }
+
+    public Integer getFilmType() {
+        return filmType;
+    }
+
+    public void setFilmType(Integer filmType) {
+        this.filmType = filmType;
     }
 }

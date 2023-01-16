@@ -25,9 +25,17 @@ public class MovieDBDatasource {
     private static final String URL_SEARCH_MOVIE =  URL + SEARCH + "/" + MOVIE_PATH;
     private static final String URL_SEARCH_TV =  URL + SEARCH + "/" + TV_PATH;
 
+    private static final Integer MOVIE_TYPE = 1;
 
-    public MovieDBDetails getMovieDetails(Integer id) throws IOException {
-        String requestUrl= URL + MOVIE_PATH + "/" + id + "?" + API_KEY + "&" + LANGUAGE;
+
+    public MovieDBDetails getMovieDetails(Integer id, Integer filmType) throws IOException {
+        String requestUrl = URL;
+        if(MOVIE_TYPE.equals(filmType)) {
+            requestUrl = requestUrl + MOVIE_PATH + "/" + id + "?" + API_KEY + "&" + LANGUAGE;
+        }
+        else{
+            requestUrl = requestUrl + TV_PATH + "/" + id + "?" + API_KEY + "&" + LANGUAGE;
+        }
         ResponseBody response = httpCall(requestUrl);
 
         ObjectMapper objectMapper = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);

@@ -18,8 +18,8 @@ public class MovieDBRepository {
         this.movieDataBaseDatasource = movieDataBaseDatasource;
     }
 
-    public MovieDBDetails getMovieInfo(Integer id) throws IOException {
-        return movieDataBaseDatasource.getMovieDetails(id);
+    public MovieDBDetails getMovieInfo(Integer id, Integer filmType) throws IOException {
+        return movieDataBaseDatasource.getMovieDetails(id,filmType);
     }
 
     public MovieDBDetailsList getMovies(String search) throws IOException {

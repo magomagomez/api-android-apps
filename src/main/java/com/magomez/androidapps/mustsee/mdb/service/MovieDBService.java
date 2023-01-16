@@ -24,8 +24,8 @@ public class MovieDBService {
         this.movieDataBaseRepository = movieDataBaseRepository;
     }
 
-    public MovieDBDetailsDTO getMovieDetails(Integer id) throws Exception {
-        MovieDBDetails movieDetails = movieDataBaseRepository.getMovieInfo(id);
+    public MovieDBDetailsDTO getMovieDetails(Integer id, Integer filmType) throws Exception {
+        MovieDBDetails movieDetails = movieDataBaseRepository.getMovieInfo(id, filmType);
         if (movieDetails.getId() == null){
             movieDetails = movieDataBaseRepository.getTvShowInfo(id);
             if (movieDetails.getId() == null){
