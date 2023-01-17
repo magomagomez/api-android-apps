@@ -1,12 +1,16 @@
 package com.magomez.androidapps.mustsee.users.controller;
 
 import com.magomez.androidapps.mustsee.config.ApiConfig;
+import com.magomez.androidapps.mustsee.users.dto.LoginUserRequest;
 import com.magomez.androidapps.mustsee.users.dto.UserDTO;
+import com.magomez.androidapps.mustsee.users.dto.UserLoginDTO;
 import com.magomez.androidapps.mustsee.users.service.UserFilmsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,5 +37,11 @@ public class UserFilmsController {
     @GetMapping(value="/{userId}/friends")
     public List<UserDTO> getRecommendationsUserList(@PathVariable Integer userId){
         return userService.getRecommendationUserList(userId);
+    }
+
+    @PostMapping
+    public UserLoginDTO loginUser(@RequestBody LoginUserRequest loginUserRequest) {
+
+        return userService.userLogin(loginUserRequest);
     }
 }

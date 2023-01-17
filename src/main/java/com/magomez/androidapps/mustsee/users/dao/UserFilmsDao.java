@@ -1,6 +1,9 @@
 package com.magomez.androidapps.mustsee.users.dao;
 
+import com.magomez.androidapps.mustsee.users.dto.LoginUser;
 import com.magomez.androidapps.mustsee.users.dto.User;
+import com.magomez.androidapps.mustsee.users.dto.UserLogin;
+import com.magomez.androidapps.mustsee.users.mapper.UserLoginMapper;
 import com.magomez.androidapps.mustsee.users.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -16,6 +19,8 @@ public class UserFilmsDao {
 
     private static final String TABLE_USERS = "films_users";
     private static final String TABLE_MOVIES = "films_recommend";
+    private static final String COL_USER_NAME = "name";
+    private static final String COL_PASSWORD = "password";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -40,6 +45,13 @@ public class UserFilmsDao {
         query = query + WHERE + " tm.id_user =  " + userId;
 
         return  jdbcTemplate.query(query, new UserMapper());
+    }
+
+    public UserLogin loginUser(LoginUser user) {
+        String query = "select * from " + TABLE_USERS;
+        query = query + " where " + COL_USER_NAME + " = '" + user.getName() +"' AND "
+                + COL_PASSWORD + " = '" + user.getPassword() + "'" ;
+        return  jdbcTemplate.queryForObject(query, new UserLoginMapper());
     }
 
 }

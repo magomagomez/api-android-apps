@@ -1,7 +1,9 @@
 package com.magomez.androidapps.mustsee.users.repository;
 
 import com.magomez.androidapps.mustsee.users.dao.UserFilmsDao;
+import com.magomez.androidapps.mustsee.users.dto.LoginUser;
 import com.magomez.androidapps.mustsee.users.dto.User;
+import com.magomez.androidapps.mustsee.users.dto.UserLogin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +25,10 @@ public class UserRepository {
 
     public List<User> getRecommendationUserList(Integer userId){
         return usersDao.getRecommendationUserList(userId);
+    }
+
+    public UserLogin loginUser(LoginUser user) {
+        return usersDao.loginUser(user);
     }
 
 }
