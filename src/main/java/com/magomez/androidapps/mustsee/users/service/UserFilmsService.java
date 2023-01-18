@@ -30,8 +30,14 @@ public class UserFilmsService {
     public String getUserName(Integer userId){
         return userRepository.getUser(userId);
     }
+
     public List<UserDTO> getRecommendationUserList(Integer userId){
         List<User> userList = userRepository.getRecommendationUserList(userId);
+        return UserConverter.toDto(userList.stream().filter(distinctByKey(User::getId)).toList());
+    }
+
+    public List<UserDTO> getUserVisibility(Integer userId){
+        List<User> userList = userRepository.getUserVisibility(userId);
         return UserConverter.toDto(userList.stream().filter(distinctByKey(User::getId)).toList());
     }
 

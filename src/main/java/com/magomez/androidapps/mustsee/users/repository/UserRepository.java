@@ -27,6 +27,10 @@ public class UserRepository {
         return usersDao.getRecommendationUserList(userId);
     }
 
+    public List<User> getUserVisibility(Integer userId){
+        return usersDao.getUserVisibility(userId);
+    }
+
     public UserLogin loginUser(LoginUser user) {
         return usersDao.loginUser(user);
     }

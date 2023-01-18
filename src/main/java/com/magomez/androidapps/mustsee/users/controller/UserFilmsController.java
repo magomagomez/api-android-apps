@@ -39,6 +39,11 @@ public class UserFilmsController {
         return userService.getRecommendationUserList(userId);
     }
 
+    @GetMapping(value="/{userId}/visibility")
+    public List<UserDTO> getUserVisibility(@PathVariable Integer userId){
+        return userService.getUserVisibility(userId);
+    }
+
     @PostMapping
     public UserLoginDTO loginUser(@RequestBody LoginUserRequest loginUserRequest) {
 

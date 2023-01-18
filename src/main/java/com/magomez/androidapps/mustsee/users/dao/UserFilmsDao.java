@@ -18,6 +18,7 @@ import static com.magomez.androidapps.jctravels.config.JcTravelsConfig.WHERE;
 public class UserFilmsDao {
 
     private static final String TABLE_USERS = "films_users";
+    private static final String TABLE_USERS_VISIBILITY = "films_users_visibility";
     private static final String TABLE_MOVIES = "films_recommend";
     private static final String COL_USER_NAME = "name";
     private static final String COL_PASSWORD = "password";
@@ -43,6 +44,17 @@ public class UserFilmsDao {
         query = query + " inner join " + TABLE_MOVIES + " tm ";
         query = query + " on tu.id = tm.id_friend";
         query = query + WHERE + " tm.id_user =  " + userId;
+
+        return  jdbcTemplate.query(query, new UserMapper());
+    }
+
+    public List<User> getUserVisibility(Integer userId) {
+
+        String query = "Select tu.id, tu.name";
+        query = query + FROM + TABLE_USERS + " tu ";
+        query = query + " inner join " + TABLE_USERS_VISIBILITY + " tv ";
+        query = query + " on tu.id = tv.id_friend";
+        query = query + WHERE + " tv.id_user =  " + userId;
 
         return  jdbcTemplate.query(query, new UserMapper());
     }
