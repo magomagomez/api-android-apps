@@ -33,12 +33,13 @@ public class UserFilmsService {
 
     public List<UserDTO> getRecommendationUserList(Integer userId){
         List<User> userList = userRepository.getRecommendationUserList(userId);
-        return UserConverter.toDto(userList.stream().filter(distinctByKey(User::getId)).toList());
+        return UserConverter.toDtoList(userList.stream().filter(distinctByKey(User::getId)).toList());
     }
 
-    public List<UserDTO> getUserVisibility(Integer userId){
+    public List<UserDTO> getUserVisibility(Integer userId, Integer filmId){
         List<User> userList = userRepository.getUserVisibility(userId);
-        return UserConverter.toDto(userList.stream().filter(distinctByKey(User::getId)).toList());
+        List<Integer> usersWhithFilms = userRepository.getUserWithFilmRecommended(filmId);
+        return UserConverter.toDtoListWithFilms(userList,usersWhithFilms);
     }
 
     public UserLoginDTO userLogin(LoginUserRequest userDTO){

@@ -16,6 +16,8 @@ public class UserDTO implements Serializable {
     private Integer id;
     @JsonProperty("name")
     private String name;
+    @JsonProperty("listed")
+    private Boolean listed;
 
     public Integer getId() {
         return id;
@@ -31,5 +33,13 @@ public class UserDTO implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Boolean getListed() {
+        return listed;
+    }
+
+    public void setListed(Boolean listed) {
+        this.listed = listed;
     }
 }

@@ -8,13 +8,29 @@ import com.magomez.androidapps.mustsee.users.dto.UserLogin;
 import com.magomez.androidapps.mustsee.users.dto.UserLoginDTO;
 
 import java.util.List;
+import java.util.Optional;
 
 public class UserConverter {
 
     private UserConverter(){}
 
-    public static List<UserDTO> toDto(List<User> source) {
+    public static List<UserDTO> toDtoList(List<User> source) {
         return source.stream().map(UserConverter::toDto).toList();
+    }
+
+    public static List<UserDTO> toDtoListWithFilms(List<User> source, List<Integer> userWithFilm) {
+        return source.stream().map(u -> toDto(u,userWithFilm)).toList();
+    }
+
+    public static UserDTO toDto(User source, List<Integer> userWithFilm) {
+        UserDTO dto = new UserDTO();
+        dto.setId(source.getId());
+        dto.setName(source.getName());
+        Optional<Integer> result = userWithFilm.stream().filter(u->u.equals(source.getId())).findAny();
+        if(result.isPresent()){
+            dto.setListed(true);
+        }
+        return dto;
     }
 
     public static UserDTO toDto(User source) {

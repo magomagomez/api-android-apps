@@ -31,6 +31,10 @@ public class UserRepository {
         return usersDao.getUserVisibility(userId);
     }
 
+    public List<Integer> getUserWithFilmRecommended(Integer userId){
+        return usersDao.getUserWithFilmRecommended(userId);
+    }
+
     public UserLogin loginUser(LoginUser user) {
         return usersDao.loginUser(user);
     }

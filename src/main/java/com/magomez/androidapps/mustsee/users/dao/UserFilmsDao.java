@@ -59,6 +59,16 @@ public class UserFilmsDao {
         return  jdbcTemplate.query(query, new UserMapper());
     }
 
+    public List<Integer> getUserWithFilmRecommended(Integer filmId) {
+
+        String query = "Select distinct (id_user)";
+        query = query + FROM + TABLE_MOVIES + " tm ";
+        query = query + WHERE + " tm.id_external =  " + filmId;
+
+        return  jdbcTemplate.queryForList(query, Integer.class);
+    }
+
+
     public UserLogin loginUser(LoginUser user) {
         String query = "select * from " + TABLE_USERS;
         query = query + " where " + COL_USER_NAME + " = '" + user.getName() +"' AND "
