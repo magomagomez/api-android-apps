@@ -11,7 +11,7 @@ import java.util.Objects;
 public class MovieDBConverter {
 
     private static final String URL = "https://image.tmdb.org/t/p/w600_and_h900_bestv2";
-    private static final int MIN_VOTES = 30;
+    private static final int MIN_VOTES = 10;
 
     private MovieDBConverter(){}
 
@@ -51,11 +51,8 @@ public class MovieDBConverter {
     }
 
     private static boolean validateWrongFilms(MovieDBDetails source) {
-        if(Boolean.TRUE.equals(source.getAdult()) || source.getPosterPath() == null || source.getOverview() == null ||
-                source.getVoteCont() < MIN_VOTES){
-            return true;
-        }
-        return false;
+        return Boolean.TRUE.equals(source.getAdult()) || source.getPosterPath() == null || source.getOverview() == null ||
+                source.getVoteCont() < MIN_VOTES;
     }
 
     public static List<MovieDBDetailsDTO> toDto(MovieDBDetailsList source) {
