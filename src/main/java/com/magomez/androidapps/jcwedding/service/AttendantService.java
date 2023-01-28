@@ -8,7 +8,9 @@ import com.magomez.androidapps.jcwedding.repository.AttendantRepository;
 import com.magomez.androidapps.jcwedding.dto.Attendant;
 import com.magomez.androidapps.jcwedding.dto.AttendantDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -24,6 +26,9 @@ public class AttendantService {
 
     public List<AttendantDTO> searchAttendants(SearchAttendantDTO attendantSearch){
         List<Attendant> attendants = attendantRepository.searchAttendants(attendantSearch);
+        if(attendants.isEmpty()){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Attendant not found");
+        }
         for(Attendant attendant : attendants){
             List<Companion> companions = attendantRepository.searchCompanions(attendant.getId());
             attendant.setCompanion(companions);
