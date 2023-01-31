@@ -1,11 +1,11 @@
-package com.magomez.androidapps.jcwedding.dao;
+package com.magomez.androidapps.jcwedding.attendant.dao;
 
-import com.magomez.androidapps.jcwedding.dto.Attendant;
-import com.magomez.androidapps.jcwedding.dto.Companion;
-import com.magomez.androidapps.jcwedding.dto.RequestAttendantDTO;
-import com.magomez.androidapps.jcwedding.dto.SearchAttendantDTO;
-import com.magomez.androidapps.jcwedding.mapper.AttendantMapper;
-import com.magomez.androidapps.jcwedding.mapper.CompanionMapper;
+import com.magomez.androidapps.jcwedding.attendant.dto.Companion;
+import com.magomez.androidapps.jcwedding.attendant.mapper.AttendantMapper;
+import com.magomez.androidapps.jcwedding.attendant.mapper.CompanionMapper;
+import com.magomez.androidapps.jcwedding.attendant.dto.Attendant;
+import com.magomez.androidapps.jcwedding.attendant.dto.RequestAttendantDTO;
+import com.magomez.androidapps.jcwedding.attendant.dto.SearchAttendantDTO;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;

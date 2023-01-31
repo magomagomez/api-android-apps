@@ -1,13 +1,11 @@
-package com.magomez.androidapps.jcwedding.dto;
+package com.magomez.androidapps.jcwedding.attendant.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serial;
 import java.io.Serializable;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class CompanionDTO implements Serializable {
+public class SearchAttendantDTO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -16,8 +14,9 @@ public class CompanionDTO implements Serializable {
     private Integer id;
     @JsonProperty("name")
     private String name;
-    @JsonProperty("attendance")
-    private Boolean attendance;
+    @JsonProperty("surname")
+    private String surname;
+
 
     public Integer getId() {
         return id;
@@ -35,11 +34,11 @@ public class CompanionDTO implements Serializable {
         this.name = name;
     }
 
-    public Boolean getAttendance() {
-        return attendance;
+    public String getSurname() {
+        return surname;
     }
 
-    public void setAttendance(Boolean attendance) {
-        this.attendance = attendance;
+    public void setSurname(String surname) {
+        this.surname = surname;
     }
 }

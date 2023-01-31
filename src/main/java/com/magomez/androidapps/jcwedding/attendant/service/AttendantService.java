@@ -1,12 +1,12 @@
-package com.magomez.androidapps.jcwedding.service;
+package com.magomez.androidapps.jcwedding.attendant.service;
 
-import com.magomez.androidapps.jcwedding.converter.AttendantConverter;
-import com.magomez.androidapps.jcwedding.dto.Companion;
-import com.magomez.androidapps.jcwedding.dto.RequestAttendantDTO;
-import com.magomez.androidapps.jcwedding.dto.SearchAttendantDTO;
-import com.magomez.androidapps.jcwedding.repository.AttendantRepository;
-import com.magomez.androidapps.jcwedding.dto.Attendant;
-import com.magomez.androidapps.jcwedding.dto.AttendantDTO;
+import com.magomez.androidapps.jcwedding.attendant.converter.AttendantConverter;
+import com.magomez.androidapps.jcwedding.attendant.dto.Companion;
+import com.magomez.androidapps.jcwedding.attendant.dto.RequestAttendantDTO;
+import com.magomez.androidapps.jcwedding.attendant.dto.SearchAttendantDTO;
+import com.magomez.androidapps.jcwedding.attendant.repository.AttendantRepository;
+import com.magomez.androidapps.jcwedding.attendant.dto.Attendant;
+import com.magomez.androidapps.jcwedding.attendant.dto.AttendantDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package com.magomez.androidapps.jcwedding.dto;
+package com.magomez.androidapps.jcwedding.attendant.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

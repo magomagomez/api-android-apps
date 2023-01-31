@@ -1,9 +1,9 @@
-package com.magomez.androidapps.jcwedding.converter;
+package com.magomez.androidapps.jcwedding.attendant.converter;
 
-import com.magomez.androidapps.jcwedding.dto.Attendant;
-import com.magomez.androidapps.jcwedding.dto.AttendantDTO;
-import com.magomez.androidapps.jcwedding.dto.Companion;
-import com.magomez.androidapps.jcwedding.dto.CompanionDTO;
+import com.magomez.androidapps.jcwedding.attendant.dto.Attendant;
+import com.magomez.androidapps.jcwedding.attendant.dto.AttendantDTO;
+import com.magomez.androidapps.jcwedding.attendant.dto.Companion;
+import com.magomez.androidapps.jcwedding.attendant.dto.CompanionDTO;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;

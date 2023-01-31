@@ -1,6 +1,6 @@
-package com.magomez.androidapps.jcwedding.mapper;
+package com.magomez.androidapps.jcwedding.attendant.mapper;
 
-import com.magomez.androidapps.jcwedding.dto.Companion;
+import com.magomez.androidapps.jcwedding.attendant.dto.Companion;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;

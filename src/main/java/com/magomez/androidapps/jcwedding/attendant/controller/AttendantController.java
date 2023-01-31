@@ -1,10 +1,10 @@
-package com.magomez.androidapps.jcwedding.controller;
+package com.magomez.androidapps.jcwedding.attendant.controller;
 
 import com.magomez.androidapps.jcwedding.config.ApiConfig;
-import com.magomez.androidapps.jcwedding.dto.AttendantDTO;
-import com.magomez.androidapps.jcwedding.dto.RequestAttendantDTO;
-import com.magomez.androidapps.jcwedding.dto.SearchAttendantDTO;
-import com.magomez.androidapps.jcwedding.service.AttendantService;
+import com.magomez.androidapps.jcwedding.attendant.service.AttendantService;
+import com.magomez.androidapps.jcwedding.attendant.dto.AttendantDTO;
+import com.magomez.androidapps.jcwedding.attendant.dto.RequestAttendantDTO;
+import com.magomez.androidapps.jcwedding.attendant.dto.SearchAttendantDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
