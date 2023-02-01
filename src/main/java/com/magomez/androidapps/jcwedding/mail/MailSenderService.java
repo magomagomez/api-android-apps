@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 public class MailSenderService {
 
     private static final String PWD = "lduvcmpguxukedid";
-    private static final String APP_ESCAPERS = "App Escapers";
+    private static final String JC_WEDDING = "JC Wedding";
     private static final String TEXT_HTML_CHARSET_UTF_8 = "text/html; charset=utf-8";
     private static final String SMTP = "smtp";
 
@@ -50,7 +50,7 @@ public class MailSenderService {
             MimeMessage message = new MimeMessage(session);
 
             // Set From: header field of the header.
-            message.setFrom(new InternetAddress(from, APP_ESCAPERS));
+            message.setFrom(new InternetAddress(from, JC_WEDDING));
 
             // Set To: header field of the header.
             message.addRecipient(Message.RecipientType.TO,
