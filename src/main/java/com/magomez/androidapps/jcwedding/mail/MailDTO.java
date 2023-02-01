@@ -7,6 +7,7 @@ public class MailDTO implements Serializable {
     private String song;
     private String email;
     private Integer type;
+    private String confirmMessage;
 
     public String getName() {
         return name;
@@ -38,5 +39,13 @@ public class MailDTO implements Serializable {
 
     public void setSong(String song) {
         this.song = song;
+    }
+
+    public String getConfirmMessage() {
+        return confirmMessage;
+    }
+
+    public void setConfirmMessage(String confirmMessage) {
+        this.confirmMessage = confirmMessage;
     }
 }

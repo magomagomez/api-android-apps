@@ -58,6 +58,15 @@ public class AttendantDao {
         jdbcTemplate.update(query);
     }
 
+    public List<Attendant> getAttendantsByIds(RequestAttendantDTO requestAttendantDTO) {
+
+        String query = "Select * from " + TABLE_FRIENDS;
+        String ids = requestAttendantDTO.getId().toString();
+        query = query + " where id in (" + ids.substring(1, ids.length()-1) + ")";
+
+        return  jdbcTemplate.query(query, new AttendantMapper());
+    }
+
     private String buildWhere(SearchAttendantDTO attendant, String query) {
         if(attendant != null && attendant.getName() != null && attendant.getSurname() != null) {
             String attendantName = getNameLowerCase(attendant);

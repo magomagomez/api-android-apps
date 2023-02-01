@@ -24,6 +24,10 @@ public class AttendantRepository {
         return attendantDao.searchAttendants(attendant);
     }
 
+    public List<Attendant> getAttendantsbyId(RequestAttendantDTO requestAttendantDTO) {
+        return attendantDao.getAttendantsByIds(requestAttendantDTO);
+    }
+
     public List<Companion> searchCompanions(Integer userId) {
         return attendantDao.searchCompanions(userId);
     }

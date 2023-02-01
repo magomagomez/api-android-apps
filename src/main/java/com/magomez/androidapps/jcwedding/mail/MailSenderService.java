@@ -87,6 +87,10 @@ public class MailSenderService {
             mailSenderDTO.setSub("Apadrina un Friki");
             mailSenderDTO.setMsg(" El " + mailDTO.getEmail() + " Vol apadrinar");
         }
+        if(mailDTO.getType() == 3){
+            mailSenderDTO.setSub("Nova confirmació");
+            mailSenderDTO.setMsg(mailDTO.getConfirmMessage());
+        }
         sendMail(mailSenderDTO);
     }
 

@@ -7,6 +7,9 @@ import com.magomez.androidapps.jcwedding.attendant.dto.SearchAttendantDTO;
 import com.magomez.androidapps.jcwedding.attendant.repository.AttendantRepository;
 import com.magomez.androidapps.jcwedding.attendant.dto.Attendant;
 import com.magomez.androidapps.jcwedding.attendant.dto.AttendantDTO;
+import com.magomez.androidapps.jcwedding.mail.MailDTO;
+import com.magomez.androidapps.jcwedding.mail.MailSenderService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -18,10 +21,12 @@ import java.util.List;
 public class AttendantService {
 
     private final AttendantRepository attendantRepository;
+    private final MailSenderService mailSenderService;
 
     @Autowired
-    public AttendantService(AttendantRepository attendantRepository){
+    public AttendantService(AttendantRepository attendantRepository, MailSenderService mailSenderService){
         this.attendantRepository = attendantRepository;
+        this.mailSenderService = mailSenderService;
     }
 
     public List<AttendantDTO> searchAttendants(SearchAttendantDTO attendantSearch){
@@ -38,6 +43,19 @@ public class AttendantService {
 
     public void updateAttendants(RequestAttendantDTO requestAttendantDTO){
         attendantRepository.updateAttendants(requestAttendantDTO);
+        confirmationMail(requestAttendantDTO);
+    }
+
+    private void confirmationMail(RequestAttendantDTO requestAttendantDTO) {
+        List<Attendant> attendants = attendantRepository.getAttendantsbyId(requestAttendantDTO);
+        String msg = "Han confirmat els següensts convidats : " ;
+        for(Attendant attendant : attendants){
+            msg = msg + " " + attendant.getName() + " " + attendant.getSurname() +"!";
+        }
+        MailDTO mailDTO = new MailDTO();
+        mailDTO.setConfirmMessage(msg);
+        mailDTO.setType(3);
+        mailSenderService.sendMail(mailDTO);
     }
 
 }
