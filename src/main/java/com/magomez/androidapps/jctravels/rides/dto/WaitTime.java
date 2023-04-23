@@ -10,7 +10,7 @@ public class WaitTime implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Date time;
-    private Integer waitTime;
+    private Integer waitingTime;
 
 
     public Date getTime() {
@@ -21,12 +21,12 @@ public class WaitTime implements Serializable {
         this.time = time;
     }
 
-    public Integer getWaitTime() {
-        return waitTime;
+    public Integer getWaitingTime() {
+        return waitingTime;
     }
 
-    public void setWaitTime(Integer waitTime) {
-        this.waitTime = waitTime;
+    public void setWaitingTime(Integer waitingTime) {
+        this.waitingTime = waitingTime;
     }
 
 }

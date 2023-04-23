@@ -41,7 +41,7 @@ public class RideConverter {
     public static WaitTimeDTO toDto(WaitTime waitTime) {
         WaitTimeDTO waitTimeDTO = new WaitTimeDTO();
         waitTimeDTO.setTime(waitTime.getTime());
-        waitTimeDTO.setWaitTime(waitTime.getWaitTime());
+        waitTimeDTO.setWaitTime(waitTime.getWaitingTime());
         return waitTimeDTO;
     }
 
