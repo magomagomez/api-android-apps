@@ -6,7 +6,8 @@ public enum ParksName {
     EPCOT  (3),
     ANIMAL_KINGDOM  (4),
     HOLLYWOOD_STUDIOS   (5),
-    MAGIC_KINGDOM(6);
+    MAGIC_KINGDOM(6),
+    UNIVERSAL_CALIFORNIA(9);
 
     private Integer id;
 
