@@ -3,8 +3,10 @@ package com.magomez.androidapps.mustsee.users.dao;
 import com.magomez.androidapps.mustsee.users.dto.LoginUser;
 import com.magomez.androidapps.mustsee.users.dto.User;
 import com.magomez.androidapps.mustsee.users.dto.UserLogin;
+import com.magomez.androidapps.mustsee.users.dto.UserRecommend;
 import com.magomez.androidapps.mustsee.users.mapper.UserLoginMapper;
 import com.magomez.androidapps.mustsee.users.mapper.UserMapper;
+import com.magomez.androidapps.mustsee.users.mapper.UserRecommendMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -59,13 +61,13 @@ public class UserFilmsDao {
         return  jdbcTemplate.query(query, new UserMapper());
     }
 
-    public List<Integer> getUserWithFilmRecommended(Integer filmId) {
+    public List<UserRecommend> getUserWithFilmRecommended(Integer filmId) {
 
-        String query = "Select distinct (id_user)";
+        String query = "Select distinct (id_user), id_friend ";
         query = query + FROM + TABLE_MOVIES + " tm ";
         query = query + WHERE + " tm.id_external =  " + filmId;
 
-        return  jdbcTemplate.queryForList(query, Integer.class);
+        return  jdbcTemplate.query(query, new UserRecommendMapper());
     }
 
 

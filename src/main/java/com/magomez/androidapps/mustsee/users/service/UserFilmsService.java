@@ -7,6 +7,7 @@ import com.magomez.androidapps.mustsee.users.dto.User;
 import com.magomez.androidapps.mustsee.users.dto.UserDTO;
 import com.magomez.androidapps.mustsee.users.dto.UserLogin;
 import com.magomez.androidapps.mustsee.users.dto.UserLoginDTO;
+import com.magomez.androidapps.mustsee.users.dto.UserRecommend;
 import com.magomez.androidapps.mustsee.users.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,7 @@ public class UserFilmsService {
 
     public List<UserDTO> getUserVisibility(Integer userId, Integer filmId){
         List<User> userList = userRepository.getUserVisibility(userId);
-        List<Integer> usersWhithFilms = userRepository.getUserWithFilmRecommended(filmId);
+        List<UserRecommend> usersWhithFilms = userRepository.getUserWithFilmRecommended(filmId);
         return UserConverter.toDtoListWithFilms(userList,usersWhithFilms);
     }
 
