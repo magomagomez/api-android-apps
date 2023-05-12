@@ -35,7 +35,7 @@ public class MovieDBService {
         return MovieDBConverter.toDto(movieDetails);
     }
 
-    public List<MovieDBDetailsDTO> getMovies(String search) throws IOException {
+    public List<MovieDBDetailsDTO> searchMovies(String search) throws IOException {
         MovieDBDetailsList movieDetailsList = movieDataBaseRepository.getMovies(search);
         List<MovieDBDetailsDTO> movies =  MovieDBConverter.toDto(movieDetailsList);
         MovieDBDetailsList tvDetailsList = movieDataBaseRepository.getTvShows(search);

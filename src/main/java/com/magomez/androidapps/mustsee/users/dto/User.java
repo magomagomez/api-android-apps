@@ -12,9 +12,7 @@ public class User implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @JsonProperty("id")
     private Integer id;
-    @JsonProperty("name")
     private String name;
 
     public Integer getId() {

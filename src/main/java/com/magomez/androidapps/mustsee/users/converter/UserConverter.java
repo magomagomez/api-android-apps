@@ -1,5 +1,7 @@
 package com.magomez.androidapps.mustsee.users.converter;
 
+import com.magomez.androidapps.mustsee.users.dto.FilmRecomendation;
+import com.magomez.androidapps.mustsee.users.dto.FilmRecomendationRequest;
 import com.magomez.androidapps.mustsee.users.dto.LoginUser;
 import com.magomez.androidapps.mustsee.users.dto.LoginUserRequest;
 import com.magomez.androidapps.mustsee.users.dto.User;

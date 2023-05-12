@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = ApiConfig.BASE_URL+"/movieDB")
+@RequestMapping(value = ApiConfig.BASE_URL+"/movieDB/films")
 @CrossOrigin(origins = "*", methods= {RequestMethod.GET,RequestMethod.POST,RequestMethod.PUT})
 public class MoviesDBController {
 
@@ -27,15 +27,15 @@ public class MoviesDBController {
         this.movieDataBaseService = movieDataBaseService;
     }
 
-    @GetMapping(value ="/films/{filmId}")
+    @GetMapping(value ="/{filmId}")
     public MovieDBDetailsDTO getMovieDBDetails(@PathVariable Integer filmId,
                                                @RequestParam(value="film_type") Integer filmType) throws Exception {
         return movieDataBaseService.getMovieDetails(filmId,filmType);
     }
 
-    @GetMapping(value ="/films")
-    public List<MovieDBDetailsDTO> getMoviesDB(@RequestParam(value = "search") String search) throws IOException {
-        return movieDataBaseService.getMovies(search);
+    @GetMapping
+    public List<MovieDBDetailsDTO> searchMoviesDB(@RequestParam(value = "search") String search) throws IOException {
+        return movieDataBaseService.searchMovies(search);
     }
 
 

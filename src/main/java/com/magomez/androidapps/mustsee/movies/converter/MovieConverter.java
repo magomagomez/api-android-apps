@@ -1,8 +1,11 @@
 package com.magomez.androidapps.mustsee.movies.converter;
 
+import com.magomez.androidapps.mustsee.mdb.dto.MovieDBDetailsDTO;
 import com.magomez.androidapps.mustsee.movies.dto.Film;
 import com.magomez.androidapps.mustsee.movies.dto.FilmDTO;
 import com.magomez.androidapps.mustsee.movies.dto.Friend;
+import com.magomez.androidapps.mustsee.users.dto.FilmRecomendation;
+import com.magomez.androidapps.mustsee.users.dto.FilmRecomendationRequest;
 
 import java.util.List;
 
@@ -25,6 +28,19 @@ public class MovieConverter {
         friend.setId(source.getIdFriend());
         dto.setFriend(friend);
         dto.setPlatform(source.getPlatform());
+        return dto;
+    }
+
+    public static FilmRecomendation fromDto(Integer userId, MovieDBDetailsDTO movieSource,
+                                            FilmRecomendationRequest source) {
+        FilmRecomendation dto = new FilmRecomendation();
+        dto.setTittle(movieSource.getTitle());
+        dto.setFriendId(userId);
+        dto.setFilmType(source.getFilmType());
+        dto.setUserId(source.getFriendId());
+        dto.setPlatform(source.getPlatform());
+        dto.setId(movieSource.getId());
+        dto.setImageUrl(movieSource.getPosterUrl());
         return dto;
     }
 

@@ -12,9 +12,7 @@ public class LoginUser implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @JsonProperty("password")
     private String password;
-    @JsonProperty("name")
     private String name;
 
     public String getPassword() {
