@@ -1,6 +1,7 @@
 package com.magomez.androidapps.mustsee.users.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.magomez.androidapps.mustsee.movies.dto.enums.FilmPlatform;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -14,7 +15,7 @@ public class FilmRecomendation implements Serializable {
     private Integer id;
     private String tittle;
     private String imageUrl;
-    private String platform;
+    private FilmPlatform platform;
     private Integer userId;
     private Integer friendId;
     private Integer filmType;
@@ -43,11 +44,11 @@ public class FilmRecomendation implements Serializable {
         this.imageUrl = imageUrl;
     }
 
-    public String getPlatform() {
+    public FilmPlatform getPlatform() {
         return platform;
     }
 
-    public void setPlatform(String platform) {
+    public void setPlatform(FilmPlatform platform) {
         this.platform = platform;
     }
 
