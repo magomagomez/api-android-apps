@@ -29,7 +29,7 @@ public class FilmsDao {
     public List<Film> getFilms(Integer userId, Integer type) {
         String query = SELECT_ALL;
         query = query + FROM + TABLE_MOVIES + " ";
-        query = query + WHERE + " id_user =  " + userId + " AND film_type = " + type;
+        query = query + WHERE + " id_user =  " + userId + " AND film_type = " + type + " AND done = 0" ;
 
         return  jdbcTemplate.query(query, new MoviesMapper());
     }
