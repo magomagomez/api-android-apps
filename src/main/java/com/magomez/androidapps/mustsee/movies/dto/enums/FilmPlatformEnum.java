@@ -1,6 +1,6 @@
 package com.magomez.androidapps.mustsee.movies.dto.enums;
 
-public enum FilmPlatform {
+public enum FilmPlatformEnum {
     DISNEY,
     PRIME,
     NETFLIX,
