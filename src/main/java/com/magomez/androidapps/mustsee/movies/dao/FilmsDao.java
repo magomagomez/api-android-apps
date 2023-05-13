@@ -34,11 +34,11 @@ public class FilmsDao {
         return  jdbcTemplate.query(query, new MoviesMapper());
     }
 
-    public void insertRecomendation(FilmRecomendation film){
+    public void insertRecomendation(FilmRecomendation film, Integer userId){
         String query = INSERT + TABLE_MOVIES + "(name,image_url,id_external,platform,id_user,id_friend,film_type) " +
                 VALUES + "(?,?,?,?,?,?,?)";
-        jdbcTemplate.update(query , film.getTittle(), film.getImageUrl(),film.getId(),film.getPlatform(),
-                film.getUserId(), film.getFriendId(), film.getFilmType());
+        jdbcTemplate.update(query , film.getTittle(), film.getImageUrl(),film.getId(),film.getPlatform().toString(),
+                userId, film.getFriendId(), film.getFilmType());
     }
 
 }

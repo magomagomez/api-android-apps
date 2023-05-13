@@ -52,7 +52,7 @@ public class MoviesService {
     public void insertRecomendation(Integer userId, Integer movieId, FilmRecomendationRequest film) throws Exception {
         MovieDBDetailsDTO movieDBDetailsDTO = movieDBService.getMovieDetails(movieId, film.getFilmType());
         FilmRecomendation filmRecomendation = MovieConverter.fromDto(userId,movieDBDetailsDTO,film);
-        moviesRepository.insertRecomendation(filmRecomendation);
+        film.getFriendId().forEach(u->moviesRepository.insertRecomendation(filmRecomendation,u));
     }
 
 }

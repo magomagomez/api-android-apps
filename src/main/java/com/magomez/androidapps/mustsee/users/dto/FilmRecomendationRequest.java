@@ -6,6 +6,7 @@ import com.magomez.androidapps.mustsee.movies.dto.enums.FilmPlatformEnum;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FilmRecomendationRequest implements Serializable {
@@ -16,7 +17,7 @@ public class FilmRecomendationRequest implements Serializable {
     @JsonProperty("platform")
     private FilmPlatformEnum platform;
     @JsonProperty("friend_id")
-    private Integer friendId;
+    private List<Integer> friendId;
     @JsonProperty("film_type")
     private Integer filmType;
 
@@ -28,11 +29,11 @@ public class FilmRecomendationRequest implements Serializable {
         this.platform = platform;
     }
 
-    public Integer getFriendId() {
+    public List<Integer> getFriendId() {
         return friendId;
     }
 
-    public void setFriendId(Integer friendId) {
+    public void setFriendId(List<Integer> friendId) {
         this.friendId = friendId;
     }
 

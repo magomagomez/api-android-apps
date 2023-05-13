@@ -24,8 +24,8 @@ public class MoviesRepository {
         return moviesDao.getFilms(userId, MOVIE_TYPE);
     }
 
-    public void insertRecomendation(FilmRecomendation film){
-        moviesDao.insertRecomendation(film);
+    public void insertRecomendation(FilmRecomendation film, Integer userId){
+        moviesDao.insertRecomendation(film, userId);
     }
 
 }
