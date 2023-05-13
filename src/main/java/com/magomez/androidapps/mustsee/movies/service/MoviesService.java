@@ -55,4 +55,8 @@ public class MoviesService {
         film.getFriendId().forEach(u->moviesRepository.insertRecomendation(filmRecomendation,u));
     }
 
+    public void markFilmAsSeen(Integer userId, Integer movieId) {
+        moviesRepository.markFilmAsSeen(userId,movieId);
+    }
+
 }

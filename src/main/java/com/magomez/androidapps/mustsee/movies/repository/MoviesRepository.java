@@ -28,4 +28,8 @@ public class MoviesRepository {
         moviesDao.insertRecomendation(film, userId);
     }
 
+    public void markFilmAsSeen(Integer userId, Integer movieId){
+        moviesDao.markFilmAsSeen(userId,movieId);
+    }
+
 }

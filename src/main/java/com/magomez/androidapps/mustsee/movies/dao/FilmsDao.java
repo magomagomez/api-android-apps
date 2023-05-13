@@ -12,6 +12,8 @@ import java.util.List;
 import static com.magomez.androidapps.jctravels.config.JcTravelsConfig.FROM;
 import static com.magomez.androidapps.jctravels.config.JcTravelsConfig.INSERT;
 import static com.magomez.androidapps.jctravels.config.JcTravelsConfig.SELECT_ALL;
+import static com.magomez.androidapps.jctravels.config.JcTravelsConfig.SET;
+import static com.magomez.androidapps.jctravels.config.JcTravelsConfig.UPDATE;
 import static com.magomez.androidapps.jctravels.config.JcTravelsConfig.VALUES;
 import static com.magomez.androidapps.jctravels.config.JcTravelsConfig.WHERE;
 
@@ -39,6 +41,12 @@ public class FilmsDao {
                 VALUES + "(?,?,?,?,?,?,?)";
         jdbcTemplate.update(query , film.getTittle(), film.getImageUrl(),film.getId(),film.getPlatform().toString(),
                 userId, film.getFriendId(), film.getFilmType());
+    }
+
+    public void markFilmAsSeen(Integer userId, Integer movieId){
+        String query = UPDATE + TABLE_MOVIES;
+        query = query +" " + SET +" done = 1" + WHERE +" id_user = "+userId+" AND id_external =  " +movieId;
+        jdbcTemplate.update(query);
     }
 
 }
