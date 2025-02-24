@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 
 public class FunkoMapper implements RowMapper<Funko> {
 
@@ -17,6 +18,6 @@ public class FunkoMapper implements RowMapper<Funko> {
                 rs.getString("image_path"),
                 rs.getInt("number"),
                 BooleanUtils.isTrue(rs.getInt("is_wishList") == 1),
-                rs.getString("category"));
+                Arrays.asList(rs.getString("category").split(",", -1)));
     }
 }

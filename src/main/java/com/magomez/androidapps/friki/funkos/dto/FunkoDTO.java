@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.List;
 
 public record FunkoDTO(
         Integer id,
@@ -13,7 +14,7 @@ public record FunkoDTO(
         @JsonProperty("wish_list")
         Boolean isWishList,
         Integer number,
-        String category
+        List<String> categories
 ) implements Serializable {
 
     @Serial

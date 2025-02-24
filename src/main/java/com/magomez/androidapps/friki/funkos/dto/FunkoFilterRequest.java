@@ -5,7 +5,6 @@ import java.io.Serializable;
 
 public record FunkoFilterRequest(
         String name,
-        String category,
         Boolean wish
 ) implements Serializable {
 

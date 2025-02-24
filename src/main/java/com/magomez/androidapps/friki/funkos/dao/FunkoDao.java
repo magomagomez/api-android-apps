@@ -26,7 +26,6 @@ public class FunkoDao {
     private static final String TABLE_FUNKOS = " friki_funkos ";
     private static final String COLUMN_NAME = " name ";
     private static final String COLUMN_ID = " id ";
-    private static final String COLUMN_CATEGORY = " category ";
     private static final String COLUMN_WISH = " is_wishList ";
 
     private final JdbcTemplate jdbcTemplate;
@@ -42,14 +41,11 @@ public class FunkoDao {
         if( filter.name() != null) {
             query = query + AND + COLUMN_NAME + " = '" + filter.name() + "' ";
         }
-        if( filter.category() != null){
-            query = query + AND + COLUMN_CATEGORY + " = " + filter.category();
-        }
         if(BooleanUtils.isTrue(filter.wish())){
             query = query + AND + COLUMN_WISH + " = 1";
         }
 
-        return  jdbcTemplate.query(query, new FunkoMapper());
+        return  jdbcTemplate.query( query, new FunkoMapper());
     }
 
     public Funko getFunko(Integer funkoId) {

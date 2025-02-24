@@ -22,7 +22,7 @@ public class FunkoConverter {
                 funko.imagePath(),
                 funko.isWishList(),
                 funko.number(),
-                funko.category()
+                funko.categories()
         );
     }
 

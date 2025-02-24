@@ -25,8 +25,8 @@ public class FunkosController {
     private final FunkosService funkosService;
 
     @Autowired
-    public FunkosController(FunkosService monumentService){
-        this.funkosService = monumentService;
+    public FunkosController(FunkosService funkosService){
+        this.funkosService = funkosService;
     }
 
     @GetMapping

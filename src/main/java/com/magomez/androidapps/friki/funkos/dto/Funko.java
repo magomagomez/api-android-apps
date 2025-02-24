@@ -2,6 +2,7 @@ package com.magomez.androidapps.friki.funkos.dto;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.List;
 
 public record Funko(
         Integer id,
@@ -9,7 +10,7 @@ public record Funko(
         String imagePath,
         Integer number,
         Boolean isWishList,
-        String category) implements Serializable {
+        List<String> categories) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
