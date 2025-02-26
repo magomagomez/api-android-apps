@@ -1,9 +1,9 @@
-package com.magomez.androidapps.friki.funkos.dao;
+package com.magomez.androidapps.friki.comics.dao;
 
-import com.magomez.androidapps.friki.funkos.dto.CreateFunkoRequest;
-import com.magomez.androidapps.friki.funkos.dto.FunkoFilterRequest;
-import com.magomez.androidapps.friki.funkos.dto.Funko;
-import com.magomez.androidapps.friki.funkos.mapper.FunkoMapper;
+import com.magomez.androidapps.friki.comics.dto.CreateComicRequest;
+import com.magomez.androidapps.friki.comics.dto.Comic;
+import com.magomez.androidapps.friki.comics.dto.ComicFilterRequest;
+import com.magomez.androidapps.friki.comics.mapper.ComicMapper;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -21,22 +21,23 @@ import static com.magomez.androidapps.friki.config.FrikiConfig.VALUES;
 import static com.magomez.androidapps.friki.config.FrikiConfig.WHERE;
 
 @Service
-public class FunkoDao {
+public class ComicDao {
 
-    private static final String TABLE_FUNKOS = " friki_funkos ";
+    private static final String TABLE_COMICS = " friki_comics ";
     private static final String COLUMN_NAME = " name ";
     private static final String COLUMN_ID = " id ";
     private static final String COLUMN_WISH = " is_wishList ";
+    private static final String COLUMN_MARVEL = " is_marvel_or_dc ";
 
     private final JdbcTemplate jdbcTemplate;
 
-    public FunkoDao(@Qualifier("jdbcTemplate") JdbcTemplate jdbcTemplate) {
+    public ComicDao(@Qualifier("jdbcTemplate") JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public List<Funko> search(FunkoFilterRequest filter) {
+    public List<Comic> search(ComicFilterRequest filter) {
         String query = SELECT_ALL;
-        query = query + FROM + TABLE_FUNKOS + " ";
+        query = query + FROM + TABLE_COMICS + " ";
         query = query + WHERE +" 1=1 ";
         if( filter.name() != null) {
             query = query + AND + COLUMN_NAME + " = '" + filter.name() + "' ";
@@ -44,26 +45,29 @@ public class FunkoDao {
         if(BooleanUtils.isTrue(filter.wish())){
             query = query + AND + COLUMN_WISH + " = 1";
         }
+        if(BooleanUtils.isTrue(filter.marvel())){
+            query = query + AND + COLUMN_MARVEL + " = 1";
+        }
 
-        return  jdbcTemplate.query( query, new FunkoMapper());
+        return  jdbcTemplate.query( query, new ComicMapper());
     }
 
-    public Funko getFunko(Integer funkoId) {
+    public Comic getComic(Integer comicId) {
         String query = SELECT_ALL;
-        query = query + FROM + TABLE_FUNKOS + " ";
-        query = query + WHERE + COLUMN_ID + "= "+ funkoId;
+        query = query + FROM + TABLE_COMICS + " ";
+        query = query + WHERE + COLUMN_ID + "= "+ comicId;
         try {
-            return jdbcTemplate.queryForObject(query, new FunkoMapper());
+            return jdbcTemplate.queryForObject(query, new ComicMapper());
         } catch(Exception e){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Funko not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Comic not found");
         }
     }
 
-    public void createFunko(CreateFunkoRequest funko) {
-        String query = INSERT + TABLE_FUNKOS + " (name,number,category,is_wishList) " +
+    public void createComic(CreateComicRequest comic) {
+        String query = INSERT + TABLE_COMICS + " (name,is_marvel_or_dc,category,is_wishList) " +
                 VALUES + "(?,?,?,?,?,?)";
-        jdbcTemplate.update(query , funko.name(),
-                funko.number(), funko.category(), 1);
+        jdbcTemplate.update(query , comic.name(),
+                comic.marvelOrDc(), comic.category(), 1);
     }
 
 }

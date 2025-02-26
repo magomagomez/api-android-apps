@@ -1,13 +1,12 @@
-package com.magomez.androidapps.friki.funkos.dto;
+package com.magomez.androidapps.friki.comics.dto;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
-public record Funko(
+public record Comic(
         Integer id,
         String name,
-        Integer number,
         Boolean isWishList,
         List<String> categories) implements Serializable {
 

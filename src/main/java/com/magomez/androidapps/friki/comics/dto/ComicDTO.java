@@ -1,4 +1,4 @@
-package com.magomez.androidapps.friki.funkos.dto;
+package com.magomez.androidapps.friki.comics.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -6,12 +6,11 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
-public record FunkoDTO(
+public record ComicDTO(
         Integer id,
         String name,
         @JsonProperty("wish_list")
         Boolean isWishList,
-        Integer number,
         List<String> categories
 ) implements Serializable {
 

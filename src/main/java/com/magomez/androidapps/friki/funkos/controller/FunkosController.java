@@ -30,9 +30,9 @@ public class FunkosController {
     }
 
     @GetMapping
-    public List<FunkoDTO> getFunkos(@Valid FunkoFilterRequest requestFilter) {
+    public List<FunkoDTO> search(@Valid FunkoFilterRequest requestFilter) {
 
-        return funkosService.getFunkos(requestFilter);
+        return funkosService.search(requestFilter);
     }
 
     @GetMapping("{funkoId}")

@@ -24,8 +24,8 @@ public class FunkosService {
         this.funkoDao = monumentDao;
     }
 
-    public List<FunkoDTO> getFunkos(FunkoFilterRequest requestFilter){
-        List<Funko> monuments =  funkoDao.getAllFunkos(requestFilter);
+    public List<FunkoDTO> search(FunkoFilterRequest requestFilter){
+        List<Funko> monuments =  funkoDao.search(requestFilter);
         return FunkoConverter.toDtoList(monuments);
     }
 

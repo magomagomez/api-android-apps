@@ -19,7 +19,6 @@ public class FunkoConverter {
         return new FunkoDTO(
                 funko.id(),
                 funko.name(),
-                funko.imagePath(),
                 funko.isWishList(),
                 funko.number(),
                 funko.categories()

@@ -1,6 +1,6 @@
-package com.magomez.androidapps.friki.funkos.mapper;
+package com.magomez.androidapps.friki.comics.mapper;
 
-import com.magomez.androidapps.friki.funkos.dto.Funko;
+import com.magomez.androidapps.friki.comics.dto.Comic;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -8,14 +8,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 
-public class FunkoMapper implements RowMapper<Funko> {
+public class ComicMapper implements RowMapper<Comic> {
 
     @Override
-    public Funko mapRow(ResultSet rs, int rowNum) throws SQLException {
-        return new Funko(
+    public Comic mapRow(ResultSet rs, int rowNum) throws SQLException {
+        return new Comic(
                 rs.getInt("id"),
                 rs.getString("name"),
-                rs.getInt("number"),
                 BooleanUtils.isTrue(rs.getInt("is_wishList") == 1),
                 Arrays.asList(rs.getString("category").split(",", -1)));
     }
