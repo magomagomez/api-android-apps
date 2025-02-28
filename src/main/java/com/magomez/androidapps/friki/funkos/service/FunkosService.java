@@ -20,8 +20,8 @@ public class FunkosService {
     private final FunkoDao funkoDao;
 
     @Autowired
-    public FunkosService(FunkoDao monumentDao){
-        this.funkoDao = monumentDao;
+    public FunkosService(FunkoDao funkoDao){
+        this.funkoDao = funkoDao;
     }
 
     public List<FunkoDTO> search(FunkoFilterRequest requestFilter){

@@ -20,8 +20,8 @@ public class ComicService {
     private final ComicDao comicDao;
 
     @Autowired
-    public ComicService(ComicDao monumentDao){
-        this.comicDao = monumentDao;
+    public ComicService(ComicDao comicDao){
+        this.comicDao = comicDao;
     }
 
     public List<ComicDTO> search(ComicFilterRequest requestFilter){
