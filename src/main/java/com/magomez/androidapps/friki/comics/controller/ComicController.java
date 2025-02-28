@@ -20,12 +20,12 @@ import java.util.List;
 @RestController
 @RequestMapping(value = ApiConfig.BASE_URL + "/comics")
 @CrossOrigin(origins = "*", methods= {RequestMethod.GET,RequestMethod.POST,RequestMethod.PUT})
-public class ComicsController {
+public class ComicController {
 
     private final ComicService comicsService;
 
     @Autowired
-    public ComicsController(ComicService comicsService){
+    public ComicController(ComicService comicsService){
         this.comicsService = comicsService;
     }
 

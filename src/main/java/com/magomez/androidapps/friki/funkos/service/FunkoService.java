@@ -14,13 +14,13 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @Service
-public class FunkosService {
+public class FunkoService {
 
     private static final String INVALID_PARAMETERS = "Invalid Parameters";
     private final FunkoDao funkoDao;
 
     @Autowired
-    public FunkosService(FunkoDao funkoDao){
+    public FunkoService(FunkoDao funkoDao){
         this.funkoDao = funkoDao;
     }
 

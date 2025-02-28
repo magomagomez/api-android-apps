@@ -9,8 +9,8 @@ public class ComicConverter {
 
     private ComicConverter(){}
 
-    public static List<ComicDTO> toDtoList(List<Comic> monuments){
-        return monuments.stream()
+    public static List<ComicDTO> toDtoList(List<Comic> comics){
+        return comics.stream()
                 .map(ComicConverter::toDto)
                 .toList();
     }

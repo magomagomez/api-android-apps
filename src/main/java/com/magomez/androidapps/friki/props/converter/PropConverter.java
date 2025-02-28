@@ -9,8 +9,8 @@ public class PropConverter {
 
     private PropConverter(){}
 
-    public static List<PropDTO> toDtoList(List<Prop> monuments){
-        return monuments.stream()
+    public static List<PropDTO> toDtoList(List<Prop> props){
+        return props.stream()
                 .map(PropConverter::toDto)
                 .toList();
     }

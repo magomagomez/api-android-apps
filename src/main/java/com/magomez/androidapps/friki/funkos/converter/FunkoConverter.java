@@ -9,8 +9,8 @@ public class FunkoConverter {
 
     private FunkoConverter(){}
 
-    public static List<FunkoDTO> toDtoList(List<Funko> monuments){
-        return monuments.stream()
+    public static List<FunkoDTO> toDtoList(List<Funko> funkos){
+        return funkos.stream()
                 .map(FunkoConverter::toDto)
                 .toList();
     }
