@@ -10,7 +10,7 @@ import com.twilio.rest.api.v2010.account.Message;
 public class WhatsappService {
 
     private static final String ACCOUNT_SID = "AC9b482f7491c6fec1fe89120965fb4325";
-    private static final String AUTH_TOKEN = "125863ea2517316d5999b6c89e517675";
+    private static final String AUTH_TOKEN = "7f291c764095b4a6bcc1d3dd70784f57";
 
     public void updateAttendants(WhatsappMessageDTO whatsappMessageDTO){
         String text = "Hola, " + whatsappMessageDTO.getFrom() + " con email " + whatsappMessageDTO.getEmail();
