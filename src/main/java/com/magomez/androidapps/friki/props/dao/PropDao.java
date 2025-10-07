@@ -41,11 +41,11 @@ public class PropDao {
         if( filter.name() != null) {
             query = query + AND + COLUMN_NAME + " = '" + filter.name() + "' ";
         }
-        if(BooleanUtils.isTrue(filter.wish())){
-            query = query + AND + COLUMN_WISH + " = 1";
+        if(filter.wish() != null){
+            query = query + AND + COLUMN_WISH + " = " + (BooleanUtils.isTrue(filter.wish()) ? 1:0) ;
         }
 
-        return  jdbcTemplate.query( query, new PropMapper());
+        return  jdbcTemplate.query(query, new PropMapper());
     }
 
     public Prop getProp(Integer propId) {

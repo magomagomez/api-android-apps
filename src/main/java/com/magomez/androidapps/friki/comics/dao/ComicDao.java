@@ -42,11 +42,11 @@ public class ComicDao {
         if( filter.name() != null) {
             query = query + AND + COLUMN_NAME + " = '" + filter.name() + "' ";
         }
-        if(BooleanUtils.isTrue(filter.wish())){
-            query = query + AND + COLUMN_WISH + " = 1";
+        if(filter.wish() != null){
+            query = query + AND + COLUMN_WISH + " = " + (BooleanUtils.isTrue(filter.wish()) ? 1:0) ;
         }
-        if(BooleanUtils.isTrue(filter.marvel())){
-            query = query + AND + COLUMN_MARVEL + " = 1";
+        if(filter.marvel() != null){
+            query = query + AND + COLUMN_MARVEL + " = " + + (BooleanUtils.isTrue(filter.marvel()) ? 1:0) ;
         }
 
         return  jdbcTemplate.query( query, new ComicMapper());

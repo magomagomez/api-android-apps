@@ -42,11 +42,11 @@ public class DeckDao {
         if( filter.name() != null) {
             query = query + AND + COLUMN_NAME + " = '" + filter.name() + "' ";
         }
-        if(BooleanUtils.isTrue(filter.wish())){
-            query = query + AND + COLUMN_WISH + " = 1";
+        if(filter.wish() != null){
+            query = query + AND + COLUMN_WISH + " = " + (BooleanUtils.isTrue(filter.wish()) ? 1:0) ;
         }
-        if(BooleanUtils.isTrue(filter.city())){
-            query = query + AND + COLUMN_CITY + " = 1";
+        if(filter.city() != null){
+            query = query + AND + COLUMN_CITY + " = " + + (BooleanUtils.isTrue(filter.city()) ? 1:0) ;
         }
 
         return  jdbcTemplate.query( query, new DeckMapper());
