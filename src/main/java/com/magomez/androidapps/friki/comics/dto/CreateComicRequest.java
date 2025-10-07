@@ -7,8 +7,6 @@ import java.io.Serializable;
 
 public record CreateComicRequest(
         String name,
-        @JsonProperty("image_path")
-        String imagePath,
         @JsonProperty("is_marvel_ord_dc")
         Integer marvelOrDc,
         String category

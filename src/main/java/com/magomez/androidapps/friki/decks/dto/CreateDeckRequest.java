@@ -7,8 +7,6 @@ import java.io.Serializable;
 
 public record CreateDeckRequest(
         String name,
-        @JsonProperty("image_path")
-        String imagePath,
         @JsonProperty("is_city_deck")
         Integer isCityDeck,
         String category

@@ -65,7 +65,7 @@ public class ComicDao {
 
     public void createComic(CreateComicRequest comic) {
         String query = INSERT + TABLE_COMICS + " (name,is_marvel_or_dc,category,is_wishList) " +
-                VALUES + "(?,?,?,?,?,?)";
+                VALUES + "(?,?,?,?)";
         jdbcTemplate.update(query , comic.name(),
                 comic.marvelOrDc(), comic.category(), 1);
     }

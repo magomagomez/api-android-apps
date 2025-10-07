@@ -61,7 +61,7 @@ public class FunkoDao {
 
     public void createFunko(CreateFunkoRequest funko) {
         String query = INSERT + TABLE_FUNKOS + " (name,number,category,is_wishList) " +
-                VALUES + "(?,?,?,?,?,?)";
+                VALUES + "(?,?,?,?)";
         jdbcTemplate.update(query , funko.name(),
                 funko.number(), funko.category(), 1);
     }

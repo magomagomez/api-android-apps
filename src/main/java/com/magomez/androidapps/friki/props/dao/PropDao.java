@@ -61,7 +61,7 @@ public class PropDao {
 
     public void createProps(CreatePropRequest prop) {
         String query = INSERT + TABLE_PROPS + " (name,category,is_wishList) " +
-                VALUES + "(?,?,?,?,?,?)";
+                VALUES + "(?,?,?)";
         jdbcTemplate.update(query , prop.name(), prop.category(), 1);
     }
 
