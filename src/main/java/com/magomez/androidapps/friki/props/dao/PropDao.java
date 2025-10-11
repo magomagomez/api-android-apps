@@ -27,6 +27,7 @@ public class PropDao {
     private static final String COLUMN_NAME = " name ";
     private static final String COLUMN_ID = " id ";
     private static final String COLUMN_WISH = " is_wishList ";
+    private static final String ORDER_BY_NAME = " ORDER BY name ";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -44,6 +45,7 @@ public class PropDao {
         if(filter.wish() != null){
             query = query + AND + COLUMN_WISH + " = " + (BooleanUtils.isTrue(filter.wish()) ? 1:0) ;
         }
+        query = query + ORDER_BY_NAME;
 
         return  jdbcTemplate.query(query, new PropMapper());
     }

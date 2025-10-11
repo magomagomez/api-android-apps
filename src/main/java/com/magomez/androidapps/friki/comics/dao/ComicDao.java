@@ -28,6 +28,7 @@ public class ComicDao {
     private static final String COLUMN_ID = " id ";
     private static final String COLUMN_WISH = " is_wishList ";
     private static final String COLUMN_MARVEL = " is_marvel_or_dc ";
+    private static final String ORDER_BY_NAME = " ORDER BY name ";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -48,6 +49,8 @@ public class ComicDao {
         if(filter.marvel() != null){
             query = query + AND + COLUMN_MARVEL + " = " + + (BooleanUtils.isTrue(filter.marvel()) ? 1:0) ;
         }
+        query = query + ORDER_BY_NAME;
+
 
         return  jdbcTemplate.query( query, new ComicMapper());
     }

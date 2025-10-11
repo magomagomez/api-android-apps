@@ -28,6 +28,7 @@ public class DeckDao {
     private static final String COLUMN_ID = " id ";
     private static final String COLUMN_WISH = " is_wishList ";
     private static final String COLUMN_CITY = " is_city_deck ";
+    private static final String ORDER_BY_NAME = " ORDER BY name ";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -48,6 +49,7 @@ public class DeckDao {
         if(filter.city() != null){
             query = query + AND + COLUMN_CITY + " = " + + (BooleanUtils.isTrue(filter.city()) ? 1:0) ;
         }
+        query = query + ORDER_BY_NAME;
 
         return  jdbcTemplate.query( query, new DeckMapper());
     }
