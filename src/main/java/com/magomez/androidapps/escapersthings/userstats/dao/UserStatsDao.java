@@ -47,12 +47,12 @@ public class UserStatsDao {
         query = query + "inner join  escape_rooms er on er.id = ucn.escape_room_id ";
         query = query + "where ucn.user_id = " + userId;
         query = switch (order == null ? "" : order) {
-            case "W" -> query + "AND ucn.global IS NOT NULL ORDER BY ucn.global ASC, ucn.horror ASC LIMIT 5";
-            case "G" -> query + "AND ucn.game_master IS NOT NULL ORDER BY ucn.game_master DESC, ucn.global DESC LIMIT 5";
-            case "I" -> query + "AND ucn.inmersion IS NOT NULL ORDER BY ucn.inmersion DESC, ucn.global DESC LIMIT 5";
-            case "H" -> query + "AND ucn.horror IS NOT NULL ORDER BY ucn.horror DESC, ucn.global DESC LIMIT 5";
-            case "A" -> query + "AND ucn.global IS NOT NULL ORDER BY ucn.global DESC, ucn.horror DESC LIMIT 5";
-            default -> query + "AND ucn.global IS NOT NULL ORDER BY ucn.global DESC, ucn.horror DESC";
+            case "W" -> query + " AND ucn.global IS NOT NULL ORDER BY ucn.global ASC, ucn.horror ASC LIMIT 5";
+            case "G" -> query + " AND ucn.game_master IS NOT NULL ORDER BY ucn.game_master DESC, ucn.global DESC LIMIT 5";
+            case "I" -> query + " AND ucn.inmersion IS NOT NULL ORDER BY ucn.inmersion DESC, ucn.global DESC LIMIT 5";
+            case "H" -> query + " AND ucn.horror IS NOT NULL ORDER BY ucn.horror DESC, ucn.global DESC LIMIT 5";
+            case "A" -> query + " AND ucn.global IS NOT NULL ORDER BY ucn.global DESC, ucn.horror DESC LIMIT 5";
+            default -> query + " AND ucn.global IS NOT NULL ORDER BY ucn.global DESC, ucn.horror DESC";
         };
         return jdbcTemplate.query(query, new GradeStatsMapper());
     }

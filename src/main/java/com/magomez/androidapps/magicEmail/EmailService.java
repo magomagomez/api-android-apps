@@ -19,6 +19,7 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Properties;
 
 @Service
@@ -40,7 +41,7 @@ public class EmailService {
         private static final String REPLY_SUBJECT_PREFIX = "Recuerdo de un As en La Manga";
 
         // HTML Body Content for the reply email
-        private static final LocalDate currentDate = LocalDate.now();
+        private static final String currentDate = LocalDate.now().toString() +"-"+ LocalDateTime.now().getHour();
         private static final String HTML_BODY_CONTENT =
                 "<html>" +
                         "<head>" +
