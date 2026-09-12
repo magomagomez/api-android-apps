@@ -5,8 +5,10 @@ import com.magomez.androidapps.movierec.model.AwardsTally;
 import com.magomez.androidapps.movierec.model.FestivalAchievement;
 import com.magomez.androidapps.movierec.model.Movie;
 import com.magomez.androidapps.movierec.provider.AccoladeProvider;
+import com.magomez.androidapps.movierec.support.ExternalCallExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * {@link AccoladeProvider} that answers "which festivals did this film <em>also</em> play"
@@ -22,10 +25,11 @@ import java.util.Map;
  * another (award databases lag months behind; festival programmes are public at once).
  *
  * <p>Configured with a set of festival editions ({@code movierec.festivals}, e.g.
- * {@code "Sundance:2026,SXSW:2026,Cannes:2026"}). Their lineups are fetched once from the
- * {@link FestivalLineupSource} and held for the life of the process (they do not change);
- * a candidate is matched against them by title / original title. Each hit becomes a
- * {@link FestivalAchievement.Type#SELECTION} in that lineup's section.
+ * {@code "Sundance:2026,SXSW:2026,Cannes:2026"}). Their lineups are fetched once — in
+ * parallel, via {@link ExternalCallExecutor} — from the {@link FestivalLineupSource} and
+ * held for the life of the process (they do not change); a candidate is matched against
+ * them by title / original title. Each hit becomes a {@link FestivalAchievement.Type#SELECTION}
+ * in that lineup's section.
  *
  * <p>A source failure for one edition is logged and skipped; it never throws.
  */
@@ -37,20 +41,37 @@ public class FestivalLineupAccoladeProvider implements AccoladeProvider {
 
     private final FestivalLineupSource lineupSource;
     private final List<FestivalEdition> editions;
+    private final ExternalCallExecutor externalCallExecutor;
 
     private volatile List<FestivalLineup> lineups;
 
+    @Autowired
     public FestivalLineupAccoladeProvider(
             FestivalLineupSource lineupSource,
             @Value("${movierec.festivals:Sundance:2026,SXSW:2026,Cannes:2026,Venice:2026,"
-                    + "Fantasia:2026,Berlinale:2026,Locarno:2026,San Sebastian:2026}") String configured) {
+                    + "Fantasia:2026,Berlinale:2026,Locarno:2026,San Sebastian:2026}") String configured,
+            ExternalCallExecutor externalCallExecutor) {
         this.lineupSource = lineupSource;
         this.editions = parseEditions(configured);
+        this.externalCallExecutor = externalCallExecutor;
+    }
+
+    /** Test constructor: fetches the editions inline, on the caller thread. */
+    public FestivalLineupAccoladeProvider(FestivalLineupSource lineupSource, String configured) {
+        this(lineupSource, configured, ExternalCallExecutor.sequential());
     }
 
     @Override
     public String sourceName() {
         return SOURCE_NAME;
+    }
+
+    /**
+     * Triggers the (cached, once-per-process) lineup fetch eagerly. Used by the startup
+     * warm-up so the first real request doesn't pay this cost on the caller's thread.
+     */
+    public void warmUp() {
+        loadLineups();
     }
 
     @Override
@@ -66,7 +87,7 @@ public class FestivalLineupAccoladeProvider implements AccoladeProvider {
                 : new AccoladeReport(AwardsTally.empty(), achievements);
     }
 
-    private static java.util.Optional<FestivalAchievement> match(FestivalLineup lineup, Movie movie) {
+    private static Optional<FestivalAchievement> match(FestivalLineup lineup, Movie movie) {
         return lineup.lookup(movie.title())
                 .or(() -> lineup.lookup(movie.originalTitle()))
                 .map(entry -> FestivalAchievement.selection(
@@ -88,20 +109,20 @@ public class FestivalLineupAccoladeProvider implements AccoladeProvider {
     }
 
     private List<FestivalLineup> fetchAll() {
-        List<FestivalLineup> loaded = new ArrayList<>();
-        for (FestivalEdition edition : editions) {
-            try {
-                lineupSource.lineup(edition.festival(), edition.year()).ifPresent(lineup -> {
-                    loaded.add(lineup);
-                    log.info("Loaded {} {} lineup: {} films",
-                            edition.festival(), edition.year(), lineup.entries().size());
-                });
-            } catch (IOException e) {
-                log.warn("Could not load {} {} lineup: {}",
-                        edition.festival(), edition.year(), e.getMessage());
-            }
+        List<Optional<FestivalLineup>> fetched = externalCallExecutor.map(editions, this::fetchOne);
+        return fetched.stream().filter(Optional::isPresent).map(Optional::get).toList();
+    }
+
+    private Optional<FestivalLineup> fetchOne(FestivalEdition edition) {
+        try {
+            Optional<FestivalLineup> lineup = lineupSource.lineup(edition.festival(), edition.year());
+            lineup.ifPresent(l -> log.info("Loaded {} {} lineup: {} films",
+                    edition.festival(), edition.year(), l.entries().size()));
+            return lineup;
+        } catch (IOException e) {
+            log.warn("Could not load {} {} lineup: {}", edition.festival(), edition.year(), e.getMessage());
+            return Optional.empty();
         }
-        return List.copyOf(loaded);
     }
 
     private static List<FestivalEdition> parseEditions(String configured) {

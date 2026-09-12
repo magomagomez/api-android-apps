@@ -80,6 +80,17 @@ class FestivalLineupAccoladeProviderTest {
     }
 
     @Test
+    void warmUpFetchesEagerlySoTheFirstRealLookupReusesTheCache() {
+        FestivalLineupAccoladeProvider provider = provider("Sundance:2026");
+
+        provider.warmUp();
+        assertThat(source.calls).hasValue(1);
+
+        provider.accoladesOf(movie("The Cycle", "The Cycle"));
+        assertThat(source.calls).hasValue(1); // still just the one fetch from warmUp()
+    }
+
+    @Test
     void aSourceFailureForOneEditionIsSkipped() {
         FakeSource failing = new FakeSource(Map.of()) {
             @Override

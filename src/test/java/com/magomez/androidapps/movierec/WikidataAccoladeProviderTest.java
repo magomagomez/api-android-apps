@@ -20,7 +20,11 @@ class WikidataAccoladeProviderTest {
     private final WikidataAccoladeProvider provider = new WikidataAccoladeProvider(client);
 
     private static Movie movie(String imdbId) {
-        return new Movie(1, imdbId, "t", "t", null, null, null,
+        return movie(imdbId, null);
+    }
+
+    private static Movie movie(String imdbId, String releaseDate) {
+        return new Movie(1, imdbId, "t", "t", releaseDate, null, null,
                 List.of(), null, List.of(), List.of(), null, List.of());
     }
 
@@ -100,6 +104,32 @@ class WikidataAccoladeProviderTest {
         client.error = new IOException("HTTP 429");
 
         assertThat(provider.accoladesOf(movie("tt1"))).isEqualTo(AccoladeReport.empty());
+    }
+
+    @Test
+    void aFilmReleasedThisYearOrLastIsSkippedWithoutCallingTheClient() {
+        client.awards = List.of(new WikidataAward(true, "Palme d'Or", null, 2026, 2026));
+
+        assertThat(provider.accoladesOf(movie("tt1", "2026-05-14"))).isEqualTo(AccoladeReport.empty());
+        assertThat(client.called).isFalse();
+    }
+
+    @Test
+    void anOlderFilmIsStillQueried() {
+        client.awards = List.of(new WikidataAward(true, "Golden Lion", null, 2012, 2012));
+
+        assertThat(provider.accoladesOf(movie("tt1", "2012-09-01")).achievements()).containsExactly(
+                FestivalAchievement.award("Venecia", 2012, null, "Golden Lion"));
+        assertThat(client.called).isTrue();
+    }
+
+    @Test
+    void isTooRecentForAwardDataIsPureAndDrivenByTheGivenYearNotTheWallClock() {
+        assertThat(WikidataAccoladeProvider.isTooRecentForAwardData("2026-01-01", 2026)).isTrue();
+        assertThat(WikidataAccoladeProvider.isTooRecentForAwardData("2025-12-31", 2026)).isTrue();
+        assertThat(WikidataAccoladeProvider.isTooRecentForAwardData("2024-12-31", 2026)).isFalse();
+        assertThat(WikidataAccoladeProvider.isTooRecentForAwardData(null, 2026)).isFalse();
+        assertThat(WikidataAccoladeProvider.isTooRecentForAwardData("unknown", 2026)).isFalse();
     }
 
     private static final class FakeWikidataClient extends WikidataClient {

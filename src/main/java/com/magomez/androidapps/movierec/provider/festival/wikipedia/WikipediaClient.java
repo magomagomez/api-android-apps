@@ -34,9 +34,15 @@ public class WikipediaClient {
             "movie-recommendation-engine/1.0 (https://github.com/Magomez; personal, non-commercial)";
     static final int MAX_CACHED = 2000;
 
+    /**
+     * Short on purpose: these fetches now run in parallel across festival editions
+     * ({@link com.magomez.androidapps.movierec.provider.festival.FestivalLineupAccoladeProvider}),
+     * but still inside one HTTP request that has to fit Heroku's hard 30s router timeout —
+     * a single stuck edition must not be allowed to hold that up for long.
+     */
     private final OkHttpClient httpClient = new OkHttpClient.Builder()
-            .callTimeout(Duration.ofSeconds(20))
-            .connectTimeout(Duration.ofSeconds(10))
+            .callTimeout(Duration.ofSeconds(10))
+            .connectTimeout(Duration.ofSeconds(5))
             .build();
     private final ObjectMapper objectMapper =
             new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);

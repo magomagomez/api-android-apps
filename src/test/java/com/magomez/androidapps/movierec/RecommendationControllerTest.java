@@ -32,6 +32,7 @@ import java.util.function.Function;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -53,11 +54,17 @@ class RecommendationControllerTest {
 
     private List<MovieQuery> lastCandidates;
     private Function<List<MovieQuery>, RecommendationResult> handler = q -> new RecommendationResult(0, List.of(), List.of());
+    private boolean ready = true;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        RecommendationService stub = new RecommendationService(null, null, null, null, null, null, null) {
+        RecommendationService stub = new RecommendationService(null, null, null, null, null, null, null, null) {
+            @Override
+            public boolean isReady() {
+                return ready;
+            }
+
             @Override
             public RecommendationResult recommend(List<MovieQuery> candidates) {
                 lastCandidates = candidates;
@@ -229,5 +236,17 @@ class RecommendationControllerTest {
                 .andExpect(jsonPath("$.recommendations[0].personalMatchScore").value(greaterThan(0.0)))
                 .andExpect(jsonPath("$.recommendations[0].qualityConfirmed").value(false))
                 .andExpect(jsonPath("$.recommendations[0].ratings.length()").value(0));
+    }
+
+    @Test
+    void whileTheLibraryIsStillWarmingUpItFailsFastInsteadOfBlocking() throws Exception {
+        ready = false;
+
+        mockMvc.perform(post("/api/recommendations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"movies\":[{\"title\":\"Anything\"}]}"))
+                .andExpect(status().isServiceUnavailable());
+
+        assertNull(lastCandidates); // recommend() was never called
     }
 }

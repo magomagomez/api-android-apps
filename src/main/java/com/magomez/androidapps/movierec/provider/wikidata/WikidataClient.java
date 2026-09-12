@@ -61,15 +61,18 @@ public class WikidataClient {
             LIMIT 200""";
 
     /**
-     * SPARQL queries routinely take longer than OkHttp's 10s default (Wikidata caps them
-     * at 60s). HTTP/1.1 only: the shared WDQS endpoint resets HTTP/2 streams from some
-     * clients ({@code stream was reset: CANCEL}).
+     * HTTP/1.1 only: the shared WDQS endpoint resets HTTP/2 streams from some clients
+     * ({@code stream was reset: CANCEL}). Timeout deliberately short: this signal is a
+     * bonus (any failure already degrades to an empty report, never breaks the request),
+     * scoring runs one of these per candidate in parallel batches, and the whole request
+     * has to fit inside Heroku's hard 30s router timeout — a single slow call must not be
+     * allowed to hold up its whole batch for anywhere near that long.
      */
     private final OkHttpClient httpClient = new OkHttpClient.Builder()
             .protocols(List.of(Protocol.HTTP_1_1))
-            .callTimeout(Duration.ofSeconds(45))
-            .readTimeout(Duration.ofSeconds(45))
-            .connectTimeout(Duration.ofSeconds(10))
+            .callTimeout(Duration.ofSeconds(8))
+            .readTimeout(Duration.ofSeconds(8))
+            .connectTimeout(Duration.ofSeconds(5))
             .build();
     private final ObjectMapper objectMapper =
             new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);

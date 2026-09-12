@@ -33,12 +33,20 @@ import java.util.Map;
  * </ul>
  *
  * <p>API / HTTP error &rarr; logged, {@link AccoladeReport#empty()} (never throws).
+ *
+ * <p>A film released this year or last is skipped without a network call: award
+ * databases lag festival premieres by months to years, so for a brand-new title the
+ * query is verified empty far more often than not (real measurement on a 2026 festival
+ * lineup: 0 hits) — it would only add latency to every request for essentially no signal.
+ * Older candidates (e.g. a retrospective title fed in for comparison) are still queried.
  */
 @Service
 public class WikidataAccoladeProvider implements AccoladeProvider {
 
     private static final String SOURCE_NAME = "Wikidata awards";
     private static final String COMPETITION_SECTION = "Competición";
+    /** Skip the lookup for a film released this year or last — see the class javadoc. */
+    static final int SKIP_IF_RELEASED_WITHIN_YEARS = 1;
 
     private static final Logger log = LoggerFactory.getLogger(WikidataAccoladeProvider.class);
 
@@ -97,6 +105,9 @@ public class WikidataAccoladeProvider implements AccoladeProvider {
         if (movie == null || movie.imdbId() == null || movie.imdbId().isBlank()) {
             return AccoladeReport.empty();
         }
+        if (isTooRecentForAwardData(movie.releaseDate(), java.time.Year.now().getValue())) {
+            return AccoladeReport.empty();
+        }
         try {
             List<FestivalAchievement> achievements = new ArrayList<>();
             for (WikidataAward award : client.awardsForImdbId(movie.imdbId())) {
@@ -143,6 +154,23 @@ public class WikidataAccoladeProvider implements AccoladeProvider {
                 .map(Map.Entry::getValue)
                 .findFirst()
                 .orElse(null);
+    }
+
+    /** Pure so the "skip when brand new" rule is testable without depending on wall-clock time. */
+    public static boolean isTooRecentForAwardData(String releaseDate, int currentYear) {
+        Integer releaseYear = releaseYear(releaseDate);
+        return releaseYear != null && releaseYear >= currentYear - SKIP_IF_RELEASED_WITHIN_YEARS;
+    }
+
+    private static Integer releaseYear(String releaseDate) {
+        if (releaseDate == null || releaseDate.length() < 4) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(releaseDate.substring(0, 4));
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private static String normalize(String value) {

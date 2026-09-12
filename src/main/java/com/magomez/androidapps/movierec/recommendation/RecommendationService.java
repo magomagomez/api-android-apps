@@ -11,6 +11,7 @@ import com.magomez.androidapps.movierec.scoring.UserTasteProfile;
 import com.magomez.androidapps.movierec.scoring.letterboxd.LetterboxdLibrary;
 import com.magomez.androidapps.movierec.scoring.letterboxd.LetterboxdLibraryLoader;
 import com.magomez.androidapps.movierec.service.MovieImportService;
+import com.magomez.androidapps.movierec.support.ExternalCallExecutor;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -77,6 +78,7 @@ public class RecommendationService {
     private final AggregatingAccoladeProvider accoladeProvider;
     private final AccoladeSignalCalculator accoladeSignalCalculator;
     private final RecommendationReasoner recommendationReasoner;
+    private final ExternalCallExecutor externalCallExecutor;
 
     public RecommendationService(MovieImportService movieImportService,
                                  LetterboxdLibraryLoader letterboxdLibraryLoader,
@@ -84,7 +86,8 @@ public class RecommendationService {
                                  SimilaritySignalCalculator similaritySignalCalculator,
                                  AggregatingAccoladeProvider accoladeProvider,
                                  AccoladeSignalCalculator accoladeSignalCalculator,
-                                 RecommendationReasoner recommendationReasoner) {
+                                 RecommendationReasoner recommendationReasoner,
+                                 ExternalCallExecutor externalCallExecutor) {
         this.movieImportService = movieImportService;
         this.letterboxdLibraryLoader = letterboxdLibraryLoader;
         this.personalMatchScoreCalculator = personalMatchScoreCalculator;
@@ -92,6 +95,17 @@ public class RecommendationService {
         this.accoladeProvider = accoladeProvider;
         this.accoladeSignalCalculator = accoladeSignalCalculator;
         this.recommendationReasoner = recommendationReasoner;
+        this.externalCallExecutor = externalCallExecutor;
+    }
+
+    /**
+     * Non-blocking: {@code true} once the Letterboxd library is warm and a call to
+     * {@link #recommend(List)} won't have to build it first. Lets the controller answer
+     * instantly instead of blocking a request for however long the warm-up has left —
+     * important on platforms with a hard request timeout (e.g. Heroku's 30s router limit).
+     */
+    public boolean isReady() {
+        return letterboxdLibraryLoader.isReady();
     }
 
     public RecommendationResult recommend(List<MovieQuery> candidates) {
@@ -102,7 +116,9 @@ public class RecommendationService {
 
         List<MovieIdentificationResult> identified = movieImportService.identifyAll(candidates);
 
-        List<ScoredCandidate> recommendations = new ArrayList<>();
+        // Sequential: exclusions are cheap (no network) and duplicate-detection depends
+        // on processing order.
+        List<MovieIdentificationResult> eligible = new ArrayList<>();
         List<ExcludedCandidate> excluded = new ArrayList<>();
         Set<Integer> candidateIdsSeen = new HashSet<>();
 
@@ -119,9 +135,7 @@ public class RecommendationService {
                 continue;
             }
 
-            Movie movie = result.match().movie();
-            Integer tmdbId = movie.tmdbId();
-
+            Integer tmdbId = result.match().movie().tmdbId();
             if (library.hasWatched(tmdbId)) {
                 excluded.add(ExcludedCandidate.alreadyWatched(title, tmdbId));
                 continue;
@@ -131,20 +145,30 @@ public class RecommendationService {
                 continue;
             }
 
-            AccoladeSignal accoladeSignal = accoladeSignalCalculator.calculate(
-                    accoladeProvider.accoladesOf(movie));
-            PersonalMatchScore score = personalMatchScoreCalculator.calculate(
-                    movie, profile, accoladeSignal.strength());
-            SimilaritySignal similaritySignal = similaritySignalCalculator.calculate(movie, library);
-            RecommendationReason reason = recommendationReasoner.explain(
-                    movie, profile, score, similaritySignal, library);
-            recommendations.add(new ScoredCandidate(
-                    title, movie, score, similaritySignal, accoladeSignal, reason,
-                    result.enrichmentError()));
+            eligible.add(result);
         }
+
+        // Parallel: scoring fans out to external providers per candidate (Wikidata,
+        // festival lineups, OMDb) — sequentially this alone can take longer than Heroku's
+        // 30s router timeout once there are 80+ eligible candidates.
+        List<ScoredCandidate> recommendations = new ArrayList<>(
+                externalCallExecutor.map(eligible, result -> score(result, profile, library)));
 
         recommendations.sort(BY_ESTIMATED_VALUE);
         return new RecommendationResult(candidates.size(), recommendations, excluded, profile.patterns());
+    }
+
+    private ScoredCandidate score(MovieIdentificationResult result, UserTasteProfile profile,
+                                  LetterboxdLibrary library) {
+        Movie movie = result.match().movie();
+        AccoladeSignal accoladeSignal = accoladeSignalCalculator.calculate(accoladeProvider.accoladesOf(movie));
+        PersonalMatchScore score = personalMatchScoreCalculator.calculate(
+                movie, profile, accoladeSignal.strength());
+        SimilaritySignal similaritySignal = similaritySignalCalculator.calculate(movie, library);
+        RecommendationReason reason = recommendationReasoner.explain(
+                movie, profile, score, similaritySignal, library);
+        return new ScoredCandidate(result.query().title(), movie, score, similaritySignal,
+                accoladeSignal, reason, result.enrichmentError());
     }
 
     private LetterboxdLibrary loadLibrary() {

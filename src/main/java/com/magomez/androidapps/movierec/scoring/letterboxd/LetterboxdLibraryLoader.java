@@ -61,6 +61,15 @@ public class LetterboxdLibraryLoader {
      * @throws LetterboxdCsvException if the CSV is not usable
      * @throws IllegalStateException  if the resource is not on the classpath
      */
+    /**
+     * Non-blocking peek: {@code true} once the library has been built and cached (by the
+     * warm-up at startup, or by an earlier call), {@code false} while it is still being
+     * built. Never triggers the build itself.
+     */
+    public boolean isReady() {
+        return cached != null;
+    }
+
     public LetterboxdLibrary load() throws IOException {
         LetterboxdLibrary result = cached;
         if (result == null) {

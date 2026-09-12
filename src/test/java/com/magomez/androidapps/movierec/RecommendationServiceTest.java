@@ -75,6 +75,11 @@ class RecommendationServiceTest {
         };
         LetterboxdLibraryLoader loaderStub = new LetterboxdLibraryLoader(null, null, "unused") {
             @Override
+            public boolean isReady() {
+                return true;
+            }
+
+            @Override
             public LetterboxdLibrary load() {
                 return library;
             }
@@ -83,7 +88,8 @@ class RecommendationServiceTest {
                 new com.magomez.androidapps.movierec.recommendation.SimilaritySignalCalculator(),
                 new com.magomez.androidapps.movierec.provider.AggregatingAccoladeProvider(List.of()),
                 new com.magomez.androidapps.movierec.recommendation.AccoladeSignalCalculator(),
-                new RecommendationReasoner());
+                new RecommendationReasoner(),
+                com.magomez.androidapps.movierec.support.ExternalCallExecutor.sequential());
     }
 
     private static Movie movie(int tmdbId, String title, String director, String genre,
@@ -331,5 +337,19 @@ class RecommendationServiceTest {
 
         assertThat(result.ranked()).isEmpty();
         assertThat(result.affinityOnly()).extracting(ScoredCandidate::title).containsExactly("Thin");
+    }
+
+    @Test
+    void isReadyReflectsWhetherTheLibraryHasFinishedWarmingUp() {
+        LetterboxdLibraryLoader notReadyYet = new LetterboxdLibraryLoader(null, null, "unused") {
+            @Override
+            public boolean isReady() {
+                return false;
+            }
+        };
+        RecommendationService service = new RecommendationService(
+                null, notReadyYet, null, null, null, null, null, null);
+
+        assertThat(service.isReady()).isFalse();
     }
 }

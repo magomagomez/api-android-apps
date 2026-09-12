@@ -6,6 +6,7 @@ import com.magomez.androidapps.movierec.api.RecommendationResponse;
 import com.magomez.androidapps.movierec.model.MovieQuery;
 import com.magomez.androidapps.movierec.recommendation.RecommendationResult;
 import com.magomez.androidapps.movierec.recommendation.RecommendationService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -24,6 +26,13 @@ import java.util.List;
  * HTTP contract and the domain (via {@link RecommendationApiMapper}); it holds no
  * business logic and never talks to an external API. The {@code /api/movies/import}
  * contract is untouched.
+ *
+ * <p>The Letterboxd library warms up in the background right after startup (tens of
+ * seconds — TMDB identification of the whole history). A request that lands mid-warm-up
+ * would otherwise block for however long is left, plus the full pipeline — easily past a
+ * platform's hard request timeout (Heroku's router cuts off at 30s, no exceptions). So
+ * this checks readiness first and fails fast with a plain, cheap {@code 503} instead of
+ * blocking — the caller can just retry shortly after.
  */
 @RestController
 @RequestMapping("/api/recommendations")
@@ -40,6 +49,11 @@ public class RecommendationController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public RecommendationResponse recommend(@RequestBody RecommendationRequest request) {
+        if (!recommendationService.isReady()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "Todavía estamos preparando tu perfil de gustos (arranque en curso). "
+                            + "Reintenta en unos segundos.");
+        }
         List<MovieQuery> candidates = RecommendationApiMapper.toQueries(request);
         RecommendationResult result = recommendationService.recommend(candidates);
         return RecommendationApiMapper.toResponse(result);
