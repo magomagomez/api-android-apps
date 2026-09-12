@@ -17,6 +17,7 @@
     --line: #e4d9c2;
     --accent: #c9852c;
     --accent-ink: #3a2409;
+    --accent-bg: rgba(201, 133, 44, .1);
     --confirmed: #3f7d58;
     --confirmed-bg: rgba(63, 125, 88, .12);
     --provisional: #a9803f;
@@ -41,6 +42,7 @@
       --line: #232b35;
       --accent: #e8a33d;
       --accent-ink: #241505;
+      --accent-bg: rgba(232, 163, 61, .14);
       --confirmed: #74c08f;
       --confirmed-bg: rgba(116, 192, 143, .14);
       --provisional: #c9a06a;
@@ -61,6 +63,7 @@
     --line: #232b35;
     --accent: #e8a33d;
     --accent-ink: #241505;
+    --accent-bg: rgba(232, 163, 61, .14);
     --confirmed: #74c08f;
     --confirmed-bg: rgba(116, 192, 143, .14);
     --provisional: #c9a06a;
@@ -446,6 +449,10 @@
     line-height: 1.6;
     color: var(--ink);
     max-width: 68ch;
+    background: var(--accent-bg);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: .55rem .8rem;
   }
 
   .highlights {
@@ -482,9 +489,23 @@
   }
 
   .note {
-    font-size: .76rem;
-    font-style: italic;
+    font-size: .8rem;
+    line-height: 1.5;
     color: var(--ink-soft);
+    max-width: 68ch;
+    background: var(--provisional-bg);
+    border-left: 3px solid var(--provisional);
+    border-radius: 0 6px 6px 0;
+    padding: .45rem .75rem;
+  }
+
+  .note b {
+    color: var(--provisional);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: .68rem;
+    letter-spacing: .05em;
+    margin-right: .4rem;
   }
 
   .empty-state {
@@ -736,7 +757,7 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
     if (item.recommendationReason) html += '<p class="reason">' + escapeHtml(item.recommendationReason) + '</p>';
     html += highlightsList(item.accoladeHighlights);
     html += reasonsDetails(item.reasons);
-    if (item.note) html += '<p class="note">' + escapeHtml(item.note) + '</p>';
+    if (item.note) html += '<p class="note"><b>Aviso</b>' + escapeHtml(item.note) + '</p>';
     html += '  </div>';
     html += '</div>';
     return html;
