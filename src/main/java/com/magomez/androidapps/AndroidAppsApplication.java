@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
@@ -32,6 +33,16 @@ public class AndroidAppsApplication {
             @Override
             public void configureContentNegotiation(@NotNull ContentNegotiationConfigurer configurer) {
                 configurer.defaultContentType(MediaType.APPLICATION_JSON);
+            }
+
+            // @EnableWebMvc above opts out of Spring Boot's autoconfiguration, which is
+            // what normally wires up serving src/main/resources/static/** — restore just
+            // that default so plain static pages (e.g. the movie recommender's frontend)
+            // work again.
+            @Override
+            public void addResourceHandlers(@NotNull ResourceHandlerRegistry registry) {
+                registry.addResourceHandler("/**")
+                        .addResourceLocations("classpath:/static/");
             }
         };
     }
