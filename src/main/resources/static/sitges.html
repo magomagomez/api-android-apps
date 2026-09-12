@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marquesina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&amp;family=Archivo:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5efe2;
+    --surface: #fffdf8;
+    --surface-2: #faf3e3;
+    --ink: #1c2027;
+    --ink-soft: #5c6270;
+    --line: #e4d9c2;
+    --accent: #c9852c;
+    --accent-ink: #3a2409;
+    --confirmed: #3f7d58;
+    --confirmed-bg: rgba(63, 125, 88, .12);
+    --provisional: #a9803f;
+    --provisional-bg: rgba(169, 128, 63, .14);
+    --festival: #6d4f8f;
+    --festival-bg: rgba(109, 79, 143, .12);
+    --danger: #a14a3a;
+    --danger-bg: rgba(161, 74, 58, .1);
+    --shadow: rgba(28, 32, 39, .08);
+
+    --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --font-body: 'Archivo', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10151b;
+      --surface: #161d26;
+      --surface-2: #1b232d;
+      --ink: #eef1f5;
+      --ink-soft: #9aa4b2;
+      --line: #232b35;
+      --accent: #e8a33d;
+      --accent-ink: #241505;
+      --confirmed: #74c08f;
+      --confirmed-bg: rgba(116, 192, 143, .14);
+      --provisional: #c9a06a;
+      --provisional-bg: rgba(201, 160, 106, .14);
+      --festival: #b79bdb;
+      --festival-bg: rgba(183, 155, 219, .14);
+      --danger: #d98670;
+      --danger-bg: rgba(217, 134, 112, .12);
+      --shadow: rgba(0, 0, 0, .45);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #10151b;
+    --surface: #161d26;
+    --surface-2: #1b232d;
+    --ink: #eef1f5;
+    --ink-soft: #9aa4b2;
+    --line: #232b35;
+    --accent: #e8a33d;
+    --accent-ink: #241505;
+    --confirmed: #74c08f;
+    --confirmed-bg: rgba(116, 192, 143, .14);
+    --provisional: #c9a06a;
+    --provisional-bg: rgba(201, 160, 106, .14);
+    --festival: #b79bdb;
+    --festival-bg: rgba(183, 155, 219, .14);
+    --danger: #d98670;
+    --danger-bg: rgba(217, 134, 112, .12);
+    --shadow: rgba(0, 0, 0, .45);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 5rem;
+  }
+
+  header.masthead {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: .5rem;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(2rem, 4vw, 2.7rem);
+    margin: 0 0 .4rem;
+    text-wrap: balance;
+  }
+
+  header.masthead p {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.35rem;
+    margin: 0 0 1rem;
+  }
+
+  .panel {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  label.field-label {
+    display: block;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: .6rem;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 190px;
+    resize: vertical;
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: .85rem 1rem;
+    font-family: var(--font-mono);
+    font-size: .85rem;
+    line-height: 1.6;
+  }
+
+  textarea:focus, input:focus, button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .field-hint {
+    font-size: .8rem;
+    color: var(--ink-soft);
+    margin-top: .6rem;
+    line-height: 1.5;
+  }
+
+  .field-hint code {
+    font-family: var(--font-mono);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: .05rem .35rem;
+  }
+
+  .panel-footer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.1rem;
+    flex-wrap: wrap;
+  }
+
+  button.primary {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: .92rem;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: none;
+    border-radius: 8px;
+    padding: .75rem 1.4rem;
+    cursor: pointer;
+  }
+
+  button.primary:disabled {
+    opacity: .55;
+    cursor: progress;
+  }
+
+  button.primary:hover:not(:disabled) {
+    filter: brightness(1.06);
+  }
+
+  .status-line {
+    font-family: var(--font-mono);
+    font-size: .82rem;
+    color: var(--ink-soft);
+  }
+
+  .status-line.is-error { color: var(--danger); }
+
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: .6rem .9rem;
+    min-width: 108px;
+  }
+
+  .stat .n {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 1.3rem;
+    font-variant-numeric: tabular-nums;
+    display: block;
+  }
+
+  .stat .l {
+    font-size: .72rem;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+    flex-wrap: wrap;
+  }
+
+  input.filter {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: .55rem .8rem;
+    font-family: var(--font-body);
+    font-size: .88rem;
+    color: var(--ink);
+    min-width: 220px;
+  }
+
+  .legend {
+    display: flex;
+    gap: 1rem;
+    font-size: .78rem;
+    color: var(--ink-soft);
+  }
+
+  .legend .dot {
+    display: inline-block;
+    width: .55rem;
+    height: .55rem;
+    border-radius: 50%;
+    margin-right: .35rem;
+    vertical-align: middle;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 2px var(--shadow);
+  }
+
+  .card-top {
+    height: 4px;
+    background: var(--line);
+    position: relative;
+  }
+
+  .card-top .fill {
+    position: absolute;
+    inset: 0;
+    width: 0;
+  }
+
+  .card-top .fill.confirmed { background: var(--confirmed); }
+  .card-top .fill.provisional { background: var(--provisional); }
+
+  .card-body-wrap { display: flex; gap: 0; }
+
+  .poster {
+    flex: 0 0 110px;
+    aspect-ratio: 2 / 3;
+    background: var(--surface-2);
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-soft);
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .poster.placeholder::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(135deg, var(--line) 0 2px, transparent 2px 14px);
+    opacity: .5;
+  }
+
+  .poster span { position: relative; }
+
+  .card-main {
+    flex: 1;
+    min-width: 0;
+    padding: .85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+  }
+
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: .6rem;
+  }
+
+  .rank {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    color: var(--ink-soft);
+  }
+
+  .score {
+    display: flex;
+    align-items: baseline;
+    gap: .25rem;
+    font-family: var(--font-mono);
+  }
+
+  .score .val {
+    font-size: 1.3rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .score .max { font-size: .72rem; color: var(--ink-soft); }
+
+  .score-tag {
+    font-size: .64rem;
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: .1rem .4rem;
+    border-radius: 999px;
+    display: inline-block;
+    margin-top: .15rem;
+  }
+
+  .score-tag.confirmed { color: var(--confirmed); background: var(--confirmed-bg); }
+  .score-tag.provisional { color: var(--provisional); background: var(--provisional-bg); }
+
+  .title-block { min-width: 0; }
+
+  .movie-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.05rem;
+    line-height: 1.25;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .movie-meta {
+    font-size: .8rem;
+    color: var(--ink-soft);
+    margin-top: .15rem;
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: .35rem; }
+
+  .chip {
+    font-size: .74rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: .18rem .55rem;
+    display: inline-flex;
+    align-items: baseline;
+    gap: .3rem;
+    color: var(--ink-soft);
+  }
+
+  .chip b {
+    font-family: var(--font-mono);
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .badge {
+    font-size: .74rem;
+    border-radius: 999px;
+    padding: .18rem .55rem;
+    display: inline-block;
+  }
+
+  .badge.selection {
+    border: 1px solid var(--festival);
+    color: var(--festival);
+  }
+
+  .badge.award {
+    background: var(--festival-bg);
+    color: var(--festival);
+    font-weight: 600;
+  }
+
+  .reason {
+    font-size: .87rem;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  .highlights {
+    font-size: .78rem;
+    color: var(--ink-soft);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+  }
+
+  .highlights li::before { content: "· "; color: var(--accent); }
+
+  details.why summary {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  details.why summary::-webkit-details-marker { display: none; }
+  details.why summary::before { content: "▸ "; }
+  details.why[open] summary::before { content: "▾ "; }
+
+  details.why ul {
+    margin: .5rem 0 0;
+    padding-left: 1.1rem;
+    font-size: .82rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  .note {
+    font-size: .76rem;
+    font-style: italic;
+    color: var(--ink-soft);
+  }
+
+  .empty-state {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--ink-soft);
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+  }
+
+  section.excluded {
+    margin-top: 2.5rem;
+  }
+
+  details.excluded-list summary {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: .3rem 0;
+  }
+
+  .excluded-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .55rem 0;
+    border-bottom: 1px solid var(--line);
+    font-size: .85rem;
+  }
+
+  .excluded-row:last-child { border-bottom: none; }
+
+  .excluded-reason {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    color: var(--danger);
+    background: var(--danger-bg);
+    padding: .1rem .5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    height: fit-content;
+  }
+
+  @media (max-width: 480px) {
+    .card-body-wrap { flex-direction: column; }
+    .poster { flex: 0 0 auto; aspect-ratio: 16 / 9; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <span class="eyebrow">Sitges 2026 · motor de recomendación personal</span>
+    <h1>Marquesina</h1>
+    <p>Pega la lista de películas del festival y las ordena por cuánto encajan con tu gusto real —
+       no por lo bien valoradas que están globalmente.</p>
+  </header>
+
+  <section class="panel">
+    <label class="field-label" for="input-movies">Candidatas</label>
+    <textarea id="input-movies" spellcheck="false">Full Phil|2026|Quentin Dupieux
+Hope|2026|Na Hong-jin
+Buddy|2026|Casper Kelly
+No Rest for the Wicked|2026|Kasper Kalle
+Blades of the Guardians: Wind Rises in the Desert|2026|Yuen Woo-ping
+Le Vertige|2026|Quentin Dupieux
+Teenage Sex and Death at Camp Miasma|2026|Jane Schoenbrun
+Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
+    <p class="field-hint">
+      Una película por línea: <code>Título|Año|Director</code>. El año y el director son
+      opcionales — con solo el título vale, aunque afinan la identificación.
+    </p>
+    <div class="panel-footer">
+      <button class="primary" id="run-btn">Generar recomendaciones</button>
+      <span class="status-line" id="status-line"></span>
+    </div>
+  </section>
+
+  <div id="results"></div>
+
+</div>
+
+<script>
+(function () {
+  var API_URL = '/api/recommendations';
+  var input = document.getElementById('input-movies');
+  var runBtn = document.getElementById('run-btn');
+  var statusLine = document.getElementById('status-line');
+  var results = document.getElementById('results');
+
+  var REASON_LABEL = {
+    NOT_FOUND: 'No encontrada',
+    AMBIGUOUS: 'Ambigua',
+    ALREADY_WATCHED: 'Ya vista',
+    DUPLICATE_CANDIDATE: 'Duplicada'
+  };
+
+  function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function parseInput(text) {
+    var movies = [];
+    text.split('\n').forEach(function (line) {
+      var trimmed = line.trim();
+      if (!trimmed) return;
+      var parts = trimmed.split('|');
+      var title = parts[0].trim();
+      if (!title) return;
+      var yearRaw = parts.length > 1 ? parts[1].trim() : '';
+      var director = parts.length > 2 ? parts.slice(2).join('|').trim() : '';
+      var year = yearRaw && /^\d{4}$/.test(yearRaw) ? parseInt(yearRaw, 10) : null;
+      movies.push({ title: title, year: year, director: director || null });
+    });
+    return movies;
+  }
+
+  function formatVotes(n) {
+    if (n === null || n === undefined) return '';
+    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k votos';
+    return n + ' votos';
+  }
+
+  function sleep(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  function fetchWithWarmupRetry(movies) {
+    var maxAttempts = 10;
+    var attempt = 0;
+
+    function tryOnce() {
+      attempt++;
+      return fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ movies: movies })
+      }).then(function (resp) {
+        if (resp.status === 503) {
+          if (attempt >= maxAttempts) {
+            throw new Error('El servidor sigue arrancando después de varios intentos. Prueba de nuevo en un minuto.');
+          }
+          statusLine.textContent = 'Preparando tu perfil de gustos (arranque en curso)… reintentando (' + attempt + '/' + maxAttempts + ')';
+          return sleep(4000).then(tryOnce);
+        }
+        if (!resp.ok) {
+          return resp.text().then(function (body) {
+            throw new Error('Error del servidor (' + resp.status + '): ' + (body || resp.statusText));
+          });
+        }
+        return resp.json();
+      });
+    }
+
+    return tryOnce();
+  }
+
+  function scoreTag(item) {
+    if (item.personalMatchScore === null || item.personalMatchScore === undefined) return '';
+    var cls = item.qualityConfirmed ? 'confirmed' : 'provisional';
+    var label = item.qualityConfirmed ? 'Confirmado' : 'Estimado';
+    return '<span class="score-tag ' + cls + '">' + label + '</span>';
+  }
+
+  function ratingChips(ratings) {
+    if (!ratings || !ratings.length) return '';
+    return '<div class="chips">' + ratings.map(function (r) {
+      var scale = r.scale ? '/' + r.scale : '';
+      var votes = r.voteCount ? ' &middot; ' + formatVotes(r.voteCount) : '';
+      return '<span class="chip">' + escapeHtml(r.source) + ' <b>' + r.score + scale + '</b>' + votes + '</span>';
+    }).join('') + '</div>';
+  }
+
+  function festivalBadges(list) {
+    if (!list || !list.length) return '';
+    return '<div class="chips">' + list.map(function (f) {
+      if (f.type === 'AWARD') {
+        return '<span class="badge award">' + escapeHtml(f.awardName || 'Premio') + ' · ' +
+          escapeHtml(f.festival) + ' ' + f.editionYear + '</span>';
+      }
+      var section = f.section ? ' · ' + escapeHtml(f.section) : '';
+      return '<span class="badge selection">Selección · ' + escapeHtml(f.festival) + ' ' + f.editionYear + section + '</span>';
+    }).join('') + '</div>';
+  }
+
+  function highlightsList(list) {
+    if (!list || !list.length) return '';
+    return '<ul class="highlights">' + list.map(function (h) {
+      return '<li>' + escapeHtml(h) + '</li>';
+    }).join('') + '</ul>';
+  }
+
+  function reasonsDetails(list) {
+    if (!list || !list.length) return '';
+    return '<details class="why"><summary>Por qué</summary><ul>' +
+      list.map(function (r) { return '<li>' + escapeHtml(r) + '</li>'; }).join('') +
+      '</ul></details>';
+  }
+
+  function posterBlock(item) {
+    if (item.posterUrl) {
+      return '<div class="poster" style="background-image:url(\'' + item.posterUrl.replace(/'/g, '') + '\')"></div>';
+    }
+    var initial = item.title ? item.title.trim().charAt(0).toUpperCase() : '?';
+    return '<div class="poster placeholder"><span>' + escapeHtml(initial) + '</span></div>';
+  }
+
+  function card(item) {
+    var pct = item.personalMatchScore === null || item.personalMatchScore === undefined
+      ? 0 : Math.max(0, Math.min(100, item.personalMatchScore));
+    var fillClass = item.qualityConfirmed ? 'confirmed' : 'provisional';
+    var scoreVal = item.personalMatchScore === null || item.personalMatchScore === undefined
+      ? '—' : Math.round(item.personalMatchScore);
+
+    var metaBits = [];
+    if (item.year) metaBits.push(item.year);
+    if (item.director) metaBits.push(escapeHtml(item.director));
+
+    var html = '';
+    html += '<div class="card" data-title="' + escapeHtml((item.title || '').toLowerCase()) + '">';
+    html += '  <div class="card-top"><div class="fill ' + fillClass + '" style="width:' + pct + '%"></div></div>';
+    html += '  <div class="card-body-wrap">';
+    html += posterBlock(item);
+    html += '    <div class="card-main">';
+    html += '      <div class="card-head">';
+    html += '        <div class="title-block">';
+    html += '          <p class="movie-title">' + escapeHtml(item.title) + '</p>';
+    if (metaBits.length) html += '          <p class="movie-meta">' + metaBits.join(' · ') + '</p>';
+    html += '        </div>';
+    html += '        <div style="text-align:right">';
+    html += '          <span class="rank">#' + item.position + '</span>';
+    html += '          <div class="score"><span class="val">' + scoreVal + '</span><span class="max">/100</span></div>';
+    html += scoreTag(item);
+    html += '        </div>';
+    html += '      </div>';
+    html += ratingChips(item.ratings);
+    html += festivalBadges(item.festivalRecognition);
+    if (item.recommendationReason) html += '<p class="reason">' + escapeHtml(item.recommendationReason) + '</p>';
+    html += highlightsList(item.accoladeHighlights);
+    html += reasonsDetails(item.reasons);
+    if (item.note) html += '<p class="note">' + escapeHtml(item.note) + '</p>';
+    html += '    </div>';
+    html += '  </div>';
+    html += '</div>';
+    return html;
+  }
+
+  function statTile(n, label) {
+    return '<div class="stat"><span class="n">' + n + '</span><span class="l">' + label + '</span></div>';
+  }
+
+  function renderExcluded(list) {
+    if (!list || !list.length) return '';
+    var rows = list.map(function (e) {
+      var extra = '';
+      if (e.candidates && e.candidates.length) {
+        extra = '<br><span style="color:var(--ink-soft);font-size:.78rem">' +
+          escapeHtml(e.candidates.join(' · ')) + '</span>';
+      } else if (e.note) {
+        extra = '<br><span style="color:var(--ink-soft);font-size:.78rem">' + escapeHtml(e.note) + '</span>';
+      }
+      return '<div class="excluded-row"><span>' + escapeHtml(e.title) + extra + '</span>' +
+        '<span class="excluded-reason">' + (REASON_LABEL[e.reason] || e.reason) + '</span></div>';
+    }).join('');
+    return '<section class="excluded"><details class="excluded-list"><summary>Excluidas (' + list.length + ')</summary>' +
+      rows + '</details></section>';
+  }
+
+  function render(data) {
+    var s = data.summary || {};
+    var statsHtml = '<div class="stats">' +
+      statTile(s.totalCandidates, 'Candidatas') +
+      statTile(s.identified, 'Identificadas') +
+      statTile(s.recommended, 'Recomendadas') +
+      statTile(s.withCompletePersonalMatchScore, 'Confirmadas') +
+      statTile(s.alreadyWatched, 'Ya vistas') +
+      statTile(s.notFound + s.ambiguous, 'Sin resolver') +
+      '</div>';
+
+    var toolbarHtml = '<div class="toolbar">' +
+      '<input class="filter" id="filter-input" type="text" placeholder="Filtrar por título…">' +
+      '<div class="legend"><span><span class="dot" style="background:var(--confirmed)"></span>Confirmado</span>' +
+      '<span><span class="dot" style="background:var(--provisional)"></span>Estimado</span></div>' +
+      '</div>';
+
+    var gridHtml;
+    if (!data.recommendations || !data.recommendations.length) {
+      gridHtml = '<div class="empty-state">Sin recomendaciones — puede que ya las hayas visto todas, o que no se identificara ninguna candidata. Revisa las excluidas más abajo.</div>';
+    } else {
+      gridHtml = '<div class="grid" id="grid">' + data.recommendations.map(card).join('') + '</div>';
+    }
+
+    results.innerHTML = '<h2>Cartelera</h2>' + statsHtml + toolbarHtml + gridHtml + renderExcluded(data.excluded);
+
+    var filterInput = document.getElementById('filter-input');
+    if (filterInput) {
+      filterInput.addEventListener('input', function () {
+        var q = filterInput.value.trim().toLowerCase();
+        document.querySelectorAll('#grid .card').forEach(function (el) {
+          el.hidden = q.length > 0 && el.getAttribute('data-title').indexOf(q) === -1;
+        });
+      });
+    }
+  }
+
+  function run() {
+    var movies = parseInput(input.value);
+    if (!movies.length) {
+      statusLine.textContent = 'Escribe al menos una película.';
+      statusLine.classList.add('is-error');
+      return;
+    }
+
+    runBtn.disabled = true;
+    statusLine.classList.remove('is-error');
+    var startedAt = Date.now();
+    var ticker = setInterval(function () {
+      statusLine.textContent = 'Calculando afinidad… ' + Math.round((Date.now() - startedAt) / 1000) + 's';
+    }, 1000);
+    statusLine.textContent = 'Calculando afinidad…';
+
+    fetchWithWarmupRetry(movies)
+      .then(function (data) {
+        clearInterval(ticker);
+        statusLine.textContent = 'Listo en ' + Math.round((Date.now() - startedAt) / 1000) + 's.';
+        render(data);
+      })
+      .catch(function (err) {
+        clearInterval(ticker);
+        statusLine.classList.add('is-error');
+        statusLine.textContent = err && err.message ? err.message : 'No se pudo conectar con el servidor.';
+      })
+      .finally(function () {
+        runBtn.disabled = false;
+      });
+  }
+
+  runBtn.addEventListener('click', run);
+})();
+</script>
+</body>
+</html>
