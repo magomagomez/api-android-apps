@@ -25,7 +25,6 @@
     --festival-bg: rgba(109, 79, 143, .12);
     --danger: #a14a3a;
     --danger-bg: rgba(161, 74, 58, .1);
-    --shadow: rgba(28, 32, 39, .08);
 
     --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
     --font-body: 'Archivo', -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -50,7 +49,6 @@
       --festival-bg: rgba(183, 155, 219, .14);
       --danger: #d98670;
       --danger-bg: rgba(217, 134, 112, .12);
-      --shadow: rgba(0, 0, 0, .45);
     }
   }
 
@@ -71,7 +69,6 @@
     --festival-bg: rgba(183, 155, 219, .14);
     --danger: #d98670;
     --danger-bg: rgba(217, 134, 112, .12);
-    --shadow: rgba(0, 0, 0, .45);
   }
 
   * { box-sizing: border-box; }
@@ -283,42 +280,27 @@
     vertical-align: middle;
   }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.25rem;
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    overflow: hidden;
+  .list {
     display: flex;
     flex-direction: column;
-    box-shadow: 0 1px 2px var(--shadow);
+    border-top: 1px solid var(--line);
   }
 
-  .card-top {
-    height: 4px;
-    background: var(--line);
-    position: relative;
+  .row {
+    display: grid;
+    grid-template-columns: 84px 68px 1fr;
+    grid-template-areas: "poster score main";
+    gap: 1.15rem;
+    align-items: start;
+    padding: 1.15rem 0;
+    border-bottom: 1px solid var(--line);
   }
-
-  .card-top .fill {
-    position: absolute;
-    inset: 0;
-    width: 0;
-  }
-
-  .card-top .fill.confirmed { background: var(--confirmed); }
-  .card-top .fill.provisional { background: var(--provisional); }
-
-  .card-body-wrap { display: flex; gap: 0; }
 
   .poster {
-    flex: 0 0 110px;
-    aspect-ratio: 2 / 3;
+    grid-area: poster;
+    width: 84px;
+    height: 126px;
+    border-radius: 6px;
     background: var(--surface-2);
     background-size: cover;
     background-position: center;
@@ -327,7 +309,7 @@
     justify-content: center;
     color: var(--ink-soft);
     font-family: var(--font-display);
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     position: relative;
     overflow: hidden;
   }
@@ -342,81 +324,93 @@
 
   .poster span { position: relative; }
 
-  .card-main {
-    flex: 1;
-    min-width: 0;
-    padding: .85rem 1rem;
+  .score-col {
+    grid-area: score;
     display: flex;
     flex-direction: column;
-    gap: .55rem;
-  }
-
-  .card-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: .6rem;
-  }
-
-  .rank {
+    align-items: flex-end;
+    gap: .3rem;
     font-family: var(--font-mono);
-    font-size: .72rem;
-    color: var(--ink-soft);
+    padding-top: .1rem;
   }
 
-  .score {
+  .score-col .rank { font-size: .7rem; color: var(--ink-soft); }
+
+  .score-num {
     display: flex;
     align-items: baseline;
-    gap: .25rem;
-    font-family: var(--font-mono);
+    gap: .2rem;
   }
 
-  .score .val {
-    font-size: 1.3rem;
+  .score-num .val {
+    font-size: 1.45rem;
     font-weight: 600;
+    line-height: 1;
     font-variant-numeric: tabular-nums;
   }
 
-  .score .max { font-size: .72rem; color: var(--ink-soft); }
+  .score-num .max { font-size: .68rem; color: var(--ink-soft); }
 
   .score-tag {
-    font-size: .64rem;
+    font-size: .62rem;
     font-family: var(--font-body);
     text-transform: uppercase;
     letter-spacing: .05em;
     padding: .1rem .4rem;
     border-radius: 999px;
     display: inline-block;
-    margin-top: .15rem;
   }
 
   .score-tag.confirmed { color: var(--confirmed); background: var(--confirmed-bg); }
   .score-tag.provisional { color: var(--provisional); background: var(--provisional-bg); }
 
-  .title-block { min-width: 0; }
+  .score-bar {
+    width: 56px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--line);
+    overflow: hidden;
+  }
+
+  .score-bar .fill { height: 100%; width: 0; }
+  .score-bar .fill.confirmed { background: var(--confirmed); }
+  .score-bar .fill.provisional { background: var(--provisional); }
+
+  .main {
+    grid-area: main;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+
+  .head-line {
+    display: flex;
+    align-items: baseline;
+    gap: .55rem;
+    flex-wrap: wrap;
+  }
 
   .movie-title {
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 1.05rem;
-    line-height: 1.25;
+    font-size: 1.15rem;
+    line-height: 1.3;
     margin: 0;
-    text-wrap: balance;
   }
 
   .movie-meta {
-    font-size: .8rem;
+    font-size: .85rem;
     color: var(--ink-soft);
-    margin-top: .15rem;
   }
 
-  .chips { display: flex; flex-wrap: wrap; gap: .35rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
 
   .chip {
-    font-size: .74rem;
-    border: 1px solid var(--line);
+    font-size: .78rem;
+    background: var(--surface-2);
     border-radius: 999px;
-    padding: .18rem .55rem;
+    padding: .2rem .6rem;
     display: inline-flex;
     align-items: baseline;
     gap: .3rem;
@@ -430,9 +424,9 @@
   }
 
   .badge {
-    font-size: .74rem;
+    font-size: .78rem;
     border-radius: 999px;
-    padding: .18rem .55rem;
+    padding: .2rem .6rem;
     display: inline-block;
   }
 
@@ -448,9 +442,10 @@
   }
 
   .reason {
-    font-size: .87rem;
-    line-height: 1.5;
+    font-size: .95rem;
+    line-height: 1.6;
     color: var(--ink);
+    max-width: 68ch;
   }
 
   .highlights {
@@ -534,9 +529,16 @@
     height: fit-content;
   }
 
-  @media (max-width: 480px) {
-    .card-body-wrap { flex-direction: column; }
-    .poster { flex: 0 0 auto; aspect-ratio: 16 / 9; width: 100%; }
+  @media (max-width: 560px) {
+    .row {
+      grid-template-columns: 72px 1fr;
+      grid-template-areas:
+        "poster score"
+        "main   main";
+      row-gap: .7rem;
+    }
+    .poster { width: 72px; height: 108px; }
+    .score-col { align-items: flex-start; }
   }
 </style>
 </head>
@@ -716,29 +718,25 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
     if (item.director) metaBits.push(escapeHtml(item.director));
 
     var html = '';
-    html += '<div class="card" data-title="' + escapeHtml((item.title || '').toLowerCase()) + '">';
-    html += '  <div class="card-top"><div class="fill ' + fillClass + '" style="width:' + pct + '%"></div></div>';
-    html += '  <div class="card-body-wrap">';
+    html += '<div class="row" data-title="' + escapeHtml((item.title || '').toLowerCase()) + '">';
     html += posterBlock(item);
-    html += '    <div class="card-main">';
-    html += '      <div class="card-head">';
-    html += '        <div class="title-block">';
-    html += '          <p class="movie-title">' + escapeHtml(item.title) + '</p>';
-    if (metaBits.length) html += '          <p class="movie-meta">' + metaBits.join(' · ') + '</p>';
-    html += '        </div>';
-    html += '        <div style="text-align:right">';
-    html += '          <span class="rank">#' + item.position + '</span>';
-    html += '          <div class="score"><span class="val">' + scoreVal + '</span><span class="max">/100</span></div>';
+    html += '  <div class="score-col">';
+    html += '    <span class="rank">#' + item.position + '</span>';
+    html += '    <div class="score-num"><span class="val">' + scoreVal + '</span><span class="max">/100</span></div>';
     html += scoreTag(item);
-    html += '        </div>';
-    html += '      </div>';
+    html += '    <div class="score-bar"><div class="fill ' + fillClass + '" style="width:' + pct + '%"></div></div>';
+    html += '  </div>';
+    html += '  <div class="main">';
+    html += '    <div class="head-line">';
+    html += '      <p class="movie-title">' + escapeHtml(item.title) + '</p>';
+    if (metaBits.length) html += '      <span class="movie-meta">' + metaBits.join(' · ') + '</span>';
+    html += '    </div>';
     html += ratingChips(item.ratings);
     html += festivalBadges(item.festivalRecognition);
     if (item.recommendationReason) html += '<p class="reason">' + escapeHtml(item.recommendationReason) + '</p>';
     html += highlightsList(item.accoladeHighlights);
     html += reasonsDetails(item.reasons);
     if (item.note) html += '<p class="note">' + escapeHtml(item.note) + '</p>';
-    html += '    </div>';
     html += '  </div>';
     html += '</div>';
     return html;
@@ -782,20 +780,20 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
       '<span><span class="dot" style="background:var(--provisional)"></span>Estimado</span></div>' +
       '</div>';
 
-    var gridHtml;
+    var listHtml;
     if (!data.recommendations || !data.recommendations.length) {
-      gridHtml = '<div class="empty-state">Sin recomendaciones — puede que ya las hayas visto todas, o que no se identificara ninguna candidata. Revisa las excluidas más abajo.</div>';
+      listHtml = '<div class="empty-state">Sin recomendaciones — puede que ya las hayas visto todas, o que no se identificara ninguna candidata. Revisa las excluidas más abajo.</div>';
     } else {
-      gridHtml = '<div class="grid" id="grid">' + data.recommendations.map(card).join('') + '</div>';
+      listHtml = '<div class="list" id="list">' + data.recommendations.map(card).join('') + '</div>';
     }
 
-    results.innerHTML = '<h2>Cartelera</h2>' + statsHtml + toolbarHtml + gridHtml + renderExcluded(data.excluded);
+    results.innerHTML = '<h2>Cartelera</h2>' + statsHtml + toolbarHtml + listHtml + renderExcluded(data.excluded);
 
     var filterInput = document.getElementById('filter-input');
     if (filterInput) {
       filterInput.addEventListener('input', function () {
         var q = filterInput.value.trim().toLowerCase();
-        document.querySelectorAll('#grid .card').forEach(function (el) {
+        document.querySelectorAll('#list .row').forEach(function (el) {
           el.hidden = q.length > 0 && el.getAttribute('data-title').indexOf(q) === -1;
         });
       });
