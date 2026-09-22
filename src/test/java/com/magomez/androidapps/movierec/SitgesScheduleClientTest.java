@@ -41,6 +41,8 @@ class SitgesScheduleClientTest {
         registerContext("/api/v1/se/films/2026/sessions/manifest");
         registerContext("/public/api/se/films/2026/sessions.json");
         registerContext("/public/api/se/films/2026/sessions2.json");
+        registerContext("/api/v1/se/films/2026/films/manifest");
+        registerContext("/public/api/se/films/2026/films.json");
         server.start();
         responses.put("/public/api/films/locations.json", LOCATIONS_JSON);
     }
@@ -121,6 +123,27 @@ class SitgesScheduleClientTest {
         List<FilmScreening> screenings = client().screenings();
 
         assertThat(screenings).extracting(FilmScreening::title).containsExactly("Good Page");
+    }
+
+    @Test
+    void aDoubleBillSessionProducesOneScreeningPerFilmInsteadOfTheStrandName() throws IOException {
+        manifestWithOnePage();
+        responses.put("/api/v1/se/films/2026/films/manifest",
+                "{\"pages\":[{\"url\":\"" + baseUrl() + "/public/api/se/films/2026/films.json\"}]}");
+        responses.put("/public/api/se/films/2026/films.json", "{\"films\":["
+                + "{\"id\":\"14307-film\",\"international_title\":\"Full Phil\"},"
+                + "{\"id\":\"14246-film\",\"international_title\":\"Vertiginous\"}]}");
+        // A themed double bill: its own display name never mentions either film.
+        responses.put("/public/api/se/films/2026/sessions.json", "{\"sessions\":[{"
+                + "\"name\":{\"es\":\"La nit (golfa) de Quentin Dupieux\"},"
+                + "\"start_date\":\"2026-10-13T23:15:00\",\"end_date\":\"2026-10-14T01:41:00\","
+                + "\"locations\":[],\"films\":[\"14307-film\",\"14246-film\"]}]}");
+
+        List<FilmScreening> screenings = client().screenings();
+
+        assertThat(screenings).extracting(FilmScreening::title).containsExactly("Full Phil", "Vertiginous");
+        assertThat(screenings).allMatch(s -> s.date().equals(LocalDate.of(2026, 10, 13))
+                && s.startTime().equals(LocalTime.of(23, 15)));
     }
 
     @Test

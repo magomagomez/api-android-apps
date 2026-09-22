@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,9 +32,18 @@ import java.util.concurrent.ConcurrentHashMap;
  * scraping rendered HTML). The page itself loads its data via JavaScript, so the listing
  * is not present in the raw HTML; this calls the underlying manifest/pages API directly.
  *
- * <p>Sessions are paginated ({@code sessions/manifest} &rarr; a list of page URLs), fetched
- * in parallel via {@link ExternalCallExecutor}. Locations are a single small unpaginated
- * call, fetched once and used to resolve each session's venue name.
+ * <p>Sessions, locations and films are each paginated ({@code .../manifest} &rarr; a list of
+ * page URLs), sessions and films fetched in parallel via {@link ExternalCallExecutor}.
+ * Locations are a single small unpaginated call. All three are fetched once and reused.
+ *
+ * <p>A session's own display name is <b>not</b> a reliable title: a double bill or a themed
+ * strand (e.g. {@code "La nit (golfa) de Quentin Dupieux"}) is programmed under a curated
+ * name that never mentions the films playing in it. Every session instead lists the
+ * internal id of each film it screens ({@code films}); this cross-references those against
+ * the films catalogue and emits one {@link FilmScreening} per film, all sharing that
+ * session's date/time/venue — so a double bill correctly produces a screening for each of
+ * its two films. Only when a film id can't be resolved does this fall back to the
+ * session's own display name, so nothing is silently dropped.
  *
  * <p>A page that fails to load is logged and skipped (partial results beat none); the
  * locations lookup failing is likewise non-fatal (screenings still come back with no
@@ -79,21 +89,25 @@ public class SitgesScheduleClient implements ScheduleSource {
     @Override
     public List<FilmScreening> screenings() throws IOException {
         Map<String, String> locationNames = fetchLocationNames();
+        Map<String, String> filmTitles = fetchFilmTitles();
 
-        ManifestResponse manifest = getJson(
-                "/api/v1/se/films/" + edition + "/sessions/manifest?format=full", ManifestResponse.class);
-        List<String> pageUrls = manifest.pages() == null ? List.of()
-                : manifest.pages().stream().map(ManifestPage::url).toList();
-
+        List<String> pageUrls = fetchManifestPageUrls(
+                "/api/v1/se/films/" + edition + "/sessions/manifest?format=full");
         List<List<FilmScreening>> perPage = externalCallExecutor.map(pageUrls,
-                url -> fetchSessionsPage(url, locationNames));
+                url -> fetchSessionsPage(url, locationNames, filmTitles));
 
         List<FilmScreening> all = new ArrayList<>();
         perPage.forEach(all::addAll);
         return all;
     }
 
-    private List<FilmScreening> fetchSessionsPage(String pageUrl, Map<String, String> locationNames) {
+    private List<String> fetchManifestPageUrls(String manifestPath) throws IOException {
+        ManifestResponse manifest = getJson(manifestPath, ManifestResponse.class);
+        return manifest.pages() == null ? List.of() : manifest.pages().stream().map(ManifestPage::url).toList();
+    }
+
+    private List<FilmScreening> fetchSessionsPage(
+            String pageUrl, Map<String, String> locationNames, Map<String, String> filmTitles) {
         try {
             SessionsPageResponse page = getJson(pageUrl, SessionsPageResponse.class);
             if (page.sessions() == null) {
@@ -101,7 +115,7 @@ public class SitgesScheduleClient implements ScheduleSource {
             }
             List<FilmScreening> screenings = new ArrayList<>();
             for (SessionDto session : page.sessions()) {
-                toScreening(session, locationNames).ifPresent(screenings::add);
+                screenings.addAll(toScreenings(session, locationNames, filmTitles));
             }
             return screenings;
         } catch (IOException e) {
@@ -110,18 +124,40 @@ public class SitgesScheduleClient implements ScheduleSource {
         }
     }
 
-    private static java.util.Optional<FilmScreening> toScreening(SessionDto session, Map<String, String> locationNames) {
-        String title = session.name() == null ? null : session.name().get("es");
-        if (title == null || title.isBlank() || session.startDate() == null) {
-            return java.util.Optional.empty();
+    private static List<FilmScreening> toScreenings(
+            SessionDto session, Map<String, String> locationNames, Map<String, String> filmTitles) {
+        if (session.startDate() == null) {
+            return List.of();
         }
         LocalDateTime start = LocalDateTime.parse(session.startDate());
         LocalDateTime end = session.endDate() == null ? null : LocalDateTime.parse(session.endDate());
         String location = (session.locations() == null || session.locations().isEmpty())
                 ? null : locationNames.get(session.locations().get(0));
-        return java.util.Optional.of(new FilmScreening(
-                title.trim(), start.toLocalDate(), start.toLocalTime(),
-                end == null ? null : end.toLocalTime(), location));
+
+        List<String> titles = new ArrayList<>();
+        if (session.films() != null) {
+            for (String filmId : session.films()) {
+                String title = filmTitles.get(filmId);
+                if (title != null) {
+                    titles.add(title);
+                }
+            }
+        }
+        if (titles.isEmpty()) {
+            // None of this session's films resolved (or it lists none) - fall back to its
+            // own display name so the session isn't silently dropped.
+            String fallback = session.name() == null ? null : session.name().get("es");
+            if (fallback != null && !fallback.isBlank()) {
+                titles.add(fallback.trim());
+            }
+        }
+
+        List<FilmScreening> screenings = new ArrayList<>(titles.size());
+        for (String title : titles) {
+            screenings.add(new FilmScreening(title, start.toLocalDate(), start.toLocalTime(),
+                    end == null ? null : end.toLocalTime(), location));
+        }
+        return screenings;
     }
 
     private Map<String, String> fetchLocationNames() {
@@ -140,6 +176,40 @@ public class SitgesScheduleClient implements ScheduleSource {
             log.warn("Could not load Sitges venue names: {}", e.getMessage());
         }
         return names;
+    }
+
+    private Map<String, String> fetchFilmTitles() {
+        Map<String, String> titles = new ConcurrentHashMap<>();
+        try {
+            List<String> pageUrls = fetchManifestPageUrls(
+                    "/api/v1/se/films/" + edition + "/films/manifest?format=full");
+            List<Map<String, String>> perPage = externalCallExecutor.map(pageUrls, this::fetchFilmsPage);
+            perPage.forEach(titles::putAll);
+        } catch (IOException e) {
+            log.warn("Could not load Sitges film titles: {}", e.getMessage());
+        }
+        return titles;
+    }
+
+    private Map<String, String> fetchFilmsPage(String pageUrl) {
+        try {
+            FilmsPageResponse page = getJson(pageUrl, FilmsPageResponse.class);
+            if (page.films() == null) {
+                return Map.of();
+            }
+            Map<String, String> map = new HashMap<>();
+            for (FilmDto film : page.films()) {
+                String title = film.internationalTitle() != null ? film.internationalTitle()
+                        : (film.title() == null ? null : film.title().get("es"));
+                if (film.id() != null && title != null && !title.isBlank()) {
+                    map.put(film.id(), title.trim());
+                }
+            }
+            return map;
+        } catch (IOException e) {
+            log.warn("Could not load Sitges films page {}: {}", pageUrl, e.getMessage());
+            return Map.of();
+        }
     }
 
     private <T> T getJson(String path, Class<T> type) throws IOException {
@@ -182,7 +252,8 @@ public class SitgesScheduleClient implements ScheduleSource {
             Map<String, String> name,
             @JsonProperty("start_date") String startDate,
             @JsonProperty("end_date") String endDate,
-            List<String> locations) {
+            List<String> locations,
+            List<String> films) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -191,5 +262,16 @@ public class SitgesScheduleClient implements ScheduleSource {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record LocationDto(String id, Map<String, String> name) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record FilmsPageResponse(List<FilmDto> films) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record FilmDto(
+            String id,
+            @JsonProperty("international_title") String internationalTitle,
+            Map<String, String> title) {
     }
 }
