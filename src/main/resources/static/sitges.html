@@ -516,6 +516,94 @@
     border-radius: 12px;
   }
 
+  section.schedule-section {
+    margin-top: 2.5rem;
+  }
+
+  .schedule-list {
+    border-top: 1px solid var(--line);
+  }
+
+  .schedule-day {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .schedule-day-head {
+    display: flex;
+    align-items: baseline;
+    gap: .6rem;
+    margin-bottom: .5rem;
+  }
+
+  .schedule-day-head .date {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+
+  .schedule-day-head .weekday {
+    font-size: .85rem;
+    color: var(--ink-soft);
+    text-transform: capitalize;
+  }
+
+  .holiday-tag {
+    font-size: .64rem;
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    background: var(--accent-bg);
+    color: var(--accent);
+    padding: .1rem .45rem;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+
+  .schedule-session {
+    display: flex;
+    align-items: baseline;
+    gap: .8rem;
+    padding: .4rem .5rem;
+    border-radius: 6px;
+  }
+
+  .schedule-session .time {
+    font-family: var(--font-mono);
+    font-size: .85rem;
+    color: var(--ink-soft);
+    min-width: 96px;
+    flex-shrink: 0;
+  }
+
+  .schedule-session .info { min-width: 0; }
+
+  .schedule-session .info .title {
+    font-weight: 600;
+  }
+
+  .schedule-session .info .location {
+    font-size: .78rem;
+    color: var(--ink-soft);
+  }
+
+  .schedule-session.convenient {
+    background: var(--confirmed-bg);
+  }
+
+  .schedule-session.convenient .time {
+    color: var(--confirmed);
+    font-weight: 600;
+  }
+
+  .schedule-not-scheduled {
+    margin-top: 1.2rem;
+    font-size: .85rem;
+    color: var(--ink-soft);
+  }
+
+  .schedule-not-scheduled b { color: var(--ink); }
+
   section.excluded {
     margin-top: 2.5rem;
   }
@@ -604,6 +692,7 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
   var runBtn = document.getElementById('run-btn');
   var statusLine = document.getElementById('status-line');
   var results = document.getElementById('results');
+  var lastRecommendations = [];
 
   var REASON_LABEL = {
     NOT_FOUND: 'No encontrada',
@@ -647,22 +736,22 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
     return new Promise(function (resolve) { setTimeout(resolve, ms); });
   }
 
-  function fetchWithWarmupRetry(movies) {
+  function postWithWarmupRetry(url, payload, onWarmingUp) {
     var maxAttempts = 10;
     var attempt = 0;
 
     function tryOnce() {
       attempt++;
-      return fetch(API_URL, {
+      return fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ movies: movies })
+        body: JSON.stringify(payload)
       }).then(function (resp) {
         if (resp.status === 503) {
           if (attempt >= maxAttempts) {
             throw new Error('El servidor sigue arrancando después de varios intentos. Prueba de nuevo en un minuto.');
           }
-          statusLine.textContent = 'Preparando tu perfil de gustos (arranque en curso)… reintentando (' + attempt + '/' + maxAttempts + ')';
+          onWarmingUp(attempt, maxAttempts);
           return sleep(4000).then(tryOnce);
         }
         if (!resp.ok) {
@@ -675,6 +764,12 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
     }
 
     return tryOnce();
+  }
+
+  function fetchWithWarmupRetry(movies) {
+    return postWithWarmupRetry(API_URL, { movies: movies }, function (attempt, maxAttempts) {
+      statusLine.textContent = 'Preparando tu perfil de gustos (arranque en curso)… reintentando (' + attempt + '/' + maxAttempts + ')';
+    });
   }
 
   function scoreTag(item) {
@@ -784,6 +879,77 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
       rows + '</details></section>';
   }
 
+  var SPANISH_MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+  function formatDateEs(iso) {
+    var parts = iso.split('-'); // avoid Date/timezone parsing entirely
+    return parseInt(parts[2], 10) + ' de ' + SPANISH_MONTHS[parseInt(parts[1], 10) - 1];
+  }
+
+  function scheduleSessionHtml(s) {
+    var cls = s.convenient ? 'schedule-session convenient' : 'schedule-session';
+    var timeRange = s.startTime + (s.endTime ? '–' + s.endTime : '');
+    var location = s.location ? '<div class="location">' + escapeHtml(s.location) + '</div>' : '';
+    return '<div class="' + cls + '">' +
+      '<span class="time">' + timeRange + '</span>' +
+      '<div class="info"><div class="title">' + escapeHtml(s.title) + '</div>' + location + '</div>' +
+      '</div>';
+  }
+
+  function scheduleDayHtml(day) {
+    var html = '<div class="schedule-day">';
+    html += '<div class="schedule-day-head"><span class="date">' + formatDateEs(day.date) + '</span>';
+    html += '<span class="weekday">' + escapeHtml(day.weekday) + '</span>';
+    if (day.holiday) html += '<span class="holiday-tag">Festivo</span>';
+    html += '</div>';
+    html += day.sessions.map(scheduleSessionHtml).join('');
+    html += '</div>';
+    return html;
+  }
+
+  function renderSchedule(data) {
+    var container = document.getElementById('schedule-results');
+    if (!container) return;
+    var html;
+    if (!data.days || !data.days.length) {
+      html = '<div class="empty-state">Ninguno de esos títulos aparece todavía en el programa publicado.</div>';
+    } else {
+      html = '<div class="schedule-list">' + data.days.map(scheduleDayHtml).join('') + '</div>';
+    }
+    if (data.notScheduled && data.notScheduled.length) {
+      html += '<p class="schedule-not-scheduled"><b>Sin sesión en el programa:</b> ' +
+        escapeHtml(data.notScheduled.join(', ')) + '</p>';
+    }
+    container.innerHTML = html;
+  }
+
+  function runSchedule() {
+    var titles = lastRecommendations.slice(0, 50).map(function (r) { return r.title; });
+    if (!titles.length) return;
+
+    var scheduleBtn = document.getElementById('schedule-btn');
+    var scheduleStatus = document.getElementById('schedule-status');
+    scheduleBtn.disabled = true;
+    scheduleStatus.classList.remove('is-error');
+    scheduleStatus.textContent = 'Consultando el programa del festival…';
+
+    postWithWarmupRetry('/api/schedule', { titles: titles }, function (attempt, maxAttempts) {
+      scheduleStatus.textContent = 'Cargando el programa (arranque en curso)… reintentando (' + attempt + '/' + maxAttempts + ')';
+    })
+      .then(function (data) {
+        scheduleStatus.textContent = 'Listo — ' + titles.length + ' títulos consultados.';
+        renderSchedule(data);
+      })
+      .catch(function (err) {
+        scheduleStatus.classList.add('is-error');
+        scheduleStatus.textContent = err && err.message ? err.message : 'No se pudo consultar el programa.';
+      })
+      .finally(function () {
+        scheduleBtn.disabled = false;
+      });
+  }
+
   function render(data) {
     var s = data.summary || {};
     var statsHtml = '<div class="stats">' +
@@ -801,14 +967,31 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
       '<span><span class="dot" style="background:var(--provisional)"></span>Estimado</span></div>' +
       '</div>';
 
+    lastRecommendations = data.recommendations || [];
+
     var listHtml;
+    var scheduleSectionHtml = '';
     if (!data.recommendations || !data.recommendations.length) {
       listHtml = '<div class="empty-state">Sin recomendaciones — puede que ya las hayas visto todas, o que no se identificara ninguna candidata. Revisa las excluidas más abajo.</div>';
     } else {
       listHtml = '<div class="list" id="list">' + data.recommendations.map(card).join('') + '</div>';
+      var topN = Math.min(50, data.recommendations.length);
+      scheduleSectionHtml = '<section class="schedule-section">' +
+        '<h2>Calendario del festival</h2>' +
+        '<p class="field-hint">Cruza tu top ' + topN + ' con el programa real de Sitges: qué días proyectan cada película y a qué hora.</p>' +
+        '<div class="panel-footer">' +
+        '<button class="primary" id="schedule-btn">Generar calendario (Top ' + topN + ')</button>' +
+        '<span class="status-line" id="schedule-status"></span>' +
+        '</div>' +
+        '<div class="legend" style="margin-top:.8rem">' +
+        '<span><span class="dot" style="background:var(--confirmed)"></span>' +
+        'Conveniente: entre semana desde las 18:00, o fin de semana / día 12 a cualquier hora</span>' +
+        '</div>' +
+        '<div id="schedule-results"></div>' +
+        '</section>';
     }
 
-    results.innerHTML = '<h2>Cartelera</h2>' + statsHtml + toolbarHtml + listHtml + renderExcluded(data.excluded);
+    results.innerHTML = '<h2>Cartelera</h2>' + statsHtml + toolbarHtml + listHtml + scheduleSectionHtml + renderExcluded(data.excluded);
 
     var filterInput = document.getElementById('filter-input');
     if (filterInput) {
@@ -818,6 +1001,11 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
           el.hidden = q.length > 0 && el.getAttribute('data-title').indexOf(q) === -1;
         });
       });
+    }
+
+    var scheduleBtn = document.getElementById('schedule-btn');
+    if (scheduleBtn) {
+      scheduleBtn.addEventListener('click', runSchedule);
     }
   }
 
