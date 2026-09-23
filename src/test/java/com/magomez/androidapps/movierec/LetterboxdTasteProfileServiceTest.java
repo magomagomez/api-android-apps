@@ -74,7 +74,7 @@ class LetterboxdTasteProfileServiceTest {
 
     @Test
     void notFoundAndAmbiguousEntriesDoNotContributeToTheProfile() throws Exception {
-        provider.identifyAs("Loved", movie(1, "Fav Director", "Drama", "Fav Actor",
+        provider.identifyAs("Loved", movie(1, "Fav Director", "Suspense", "Fav Actor",
                 "Spain", "2022-01-01"));
         provider.answer("Crash", MovieMatch.ambiguous(List.of("Crash (1996)", "Crash (2004)")));
         // "Ghost movie" is unknown -> NOT_FOUND by default
@@ -85,7 +85,7 @@ class LetterboxdTasteProfileServiceTest {
                 + "d,Ghost movie,1999,u3,5\n");
 
         assertThat(profile.preferredDirectors()).containsExactly("Fav Director");
-        assertThat(profile.preferredGenres()).containsExactly("Drama");
+        assertThat(profile.preferredGenres()).containsExactly("Suspense");
         assertThat(profile.preferredActors()).containsExactly("Fav Actor");
         assertThat(profile.preferredCountries()).containsExactly("Spain");
         assertThat(profile.preferredDecades()).containsExactly(2020);
@@ -93,7 +93,7 @@ class LetterboxdTasteProfileServiceTest {
 
     @Test
     void ratingsBelowSevenDoNotProducePreferences() throws Exception {
-        provider.identifyAs("Loved", movie(1, "Loved Director", "Drama", "Loved Actor",
+        provider.identifyAs("Loved", movie(1, "Loved Director", "Suspense", "Loved Actor",
                 "Spain", "2022-01-01"));
         provider.identifyAs("Meh", movie(2, "Meh Director", "Comedy", "Meh Actor",
                 "France", "1999-01-01"));
@@ -104,7 +104,7 @@ class LetterboxdTasteProfileServiceTest {
                 + "d,Meh,1999,u2,3\n");
 
         assertThat(profile.preferredDirectors()).containsExactly("Loved Director");
-        assertThat(profile.preferredGenres()).containsExactly("Drama");
+        assertThat(profile.preferredGenres()).containsExactly("Suspense");
         assertThat(profile.preferredGenres()).doesNotContain("Comedy");
         assertThat(profile.preferredDecades()).containsExactly(2020);
     }

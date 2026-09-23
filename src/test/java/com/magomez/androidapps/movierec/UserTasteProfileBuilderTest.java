@@ -11,7 +11,6 @@ import com.magomez.androidapps.movierec.scoring.UserTasteProfile;
 import com.magomez.androidapps.movierec.scoring.UserTasteProfileBuilder;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -136,14 +135,14 @@ class UserTasteProfileBuilderTest {
     void aSingleFavouriteExtractsAllFiveDimensions() {
         UserTasteProfile profile = builder.build(List.of(new RatedMovie(
                 movie(Director.of("Coralie Fargeat"),
-                        List.of(Genre.of("Terror"), Genre.of("Drama")),
+                        List.of(Genre.of("Terror"), Genre.of("Suspense")),
                         List.of(Actor.of("Demi Moore"), Actor.of("Margaret Qualley")),
                         List.of(Country.of("Francia"), Country.of("Reino Unido")),
                         "2024-09-07", List.of()),
                 8.5)));
 
         assertThat(profile.preferredDirectors()).containsExactly("Coralie Fargeat");
-        assertThat(profile.preferredGenres()).containsExactlyInAnyOrder("Terror", "Drama");
+        assertThat(profile.preferredGenres()).containsExactlyInAnyOrder("Terror", "Suspense");
         assertThat(profile.preferredActors()).containsExactlyInAnyOrder("Demi Moore", "Margaret Qualley");
         assertThat(profile.preferredCountries()).containsExactlyInAnyOrder("Francia", "Reino Unido");
         assertThat(profile.preferredDecades()).containsExactly(2020);
@@ -154,11 +153,11 @@ class UserTasteProfileBuilderTest {
         UserTasteProfile profile = builder.build(List.of(
                 new RatedMovie(fullMovie("Denis Villeneuve", "Sci-Fi", "Timothee Chalamet",
                         "Canada", "2021-09-15"), 8.0),
-                new RatedMovie(fullMovie("Denis Villeneuve", "Drama", "Amy Adams",
+                new RatedMovie(fullMovie("Denis Villeneuve", "Misterio", "Amy Adams",
                         "Canada", "2016-11-11"), 9.0)));
 
         assertThat(profile.preferredDirectors()).containsExactly("Denis Villeneuve");
-        assertThat(profile.preferredGenres()).containsExactlyInAnyOrder("Sci-Fi", "Drama");
+        assertThat(profile.preferredGenres()).containsExactlyInAnyOrder("Sci-Fi", "Misterio");
         assertThat(profile.preferredActors())
                 .containsExactlyInAnyOrder("Timothee Chalamet", "Amy Adams");
         assertThat(profile.preferredCountries()).containsExactly("Canada");
@@ -284,12 +283,12 @@ class UserTasteProfileBuilderTest {
     @Test
     void profileFromMixedListReflectsOnlyTheFavourites() {
         UserTasteProfile profile = builder.build(List.of(
-                new RatedMovie(fullMovie("Loved", "Drama", "A", "Spain", "2022-01-01"), 8.0),
+                new RatedMovie(fullMovie("Loved", "Suspense", "A", "Spain", "2022-01-01"), 8.0),
                 new RatedMovie(fullMovie("Meh", "Comedy", "B", "France", "2018-01-01"), 5.5),
                 new RatedMovie(fullMovie("Loved Too", "Thriller", "C", "Spain", "2001-01-01"), 7.5)));
 
         assertThat(profile.preferredDirectors()).containsExactlyInAnyOrder("Loved", "Loved Too");
-        assertThat(profile.preferredGenres()).containsExactlyInAnyOrder("Drama", "Thriller");
+        assertThat(profile.preferredGenres()).containsExactlyInAnyOrder("Suspense", "Thriller");
         assertThat(profile.preferredCountries()).containsExactly("Spain");
         assertThat(profile.preferredDecades()).containsExactlyInAnyOrder(2020, 2000);
         assertThat(profile.preferredGenres()).doesNotContain("Comedy");
@@ -323,39 +322,44 @@ class UserTasteProfileBuilderTest {
     }
 
     @Test
-    void aGenreAsCommonOutsideFavouritesAsWithinThemIsDiscountedToZero() {
-        // "Drama" is exactly as common among favourites (4/4) as across everything rated
-        // (10/10) - lift 1.0, no real preference - so it should not out-rank "Heist",
-        // which never shows up outside the favourites at all.
-        List<RatedMovie> ratedMovies = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
-            ratedMovies.add(new RatedMovie(movie(Director.of("d" + i),
-                    List.of(Genre.of("Drama"), Genre.of("Heist")), List.of(), List.of(), "2020-01-01", List.of()), 8.0));
-        }
-        ratedMovies.add(new RatedMovie(movie(Director.of("d3"), List.of(Genre.of("Drama")),
-                List.of(), List.of(), "2020-01-01", List.of()), 8.0));
-        for (int i = 4; i < 10; i++) {
-            ratedMovies.add(new RatedMovie(movie(Director.of("d" + i), List.of(Genre.of("Drama")),
-                    List.of(), List.of(), "2020-01-01", List.of()), 5.0)); // not a favourite
-        }
+    void dramaNeverContributesToGenreAffinityNoMatterHowManyFavouritesCarryIt() {
+        // even when every single favourite is tagged "Drama" (and nothing else competes),
+        // it must never surface as a preferred genre - it's excluded outright, not just
+        // out-weighed by something else.
+        List<RatedMovie> ratedMovies = List.of(
+                new RatedMovie(fullMovie("d1", "Drama", "a1", "c1", "2020-01-01"), 8.0),
+                new RatedMovie(fullMovie("d2", "Drama", "a2", "c2", "2020-01-01"), 9.0),
+                new RatedMovie(fullMovie("d3", "Drama", "a3", "c3", "2020-01-01"), 10.0));
+
+        UserTasteProfile profile = builder.build(ratedMovies);
+
+        assertThat(profile.genreAffinityOf("Drama")).isZero();
+        assertThat(profile.preferredGenres()).doesNotContain("Drama");
+        assertThat(profile.preferredGenres()).isEmpty();
+    }
+
+    @Test
+    void dramaIsExcludedEvenAlongsideARealDistinctiveGenre() {
+        List<RatedMovie> ratedMovies = List.of(
+                new RatedMovie(movie(Director.of("d1"), List.of(Genre.of("Drama"), Genre.of("Heist")),
+                        List.of(), List.of(), "2020-01-01", List.of()), 8.0));
 
         UserTasteProfile profile = builder.build(ratedMovies);
 
         assertThat(profile.genreAffinityOf("Drama")).isZero();
         assertThat(profile.genreAffinityOf("Heist")).isEqualTo(1.0);
+        assertThat(profile.preferredGenres()).containsExactly("Heist");
     }
 
     @Test
-    void withNoNonFavouriteRatingsAtAllTheDiscountIsSkippedForLackOfABaseline() {
-        // every rated movie is a favourite: there is nothing to compare against, so raw
-        // favourite frequency is used as-is rather than wrongly zeroing everything out
+    void theDramaExclusionIsCaseInsensitive() {
         List<RatedMovie> ratedMovies = List.of(
-                new RatedMovie(fullMovie("d1", "Drama", "a1", "c1", "2020-01-01"), 8.0),
-                new RatedMovie(fullMovie("d2", "Drama", "a2", "c2", "2020-01-01"), 8.0));
+                new RatedMovie(fullMovie("d1", "DRAMA", "a1", "c1", "2020-01-01"), 8.0));
 
         UserTasteProfile profile = builder.build(ratedMovies);
 
-        assertThat(profile.genreAffinityOf("Drama")).isEqualTo(1.0);
+        assertThat(profile.genreAffinityOf("DRAMA")).isZero();
+        assertThat(profile.preferredGenres()).isEmpty();
     }
 
     @Test

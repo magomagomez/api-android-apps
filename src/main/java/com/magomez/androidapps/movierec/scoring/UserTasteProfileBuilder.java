@@ -6,9 +6,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalInt;
+import java.util.Set;
 
 /**
  * Deterministic construction of a weighted {@link UserTasteProfile} from the movies the
@@ -24,13 +26,13 @@ import java.util.OptionalInt;
  * name spellings ({@code "Bong Joon-ho"} / {@code "봉준호"}) counts once. The display name
  * kept for that person prefers a Latin-script spelling.
  *
- * <p>Genre weight is discounted by <b>lift</b> — the same measure
- * {@link TastePatternDetector} uses for narrative patterns: how much more often a genre
- * appears among favourites than across everything rated. A near-universal tag like
- * "Drama" is typically about as common among favourites as in the rest of the library
- * (lift &asymp; 1) — it says little about this user's actual taste, so it is discounted
- * toward {@code 0} instead of dominating {@code genreAffinity} on raw favourite count
- * alone. A genre that is genuinely over-represented among favourites keeps its weight.
+ * <p>{@code "Drama"} never contributes to {@code genreAffinity} — it is close to a
+ * non-genre (most narrative films could carry it) and, measured against this project's
+ * own data, letting it compete on raw favourite count made it dominate the affinity
+ * outright rather than say anything about taste. Deliberately a fixed exclusion, not a
+ * per-user statistic (an earlier lift-based version could push a generic genre's score
+ * <em>up</em> instead of down depending on the library's shape — verified against real
+ * data, not theoretical) — simple and predictable beats clever and occasionally backwards.
  *
  * <p>Fully deterministic, reproducible; no LLM, no persistence. Original {@link Movie}s
  * and their ratings are never modified.
@@ -40,34 +42,24 @@ public class UserTasteProfileBuilder {
 
     static final double FAVOURITE_THRESHOLD = 7.0;
 
-    /** Genre lift at/below this value is treated as "no real preference" (see class doc). */
-    private static final double GENRE_LIFT_FLOOR = 1.0;
-    /** Genre lift at/above this value gets the full, undiscounted weight. */
-    private static final double GENRE_LIFT_CEILING = 3.0;
+    /** Genres too generic to say anything about taste; excluded from genreAffinity entirely. */
+    private static final Set<String> EXCLUDED_GENRES = Set.of("drama");
 
     private final TastePatternDetector tastePatternDetector = new TastePatternDetector();
 
     public UserTasteProfile build(List<RatedMovie> ratedMovies) {
         Objects.requireNonNull(ratedMovies, "ratedMovies");
 
-        List<RatedMovie> valid = ratedMovies.stream().filter(Objects::nonNull).toList();
-        List<RatedMovie> favourites = valid.stream()
-                .filter(r -> r.userScore() >= FAVOURITE_THRESHOLD)
-                .toList();
-
         PersonAffinities directors = new PersonAffinities();
         PersonAffinities actors = new PersonAffinities();
-        Map<String, Double> genreWeights = new LinkedHashMap<>();
-        Map<String, Integer> genreFavouriteCounts = new LinkedHashMap<>();
-        Map<String, Integer> genreAllCounts = new LinkedHashMap<>();
+        Map<String, Double> genres = new LinkedHashMap<>();
         Map<String, Double> countries = new LinkedHashMap<>();
         Map<Integer, Double> decades = new LinkedHashMap<>();
 
-        for (RatedMovie rated : valid) {
-            rated.movie().genres().forEach(g -> addCount(genreAllCounts, g.name()));
-        }
-
-        for (RatedMovie rated : favourites) {
+        for (RatedMovie rated : ratedMovies) {
+            if (rated == null || rated.userScore() < FAVOURITE_THRESHOLD) {
+                continue;
+            }
             Movie movie = rated.movie();
             double weight = weightOf(rated.userScore());
 
@@ -76,8 +68,9 @@ public class UserTasteProfileBuilder {
             }
             movie.actors().forEach(a -> actors.add(a.tmdbId(), a.name(), weight));
             movie.genres().forEach(g -> {
-                addWeight(genreWeights, g.name(), weight);
-                addCount(genreFavouriteCounts, g.name());
+                if (!isExcludedGenre(g.name())) {
+                    addWeight(genres, g.name(), weight);
+                }
             });
             movie.countries().forEach(c -> addWeight(countries, c.name(), weight));
 
@@ -86,9 +79,6 @@ public class UserTasteProfileBuilder {
                 decades.merge(decade.getAsInt(), weight, Double::sum);
             }
         }
-
-        Map<String, Double> genres = discountGenericGenres(
-                genreWeights, genreFavouriteCounts, genreAllCounts, favourites.size(), valid.size());
 
         PersonAffinities.Result directorResult = directors.normalized();
         PersonAffinities.Result actorResult = actors.normalized();
@@ -100,45 +90,8 @@ public class UserTasteProfileBuilder {
                 directorResult.idToName(), actorResult.idToName());
     }
 
-    /**
-     * Multiplies each genre's weighted favourite score by a {@code [0, 1]} lift score:
-     * {@code 0} at lift {@code <= GENRE_LIFT_FLOOR} (no more common among favourites than
-     * across the whole library — not a real preference), {@code 1} at lift
-     * {@code >= GENRE_LIFT_CEILING}, linear in between. A genre absent from the rest of the
-     * library entirely (lift undefined, division by zero) is treated as maximally
-     * distinctive rather than penalised for sparse data.
-     *
-     * <p>Skipped entirely when there is no non-favourite rating at all ({@code totalRated
-     * <= totalFavourites}): with nothing outside the favourites to compare against, lift
-     * cannot be computed, and every genre would otherwise come out at exactly {@code 1.0}
-     * and be wrongly zeroed out for "looking generic" rather than for actually being so.
-     */
-    private static Map<String, Double> discountGenericGenres(Map<String, Double> weighted,
-            Map<String, Integer> favouriteCounts, Map<String, Integer> allCounts,
-            int totalFavourites, int totalRated) {
-        if (weighted.isEmpty() || totalFavourites == 0 || totalRated <= totalFavourites) {
-            return weighted;
-        }
-        Map<String, Double> discounted = new LinkedHashMap<>();
-        weighted.forEach((genre, weight) -> {
-            double favFraction = favouriteCounts.getOrDefault(genre, 0) / (double) totalFavourites;
-            double allFraction = allCounts.getOrDefault(genre, 0) / (double) totalRated;
-            double lift = allFraction > 0.0 ? favFraction / allFraction : GENRE_LIFT_CEILING;
-            double liftScore = clamp01((Math.min(lift, GENRE_LIFT_CEILING) - GENRE_LIFT_FLOOR)
-                    / (GENRE_LIFT_CEILING - GENRE_LIFT_FLOOR));
-            discounted.put(genre, weight * liftScore);
-        });
-        return discounted;
-    }
-
-    private static double clamp01(double value) {
-        return Math.max(0.0, Math.min(1.0, value));
-    }
-
-    private static void addCount(Map<String, Integer> target, String value) {
-        if (value != null && !value.isBlank()) {
-            target.merge(value.trim(), 1, Integer::sum);
-        }
+    private static boolean isExcludedGenre(String genre) {
+        return genre != null && EXCLUDED_GENRES.contains(genre.trim().toLowerCase(Locale.ROOT));
     }
 
     /** Per-favourite weight: a {@code 7.0} rating weighs {@code 1.0}, a {@code 10.0} weighs {@code 4.0}. */
