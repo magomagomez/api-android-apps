@@ -148,6 +148,20 @@ class ScheduleServiceTest {
     }
 
     @Test
+    void matchesByTheFilmsOriginalLanguageTitleTooWhenTheDisplayTitleDiffers() throws IOException {
+        FilmScreening screening = new FilmScreening("Vertiginous", LocalDate.of(2026, 10, 13),
+                LocalTime.of(23, 15), LocalTime.of(1, 41), "Tramuntana",
+                List.of("Full Phil", "Vertiginous"), "Le Vertige");
+        ScheduleSource source = () -> List.of(screening);
+        ScheduleService service = new ScheduleService(source);
+
+        ScheduleResult result = service.buildSchedule(List.of("Le Vertige"));
+
+        assertThat(result.notScheduled()).isEmpty();
+        assertThat(result.days().get(0).sessions().get(0).title()).isEqualTo("Le Vertige");
+    }
+
+    @Test
     void isReadyReflectsWhetherTheProgrammeHasBeenFetched() throws IOException {
         ScheduleSource source = () -> List.of();
         ScheduleService service = new ScheduleService(source);

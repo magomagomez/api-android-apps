@@ -147,6 +147,41 @@ class SitgesScheduleClientTest {
     }
 
     @Test
+    void resolvesTheFilmsOriginalLanguageTitleWhenItDiffersFromTheDisplayTitle() throws IOException {
+        manifestWithOnePage();
+        responses.put("/api/v1/se/films/2026/films/manifest",
+                "{\"pages\":[{\"url\":\"" + baseUrl() + "/public/api/se/films/2026/films.json\"}]}");
+        responses.put("/public/api/se/films/2026/films.json", "{\"films\":["
+                + "{\"id\":\"14246-film\",\"international_title\":\"Vertiginous\",\"original_title\":\"Le Vertige\"}]}");
+        responses.put("/public/api/se/films/2026/sessions.json", "{\"sessions\":[{"
+                + "\"name\":{\"es\":\"Vertiginous\"},\"start_date\":\"2026-10-13T22:00:00\","
+                + "\"locations\":[],\"films\":[\"14246-film\"]}]}");
+
+        List<FilmScreening> screenings = client().screenings();
+
+        assertThat(screenings).singleElement().satisfies(s -> {
+            assertThat(s.title()).isEqualTo("Vertiginous");
+            assertThat(s.originalTitle()).isEqualTo("Le Vertige");
+        });
+    }
+
+    @Test
+    void anOriginalTitleEqualToTheDisplayTitleIsNotDuplicated() throws IOException {
+        manifestWithOnePage();
+        responses.put("/api/v1/se/films/2026/films/manifest",
+                "{\"pages\":[{\"url\":\"" + baseUrl() + "/public/api/se/films/2026/films.json\"}]}");
+        responses.put("/public/api/se/films/2026/films.json", "{\"films\":["
+                + "{\"id\":\"14307-film\",\"international_title\":\"Full Phil\",\"original_title\":\"Full Phil\"}]}");
+        responses.put("/public/api/se/films/2026/sessions.json", "{\"sessions\":[{"
+                + "\"name\":{\"es\":\"Full Phil\"},\"start_date\":\"2026-10-09T19:00:00\","
+                + "\"locations\":[],\"films\":[\"14307-film\"]}]}");
+
+        List<FilmScreening> screenings = client().screenings();
+
+        assertThat(screenings).singleElement().satisfies(s -> assertThat(s.originalTitle()).isNull());
+    }
+
+    @Test
     void aFailingVenueLookupLeavesLocationNull() throws IOException {
         statusCodes.put("/public/api/films/locations.json", 500);
         manifestWithOnePage();

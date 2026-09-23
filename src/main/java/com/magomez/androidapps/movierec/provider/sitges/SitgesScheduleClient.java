@@ -89,7 +89,7 @@ public class SitgesScheduleClient implements ScheduleSource {
     @Override
     public List<FilmScreening> screenings() throws IOException {
         Map<String, String> locationNames = fetchLocationNames();
-        Map<String, String> filmTitles = fetchFilmTitles();
+        Map<String, FilmTitle> filmTitles = fetchFilmTitles();
 
         List<String> pageUrls = fetchManifestPageUrls(
                 "/api/v1/se/films/" + edition + "/sessions/manifest?format=full");
@@ -107,7 +107,7 @@ public class SitgesScheduleClient implements ScheduleSource {
     }
 
     private List<FilmScreening> fetchSessionsPage(
-            String pageUrl, Map<String, String> locationNames, Map<String, String> filmTitles) {
+            String pageUrl, Map<String, String> locationNames, Map<String, FilmTitle> filmTitles) {
         try {
             SessionsPageResponse page = getJson(pageUrl, SessionsPageResponse.class);
             if (page.sessions() == null) {
@@ -125,7 +125,7 @@ public class SitgesScheduleClient implements ScheduleSource {
     }
 
     private static List<FilmScreening> toScreenings(
-            SessionDto session, Map<String, String> locationNames, Map<String, String> filmTitles) {
+            SessionDto session, Map<String, String> locationNames, Map<String, FilmTitle> filmTitles) {
         if (session.startDate() == null) {
             return List.of();
         }
@@ -134,29 +134,29 @@ public class SitgesScheduleClient implements ScheduleSource {
         String location = (session.locations() == null || session.locations().isEmpty())
                 ? null : locationNames.get(session.locations().get(0));
 
-        List<String> titles = new ArrayList<>();
+        List<FilmTitle> resolved = new ArrayList<>();
         if (session.films() != null) {
             for (String filmId : session.films()) {
-                String title = filmTitles.get(filmId);
+                FilmTitle title = filmTitles.get(filmId);
                 if (title != null) {
-                    titles.add(title);
+                    resolved.add(title);
                 }
             }
         }
-        if (titles.isEmpty()) {
+        if (resolved.isEmpty()) {
             // None of this session's films resolved (or it lists none) - fall back to its
             // own display name so the session isn't silently dropped.
             String fallback = session.name() == null ? null : session.name().get("es");
             if (fallback != null && !fallback.isBlank()) {
-                titles.add(fallback.trim());
+                resolved.add(new FilmTitle(fallback.trim(), null));
             }
         }
 
-        List<String> sessionFilms = List.copyOf(titles);
-        List<FilmScreening> screenings = new ArrayList<>(titles.size());
-        for (String title : titles) {
-            screenings.add(new FilmScreening(title, start.toLocalDate(), start.toLocalTime(),
-                    end == null ? null : end.toLocalTime(), location, sessionFilms));
+        List<String> sessionFilms = resolved.stream().map(FilmTitle::display).toList();
+        List<FilmScreening> screenings = new ArrayList<>(resolved.size());
+        for (FilmTitle title : resolved) {
+            screenings.add(new FilmScreening(title.display(), start.toLocalDate(), start.toLocalTime(),
+                    end == null ? null : end.toLocalTime(), location, sessionFilms, title.original()));
         }
         return screenings;
     }
@@ -179,12 +179,12 @@ public class SitgesScheduleClient implements ScheduleSource {
         return names;
     }
 
-    private Map<String, String> fetchFilmTitles() {
-        Map<String, String> titles = new ConcurrentHashMap<>();
+    private Map<String, FilmTitle> fetchFilmTitles() {
+        Map<String, FilmTitle> titles = new ConcurrentHashMap<>();
         try {
             List<String> pageUrls = fetchManifestPageUrls(
                     "/api/v1/se/films/" + edition + "/films/manifest?format=full");
-            List<Map<String, String>> perPage = externalCallExecutor.map(pageUrls, this::fetchFilmsPage);
+            List<Map<String, FilmTitle>> perPage = externalCallExecutor.map(pageUrls, this::fetchFilmsPage);
             perPage.forEach(titles::putAll);
         } catch (IOException e) {
             log.warn("Could not load Sitges film titles: {}", e.getMessage());
@@ -192,19 +192,28 @@ public class SitgesScheduleClient implements ScheduleSource {
         return titles;
     }
 
-    private Map<String, String> fetchFilmsPage(String pageUrl) {
+    private Map<String, FilmTitle> fetchFilmsPage(String pageUrl) {
         try {
             FilmsPageResponse page = getJson(pageUrl, FilmsPageResponse.class);
             if (page.films() == null) {
                 return Map.of();
             }
-            Map<String, String> map = new HashMap<>();
+            Map<String, FilmTitle> map = new HashMap<>();
             for (FilmDto film : page.films()) {
-                String title = film.internationalTitle() != null ? film.internationalTitle()
+                String display = film.internationalTitle() != null ? film.internationalTitle()
                         : (film.title() == null ? null : film.title().get("es"));
-                if (film.id() != null && title != null && !title.isBlank()) {
-                    map.put(film.id(), title.trim());
+                if (film.id() == null || display == null || display.isBlank()) {
+                    continue;
                 }
+                display = display.trim();
+                // original_title is the film's native-language title, e.g. a festival
+                // markets "Vertiginous" internationally but its own title is "Le Vertige" -
+                // keep it as a second name a requester might use, only when it differs.
+                String original = film.originalTitle() == null ? null : film.originalTitle().trim();
+                if (original != null && (original.isEmpty() || original.equalsIgnoreCase(display))) {
+                    original = null;
+                }
+                map.put(film.id(), new FilmTitle(display, original));
             }
             return map;
         } catch (IOException e) {
@@ -273,6 +282,11 @@ public class SitgesScheduleClient implements ScheduleSource {
     private record FilmDto(
             String id,
             @JsonProperty("international_title") String internationalTitle,
+            @JsonProperty("original_title") String originalTitle,
             Map<String, String> title) {
+    }
+
+    /** A film's display name plus its native-language name, when the catalogue gives a different one. */
+    private record FilmTitle(String display, String original) {
     }
 }

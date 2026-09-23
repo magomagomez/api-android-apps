@@ -20,10 +20,13 @@ import java.util.Objects;
  *
  * <p>The full programme is fetched once per process and reused ({@link #loadScreenings()}
  * — same pattern as {@code FestivalLineupAccoladeProvider}: the schedule doesn't change
- * during a run, and re-fetching ~500 sessions per request would be wasted latency). Titles
- * are matched the same accent/punctuation-insensitive way festival lineups are
- * ({@link FestivalLineup#normalizeTitle(String)}); when that isn't an exact hit, a
- * word-sequence prefix match is tried too (e.g. a requested {@code "Cold War"} still finds
+ * during a run, and re-fetching ~500 sessions per request would be wasted latency). A
+ * screening is indexed under both its display title and its
+ * {@link FilmScreening#originalTitle()} when the catalogue gives a different one (e.g. a
+ * requester may know a film by its native-language name, not the one it's marketed under
+ * internationally). Titles are matched the same accent/punctuation-insensitive way festival
+ * lineups are ({@link FestivalLineup#normalizeTitle(String)}); when that isn't an exact hit,
+ * a word-sequence prefix match is tried too (e.g. a requested {@code "Cold War"} still finds
  * the programme's {@code "Cold War 1994"} — a same-word-order year/subtitle suffix, not a
  * different film with a similar name). A title with no match either way is reported in
  * {@link ScheduleResult#notScheduled()}, never silently dropped.
@@ -54,9 +57,10 @@ public class ScheduleService {
 
         Map<String, List<FilmScreening>> byNormalizedTitle = new LinkedHashMap<>();
         for (FilmScreening screening : loadScreenings()) {
-            byNormalizedTitle
-                    .computeIfAbsent(FestivalLineup.normalizeTitle(screening.title()), k -> new ArrayList<>())
-                    .add(screening);
+            index(byNormalizedTitle, screening.title(), screening);
+            if (screening.originalTitle() != null) {
+                index(byNormalizedTitle, screening.originalTitle(), screening);
+            }
         }
 
         List<String> notScheduled = new ArrayList<>();
@@ -84,6 +88,10 @@ public class ScheduleService {
                 .toList();
 
         return new ScheduleResult(requestedTitles, notScheduled, days);
+    }
+
+    private static void index(Map<String, List<FilmScreening>> byNormalizedTitle, String title, FilmScreening screening) {
+        byNormalizedTitle.computeIfAbsent(FestivalLineup.normalizeTitle(title), k -> new ArrayList<>()).add(screening);
     }
 
     private static List<FilmScreening> findMatches(String requestedTitle, Map<String, List<FilmScreening>> byNormalizedTitle) {
