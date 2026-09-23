@@ -22,7 +22,10 @@ import java.util.Objects;
  * — same pattern as {@code FestivalLineupAccoladeProvider}: the schedule doesn't change
  * during a run, and re-fetching ~500 sessions per request would be wasted latency). Titles
  * are matched the same accent/punctuation-insensitive way festival lineups are
- * ({@link FestivalLineup#normalizeTitle(String)}) — a title with no match is reported in
+ * ({@link FestivalLineup#normalizeTitle(String)}); when that isn't an exact hit, a
+ * word-sequence prefix match is tried too (e.g. a requested {@code "Cold War"} still finds
+ * the programme's {@code "Cold War 1994"} — a same-word-order year/subtitle suffix, not a
+ * different film with a similar name). A title with no match either way is reported in
  * {@link ScheduleResult#notScheduled()}, never silently dropped.
  */
 @Service
@@ -60,15 +63,15 @@ public class ScheduleService {
         Map<java.time.LocalDate, List<ScheduledSession>> sessionsByDate = new LinkedHashMap<>();
 
         for (String requestedTitle : requestedTitles) {
-            List<FilmScreening> matches = byNormalizedTitle.get(FestivalLineup.normalizeTitle(requestedTitle));
+            List<FilmScreening> matches = findMatches(requestedTitle, byNormalizedTitle);
             if (matches == null || matches.isEmpty()) {
                 notScheduled.add(requestedTitle);
                 continue;
             }
             for (FilmScreening screening : matches) {
                 boolean convenient = SchedulePriority.isConvenient(screening.date(), screening.startTime());
-                ScheduledSession session = new ScheduledSession(
-                        requestedTitle, screening.startTime(), screening.endTime(), screening.location(), convenient);
+                ScheduledSession session = new ScheduledSession(requestedTitle, screening.startTime(),
+                        screening.endTime(), screening.location(), convenient, screening.sessionFilms());
                 sessionsByDate.computeIfAbsent(screening.date(), k -> new ArrayList<>()).add(session);
             }
         }
@@ -81,6 +84,37 @@ public class ScheduleService {
                 .toList();
 
         return new ScheduleResult(requestedTitles, notScheduled, days);
+    }
+
+    private static List<FilmScreening> findMatches(String requestedTitle, Map<String, List<FilmScreening>> byNormalizedTitle) {
+        String normalizedRequest = FestivalLineup.normalizeTitle(requestedTitle);
+        List<FilmScreening> exact = byNormalizedTitle.get(normalizedRequest);
+        if (exact != null) {
+            return exact;
+        }
+        for (Map.Entry<String, List<FilmScreening>> entry : byNormalizedTitle.entrySet()) {
+            if (isWordSequencePrefix(normalizedRequest, entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * {@code true} when one normalized title's words are, in order, a prefix of the
+     * other's — e.g. {@code "cold war"} is a prefix of {@code "cold war 1994"}. Deliberately
+     * word-based (not a raw substring check) so {@code "cold"} alone can never match
+     * {@code "coldwar"} or similar unrelated titles.
+     */
+    private static boolean isWordSequencePrefix(String normalizedA, String normalizedB) {
+        if (normalizedA.isEmpty() || normalizedB.isEmpty()) {
+            return false;
+        }
+        List<String> wordsA = List.of(normalizedA.split(" "));
+        List<String> wordsB = List.of(normalizedB.split(" "));
+        List<String> shorter = wordsA.size() <= wordsB.size() ? wordsA : wordsB;
+        List<String> longer = wordsA.size() <= wordsB.size() ? wordsB : wordsA;
+        return !shorter.equals(longer) && longer.subList(0, shorter.size()).equals(shorter);
     }
 
     private List<FilmScreening> loadScreenings() throws IOException {

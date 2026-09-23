@@ -43,7 +43,7 @@ class ScheduleApiMapperTest {
     @Test
     void mapsDaysWeekdayNamesAndTheHolidayFlag() {
         ScheduledSession session = new ScheduledSession(
-                "Buddy", LocalTime.of(20, 0), LocalTime.of(21, 41), "Auditori Meliá", true);
+                "Buddy", LocalTime.of(20, 0), LocalTime.of(21, 41), "Auditori Meliá", true, List.of("Buddy"));
         ScheduleResult result = new ScheduleResult(
                 List.of("Buddy"), List.of(),
                 List.of(new ScheduleDay(LocalDate.of(2026, 10, 12), List.of(session))));
@@ -61,6 +61,21 @@ class ScheduleApiMapperTest {
         assertThat(sessionView.endTime()).isEqualTo("21:41");
         assertThat(sessionView.location()).isEqualTo("Auditori Meliá");
         assertThat(sessionView.convenient()).isTrue();
+        assertThat(sessionView.doubleBill()).isFalse();
+        assertThat(sessionView.sessionFilms()).containsExactly("Buddy");
+    }
+
+    @Test
+    void flagsADoubleBillAndListsEveryFilmInTheSession() {
+        ScheduledSession session = new ScheduledSession("Full Phil", LocalTime.of(23, 15), LocalTime.of(1, 41),
+                "Tramuntana", true, List.of("Full Phil", "Vertiginous"));
+        ScheduleResult result = new ScheduleResult(List.of("Full Phil"), List.of(),
+                List.of(new ScheduleDay(LocalDate.of(2026, 10, 13), List.of(session))));
+
+        ScheduleResponse.SessionView sessionView = ScheduleApiMapper.toResponse(result).days().get(0).sessions().get(0);
+
+        assertThat(sessionView.doubleBill()).isTrue();
+        assertThat(sessionView.sessionFilms()).containsExactly("Full Phil", "Vertiginous");
     }
 
     @Test

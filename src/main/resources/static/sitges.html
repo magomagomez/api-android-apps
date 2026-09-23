@@ -578,6 +578,25 @@
 
   .schedule-session .info { min-width: 0; }
 
+  .session-films {
+    font-size: .78rem;
+    color: var(--ink-soft);
+    margin-top: .15rem;
+  }
+
+  .double-bill-tag {
+    font-size: .62rem;
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    background: var(--festival-bg);
+    color: var(--festival);
+    padding: .05rem .4rem;
+    border-radius: 999px;
+    font-weight: 600;
+    margin-right: .4rem;
+  }
+
   .schedule-session .info .title {
     font-weight: 600;
   }
@@ -891,9 +910,14 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
     var cls = s.convenient ? 'schedule-session convenient' : 'schedule-session';
     var timeRange = s.startTime + (s.endTime ? '–' + s.endTime : '');
     var location = s.location ? '<div class="location">' + escapeHtml(s.location) + '</div>' : '';
+    var sessionFilmsHtml = '';
+    if (s.doubleBill && s.sessionFilms && s.sessionFilms.length > 1) {
+      sessionFilmsHtml = '<div class="session-films"><span class="double-bill-tag">Sesión doble</span>' +
+        escapeHtml(s.sessionFilms.join(' + ')) + '</div>';
+    }
     return '<div class="' + cls + '">' +
       '<span class="time">' + timeRange + '</span>' +
-      '<div class="info"><div class="title">' + escapeHtml(s.title) + '</div>' + location + '</div>' +
+      '<div class="info"><div class="title">' + escapeHtml(s.title) + '</div>' + location + sessionFilmsHtml + '</div>' +
       '</div>';
   }
 

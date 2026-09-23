@@ -61,7 +61,9 @@ public final class ScheduleApiMapper {
                 session.startTime().format(TIME),
                 session.endTime() == null ? null : session.endTime().format(TIME),
                 session.location(),
-                session.convenient());
+                session.convenient(),
+                session.sessionFilms().size() > 1,
+                session.sessionFilms());
     }
 
     private static String capitalize(String value) {

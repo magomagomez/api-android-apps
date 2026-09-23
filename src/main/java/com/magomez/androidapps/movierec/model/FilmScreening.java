@@ -2,6 +2,7 @@ package com.magomez.androidapps.movierec.model;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -9,17 +10,30 @@ import java.util.Objects;
  * Provider-internal until matched against a recommended title (by
  * {@link com.magomez.androidapps.movierec.schedule.ScheduleService}).
  *
- * @param title     the session's title exactly as the programme lists it (never blank)
- * @param date      the screening's date
- * @param startTime the screening's start time
- * @param endTime   the screening's end time, or {@code null} when the source doesn't say
- * @param location  venue/room name, or {@code null} when the source doesn't say
+ * @param title        the film's title (resolved against the festival's films catalogue,
+ *                      not necessarily the session's own display name — see
+ *                      {@code SitgesScheduleClient}; never blank)
+ * @param date          the screening's date
+ * @param startTime     the screening's start time
+ * @param endTime       the screening's end time, or {@code null} when the source doesn't say
+ * @param location      venue/room name, or {@code null} when the source doesn't say
+ * @param sessionFilms  every film title playing in this same physical session, in
+ *                      programme order (a double bill or marathon lists more than one;
+ *                      always includes {@code title} itself)
  */
-public record FilmScreening(String title, LocalDate date, LocalTime startTime, LocalTime endTime, String location) {
+public record FilmScreening(
+        String title, LocalDate date, LocalTime startTime, LocalTime endTime, String location,
+        List<String> sessionFilms) {
 
     public FilmScreening {
         Objects.requireNonNull(title, "title");
         Objects.requireNonNull(date, "date");
         Objects.requireNonNull(startTime, "startTime");
+        sessionFilms = (sessionFilms == null || sessionFilms.isEmpty()) ? List.of(title) : List.copyOf(sessionFilms);
+    }
+
+    /** Backward-compatible constructor for a solo screening (its own single-film session). */
+    public FilmScreening(String title, LocalDate date, LocalTime startTime, LocalTime endTime, String location) {
+        this(title, date, startTime, endTime, location, List.of(title));
     }
 }

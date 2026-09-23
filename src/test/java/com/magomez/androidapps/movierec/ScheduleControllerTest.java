@@ -57,7 +57,8 @@ class ScheduleControllerTest {
     void returnsTheCalendarAsJson() throws Exception {
         handler = titles -> new ScheduleResult(titles, List.of("Ghost Film"), List.of(
                 new ScheduleDay(LocalDate.of(2026, 10, 12), List.of(
-                        new ScheduledSession("Buddy", LocalTime.of(20, 0), LocalTime.of(21, 41), "Auditori", true)))));
+                        new ScheduledSession("Buddy", LocalTime.of(20, 0), LocalTime.of(21, 41), "Auditori",
+                                true, List.of("Buddy"))))));
 
         mockMvc.perform(post("/api/schedule")
                         .contentType(MediaType.APPLICATION_JSON)

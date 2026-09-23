@@ -112,6 +112,42 @@ class ScheduleServiceTest {
     }
 
     @Test
+    void aYearOrSubtitleSuffixStillMatchesViaWordSequencePrefix() throws IOException {
+        ScheduleSource source = () -> List.of(
+                screening("Cold War 1994", LocalDate.of(2026, 10, 17), LocalTime.of(18, 45), "Auditori"));
+        ScheduleService service = new ScheduleService(source);
+
+        ScheduleResult result = service.buildSchedule(List.of("Cold War"));
+
+        assertThat(result.notScheduled()).isEmpty();
+        assertThat(result.days().get(0).sessions()).extracting(ScheduledSession::title).containsExactly("Cold War");
+    }
+
+    @Test
+    void aSingleUnrelatedWordDoesNotFalselyMatchADifferentTitle() throws IOException {
+        ScheduleSource source = () -> List.of(
+                screening("Coldwar Zero", LocalDate.of(2026, 10, 17), LocalTime.of(18, 45), null));
+        ScheduleService service = new ScheduleService(source);
+
+        ScheduleResult result = service.buildSchedule(List.of("Cold"));
+
+        assertThat(result.notScheduled()).containsExactly("Cold");
+    }
+
+    @Test
+    void aDoubleBillCarriesEveryFilmOfItsSessionOntoTheMatchedScreening() throws IOException {
+        FilmScreening doubleBill = new FilmScreening("Full Phil", LocalDate.of(2026, 10, 13),
+                LocalTime.of(23, 15), LocalTime.of(1, 41), "Tramuntana", List.of("Full Phil", "Vertiginous"));
+        ScheduleSource source = () -> List.of(doubleBill);
+        ScheduleService service = new ScheduleService(source);
+
+        ScheduleResult result = service.buildSchedule(List.of("Full Phil"));
+
+        ScheduledSession session = result.days().get(0).sessions().get(0);
+        assertThat(session.sessionFilms()).containsExactly("Full Phil", "Vertiginous");
+    }
+
+    @Test
     void isReadyReflectsWhetherTheProgrammeHasBeenFetched() throws IOException {
         ScheduleSource source = () -> List.of();
         ScheduleService service = new ScheduleService(source);

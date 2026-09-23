@@ -152,10 +152,11 @@ public class SitgesScheduleClient implements ScheduleSource {
             }
         }
 
+        List<String> sessionFilms = List.copyOf(titles);
         List<FilmScreening> screenings = new ArrayList<>(titles.size());
         for (String title : titles) {
             screenings.add(new FilmScreening(title, start.toLocalDate(), start.toLocalTime(),
-                    end == null ? null : end.toLocalTime(), location));
+                    end == null ? null : end.toLocalTime(), location, sessionFilms));
         }
         return screenings;
     }

@@ -30,13 +30,23 @@ public record ScheduleResponse(List<String> notScheduled, List<ScheduleDayView> 
     }
 
     /**
-     * @param title      the requested title
-     * @param startTime  {@code "HH:mm"}
-     * @param endTime    {@code "HH:mm"}, or {@code null} when the programme doesn't say
-     * @param location   venue/room name, or {@code null} when the programme doesn't say
-     * @param convenient whether this slot is realistically attendable (see
-     *                   {@link com.magomez.androidapps.movierec.schedule.SchedulePriority})
+     * @param title        the requested title
+     * @param startTime    {@code "HH:mm"}
+     * @param endTime      {@code "HH:mm"}, or {@code null} when the programme doesn't say
+     * @param location     venue/room name, or {@code null} when the programme doesn't say
+     * @param convenient   whether this slot is realistically attendable (see
+     *                     {@link com.magomez.androidapps.movierec.schedule.SchedulePriority})
+     * @param doubleBill   {@code true} when this is a double bill / marathon (more than one
+     *                     film in {@code sessionFilms})
+     * @param sessionFilms every film playing in this same physical session, including
+     *                     {@code title} itself — attending means watching all of them
      */
-    public record SessionView(String title, String startTime, String endTime, String location, boolean convenient) {
+    public record SessionView(
+            String title, String startTime, String endTime, String location, boolean convenient,
+            boolean doubleBill, List<String> sessionFilms) {
+
+        public SessionView {
+            sessionFilms = sessionFilms == null ? List.of() : List.copyOf(sessionFilms);
+        }
     }
 }
