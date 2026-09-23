@@ -199,6 +199,24 @@ class TmdbMovieDataProviderTest {
     }
 
     @Test
+    void whenNoCandidateDominatesByVotesTheDirectorIsCheckedAgainstEachOneInThatYear() throws Exception {
+        // three brand-new premieres, same title, same year, ~0 votes each - votes cannot
+        // resolve this at all; only the director tells them apart.
+        client.onSearch("Hunger", 2026, search(
+                result(1, "Hunger", "2026"),
+                result(2, "Hunger", "2026"),
+                result(3, "Hunger", "2026")));
+        client.onDetails(1, details(1, "Jelica Kovačević"));
+        client.onDetails(2, details(2, "Melker Laurell"));
+        client.onDetails(3, details(3, "Imanol Ortiz López"));
+
+        MovieMatch match = provider.identify(new MovieQuery("Hunger", 2026, "Imanol Ortiz López"));
+
+        assertThat(match.status()).isEqualTo(IdentificationStatus.IDENTIFIED);
+        assertThat(match.movie().tmdbId()).isEqualTo(3);
+    }
+
+    @Test
     void aYearScopedSearchThatExcludesTheRealFilmIsWidenedAndResolvedByVotes() throws Exception {
         // "Split" logged as 2016 on Letterboxd, but TMDB's own release_date for the real
         // Shyamalan film is 2017-01-19 - a year-scoped search never even sees it.

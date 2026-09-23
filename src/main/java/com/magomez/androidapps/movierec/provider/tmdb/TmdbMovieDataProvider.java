@@ -76,7 +76,12 @@ public class TmdbMovieDataProvider implements MovieDataProvider, MovieEnricher {
     private static final String SOURCE_NAME = "TMDB";
     private static final String ENRICHER_NAME = "TMDB rating";
     private static final int MAX_CANDIDATES = 10;
-    private static final int MAX_DIRECTOR_LOOKUPS = 5;
+    /**
+     * A common short-film title can attract this many same-year, same-titled, brand-new
+     * premieres with ~0 votes each (director is the only real signal then) — kept
+     * generous, but bounded: this only runs for the residual, genuinely ambiguous cases.
+     */
+    private static final int MAX_DIRECTOR_LOOKUPS = 15;
     /** Minimum vote count for a candidate to be considered a real, released film. */
     private static final int MIN_DOMINANT_VOTES = 20;
     /** A candidate "dominates" only if its votes are this many times the runner-up's. */
@@ -258,13 +263,12 @@ public class TmdbMovieDataProvider implements MovieDataProvider, MovieEnricher {
 
     /**
      * Among several exact-title matches spanning different years, tries the most recent
-     * year first, then works backward one year at a time. Within a shared year, several
-     * candidates are narrowed by vote dominance same as {@link #dominantByVotes}. A given
-     * director confirms that year's pick; a mismatch does not reject the film outright but
-     * moves on to try the next, older year instead — a Sitges premiere is essentially
-     * always the newest film sharing its title, never an older homonym. Candidates with no
-     * known release year are not considered here (handled by {@link #pickByDirector}
-     * afterwards). {@code null} when nothing is confirmed.
+     * year first, then works backward one year at a time. A given director confirms that
+     * year's pick; a mismatch does not reject the film outright but moves on to try the
+     * next, older year instead — a Sitges premiere is essentially always the newest film
+     * sharing its title, never an older homonym. Candidates with no known release year are
+     * not considered here (handled by {@link #pickByDirector} afterwards). {@code null}
+     * when nothing is confirmed.
      */
     private Movie pickMostRecentConfirmed(MovieQuery query, List<TmdbSearchResult> pool) throws IOException {
         Map<Integer, List<TmdbSearchResult>> byYear = pool.stream()
@@ -275,16 +279,39 @@ public class TmdbMovieDataProvider implements MovieDataProvider, MovieEnricher {
         years.sort(Comparator.reverseOrder()); // most recent first
 
         for (Integer year : years) {
-            List<TmdbSearchResult> sameYear = byYear.get(year);
-            TmdbSearchResult candidate = sameYear.size() == 1 ? sameYear.get(0)
-                    : dominantByVotes(sameYear).orElse(null);
-            if (candidate == null) {
-                continue;
+            Movie confirmed = pickWithinYear(query, byYear.get(year));
+            if (confirmed != null) {
+                return confirmed;
             }
+        }
+        return null;
+    }
+
+    /**
+     * Resolves one release year's candidates: the vote-dominant one when there is one,
+     * confirmed by a given director when present. Several brand-new premieres sharing an
+     * exact title and year all carry ~0 votes each, so nothing dominates; when a director
+     * was given, every candidate in that year (bounded by {@link #MAX_DIRECTOR_LOOKUPS})
+     * is checked individually instead of giving up on the year outright. {@code null} when
+     * nothing in this year is confirmed — {@link #pickMostRecentConfirmed} then tries the
+     * next, older year.
+     */
+    private Movie pickWithinYear(MovieQuery query, List<TmdbSearchResult> sameYear) throws IOException {
+        TmdbSearchResult candidate = sameYear.size() == 1 ? sameYear.get(0) : dominantByVotes(sameYear).orElse(null);
+        if (candidate != null) {
             Movie movie = loadMovie(candidate);
             String directorName = movie.director() == null ? null : movie.director().name();
             if (!query.hasDirector() || nameMatches(query.director(), directorName)) {
                 return movie;
+            }
+        }
+        if (query.hasDirector() && sameYear.size() > 1) {
+            for (TmdbSearchResult other : sameYear.stream().limit(MAX_DIRECTOR_LOOKUPS).toList()) {
+                Movie movie = loadMovie(other);
+                String directorName = movie.director() == null ? null : movie.director().name();
+                if (nameMatches(query.director(), directorName)) {
+                    return movie;
+                }
             }
         }
         return null;
