@@ -155,15 +155,33 @@ class TmdbMovieDataProviderTest {
     }
 
     @Test
-    void returnsAmbiguousWhenNeitherYearNorDirectorResolves() throws Exception {
+    void withNoYearOrDirectorGivenTheMostRecentSameTitledFilmWins() throws Exception {
+        // no year, no director to disambiguate with: the newer film is virtually always
+        // the one meant (see class doc) - an old same-titled film never wins by default
         client.onSearch("Crash", null, search(
                 result(1, "Crash", "1996"),
                 result(2, "Crash", "2004")));
+        client.onDetails(1, details(1, null));
+        client.onDetails(2, details(2, null));
+
+        MovieMatch match = provider.identify(new MovieQuery("Crash", null, null));
+
+        assertThat(match.status()).isEqualTo(IdentificationStatus.IDENTIFIED);
+        assertThat(match.movie().tmdbId()).isEqualTo(2); // 2004, the more recent one
+    }
+
+    @Test
+    void returnsAmbiguousWhenSameTitledCandidatesShareAYearAndNeitherVotesNorDirectorResolve() throws Exception {
+        client.onSearch("Crash", null, search(
+                result(1, "Crash", "2004"),
+                result(2, "Crash", "2004")));
+        client.onDetails(1, details(1, "Director One"));
+        client.onDetails(2, details(2, "Director Two"));
 
         MovieMatch match = provider.identify(new MovieQuery("Crash", null, null));
 
         assertThat(match.status()).isEqualTo(IdentificationStatus.AMBIGUOUS);
-        assertThat(match.candidates()).containsExactly("Crash (1996)", "Crash (2004)");
+        assertThat(match.candidates()).containsExactly("Crash (2004)", "Crash (2004)");
         assertThat(match.movie()).isNull();
     }
 
@@ -178,6 +196,23 @@ class TmdbMovieDataProviderTest {
         MovieMatch match = provider.identify(new MovieQuery("The Killer", 2023, "Nobody Known"));
 
         assertThat(match.status()).isEqualTo(IdentificationStatus.AMBIGUOUS);
+    }
+
+    @Test
+    void whenTheMostRecentSameTitledFilmHasTheWrongDirectorItRetreatsToAnOlderYear() throws Exception {
+        // no year given; the newest "Carrie" isn't by the requested director, so this
+        // should retreat to the older one that is - never just take the newest blindly
+        // once a director was actually given to check against.
+        client.onSearch("Carrie", null, search(
+                result(1, "Carrie", "2013"),
+                result(2, "Carrie", "1976")));
+        client.onDetails(1, details(1, "Someone Else"));
+        client.onDetails(2, details(2, "Brian De Palma"));
+
+        MovieMatch match = provider.identify(new MovieQuery("Carrie", null, "Brian De Palma"));
+
+        assertThat(match.status()).isEqualTo(IdentificationStatus.IDENTIFIED);
+        assertThat(match.movie().tmdbId()).isEqualTo(2);
     }
 
     @Test

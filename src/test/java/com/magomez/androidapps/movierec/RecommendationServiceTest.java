@@ -313,7 +313,8 @@ class RecommendationServiceTest {
 
         ScoredCandidate strongEstimate = result.recommendations().get(0);
         assertThat(strongEstimate.score().value()).isEmpty(); // never a confirmed PMS...
-        assertThat(strongEstimate.score().estimatedValue()).hasValue(65.0); // ...but a real estimate: 100*0.65
+        // ...but a real estimate: 100*0.65 + recencyBonus (released this year -> full 10) = 75.0
+        assertThat(strongEstimate.score().estimatedValue()).hasValue(75.0);
 
         ScoredCandidate weakConfirmed = result.recommendations().get(1);
         assertThat(weakConfirmed.score().value()).isPresent();

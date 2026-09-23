@@ -35,20 +35,27 @@ import java.util.OptionalDouble;
  *       reward for external recognition (festival selections and awards), passed in
  *       already computed by {@code AccoladeSignalCalculator} — this class stays a pure
  *       function of primitives and never talks to a provider;</li>
- *   <li>{@code personalMatchScore = clamp(base + patternBonus + accoladeBonus, 0, 100)},
+ *   <li>{@code recencyBonus = RECENCY_BONUS_MAX * recencyScore(movie)} — a small, bounded
+ *       reward for a recent release: full credit for this year or last, decaying to
+ *       {@code 0} by {@value #RECENCY_ZERO_CREDIT_YEARS} years old (or when the release
+ *       date is unknown — never guessed). So an older film does not outrank an
+ *       equally-matched newer one just for having accumulated more votes or accolades over
+ *       time — see {@link #recencyScore(Movie)};</li>
+ *   <li>{@code personalMatchScore = clamp(base + patternBonus + accoladeBonus + recencyBonus, 0, 100)},
  *       rounded to one decimal — this is {@link PersonalMatchScore#value()}, present only
  *       with a trustworthy quality;</li>
  *   <li>{@link PersonalMatchScore#estimatedValue()} is the same computation with the
  *       quality term dropped (never guessed) when it is missing:
- *       {@code clamp(personalAffinity * 0.65 + patternBonus + accoladeBonus, 0, 100)} —
+ *       {@code clamp(personalAffinity * 0.65 + patternBonus + accoladeBonus + recencyBonus, 0, 100)} —
  *       present whenever the affinity half alone is known, so every candidate with a
  *       taste signal gets one honest, comparable ranking number.</li>
  * </ol>
  *
- * <p>Neither bonus touches the {@code 0.35/0.65} nor the {@code 0.55/0.35/0.10} weights.
+ * <p>None of the bonuses touch the {@code 0.35/0.65} nor the {@code 0.55/0.35/0.10} weights.
  * {@code accoladeBonus} is capped lower than {@code patternBonus}: it rewards what
  * festival programmers or juries recognised, not what matches <em>this</em> user — the
- * personal-taste bonus stays the bigger lever. No LLM.
+ * personal-taste bonus stays the bigger lever. {@code recencyBonus} is capped lower still —
+ * a modest nudge towards what's new, not a reason on its own to recommend something. No LLM.
  */
 @Component
 public class PersonalMatchScoreCalculator {
@@ -64,6 +71,12 @@ public class PersonalMatchScoreCalculator {
     static final double PATTERN_BONUS_MAX = 30.0;
     /** Maximum points the accolade bonus can add — lower than the pattern bonus on purpose. */
     static final double ACCOLADE_BONUS_MAX = 20.0;
+    /** Maximum points the recency bonus can add — a nudge, lower than either other bonus. */
+    static final double RECENCY_BONUS_MAX = 10.0;
+    /** A film this many years old or newer gets the full recency bonus. */
+    static final int RECENCY_FULL_CREDIT_YEARS = 1;
+    /** A film this many years old or older gets none of the recency bonus. */
+    static final int RECENCY_ZERO_CREDIT_YEARS = 10;
 
     private final QualityScoreCalculator qualityScoreCalculator;
     private final PersonalAffinityCalculator personalAffinityCalculator;
@@ -101,7 +114,8 @@ public class PersonalMatchScoreCalculator {
         double patternBonus = roundToOneDecimal(
                 PATTERN_BONUS_MAX * maxPatternRelevance(movie, profile));
         double accoladeBonus = roundToOneDecimal(ACCOLADE_BONUS_MAX * accoladeStrength);
-        double bonusSum = patternBonus + accoladeBonus;
+        double recencyBonus = roundToOneDecimal(RECENCY_BONUS_MAX * recencyScore(movie));
+        double bonusSum = patternBonus + accoladeBonus + recencyBonus;
 
         OptionalDouble value = OptionalDouble.empty();
         OptionalDouble estimatedValue = OptionalDouble.empty();
@@ -118,8 +132,40 @@ public class PersonalMatchScoreCalculator {
             }
         }
 
-        return new PersonalMatchScore(
-                value, estimatedValue, qualityScore, signals, personalAffinity, patternBonus, accoladeBonus);
+        return new PersonalMatchScore(value, estimatedValue, qualityScore, signals, personalAffinity,
+                patternBonus, accoladeBonus, recencyBonus);
+    }
+
+    /**
+     * Full credit ({@code 1.0}) for a film released this year or last; decays linearly to
+     * {@code 0} by {@link #RECENCY_ZERO_CREDIT_YEARS} years old. {@code 0} when the release
+     * date is unknown — never guessed. An upcoming (not-yet-released) film also gets full
+     * credit rather than being penalised for a "negative age".
+     */
+    private static double recencyScore(Movie movie) {
+        Integer releaseYear = releaseYear(movie.releaseDate());
+        if (releaseYear == null) {
+            return 0.0;
+        }
+        int age = java.time.Year.now().getValue() - releaseYear;
+        if (age <= RECENCY_FULL_CREDIT_YEARS) {
+            return 1.0;
+        }
+        if (age >= RECENCY_ZERO_CREDIT_YEARS) {
+            return 0.0;
+        }
+        return 1.0 - (double) (age - RECENCY_FULL_CREDIT_YEARS) / (RECENCY_ZERO_CREDIT_YEARS - RECENCY_FULL_CREDIT_YEARS);
+    }
+
+    private static Integer releaseYear(String releaseDate) {
+        if (releaseDate == null || releaseDate.length() < 4) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(releaseDate.substring(0, 4));
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /**

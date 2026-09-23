@@ -112,8 +112,9 @@ class PersonalMatchScoreCalculatorTest {
 
     @Test
     void anAccoladeSignalAddsABoundedBonusOnTopOfTheBaseScore() {
+        // an old release date keeps the (unrelated) recency bonus at 0 here
         Movie theMovie = movie(Director.of("Fav Director"), List.of(Genre.of("Terror")),
-                List.of(), "2024-01-01", List.of(new Rating("TMDB", 8.0, 1000)));
+                List.of(), "2000-01-01", List.of(new Rating("TMDB", 8.0, 1000)));
         UserTasteProfile taste = profile(Set.of("Fav Director"), Set.of("Terror"), Set.of());
 
         PersonalMatchScore without = calculator.calculate(theMovie, taste);
@@ -155,13 +156,84 @@ class PersonalMatchScoreCalculatorTest {
         assertThat(score.value()).isEmpty(); // ...but never applied without a trusted quality
     }
 
+    // --- recency bonus ----------------------------------------------------------
+
+    @Test
+    void aFilmReleasedThisYearGetsTheFullRecencyBonus() {
+        Movie theMovie = movie(null, List.of(), List.of(), "2026-03-01", List.of(new Rating("TMDB", 8.0, 1000)));
+        UserTasteProfile taste = profile(Set.of(), Set.of("Terror"), Set.of());
+
+        assertThat(calculator.calculate(theMovie, taste).recencyBonus()).isEqualTo(10.0);
+    }
+
+    @Test
+    void aFilmReleasedLastYearAlsoGetsTheFullRecencyBonus() {
+        Movie theMovie = movie(null, List.of(), List.of(), "2025-06-01", List.of(new Rating("TMDB", 8.0, 1000)));
+        UserTasteProfile taste = profile(Set.of(), Set.of("Terror"), Set.of());
+
+        assertThat(calculator.calculate(theMovie, taste).recencyBonus()).isEqualTo(10.0);
+    }
+
+    @Test
+    void aFilmTenOrMoreYearsOldGetsNoRecencyBonus() {
+        Movie theMovie = movie(null, List.of(), List.of(), "2016-01-01", List.of(new Rating("TMDB", 8.0, 1000)));
+        UserTasteProfile taste = profile(Set.of(), Set.of("Terror"), Set.of());
+
+        assertThat(calculator.calculate(theMovie, taste).recencyBonus()).isZero();
+    }
+
+    @Test
+    void recencyBonusDecaysLinearlyBetweenOneAndTenYearsOld() {
+        // age 5 -> 1 - (5-1)/(10-1) = 1 - 4/9 = 0.5556 -> 10 * 0.5556 = 5.6 (rounded)
+        Movie theMovie = movie(null, List.of(), List.of(), "2021-01-01", List.of(new Rating("TMDB", 8.0, 1000)));
+        UserTasteProfile taste = profile(Set.of(), Set.of("Terror"), Set.of());
+
+        assertThat(calculator.calculate(theMovie, taste).recencyBonus()).isEqualTo(5.6);
+    }
+
+    @Test
+    void anUnreleasedOrUndatedFilmGetsNoRecencyBonusNeverGuessed() {
+        Movie theMovie = movie(null, List.of(), List.of(), null, List.of(new Rating("TMDB", 8.0, 1000)));
+        UserTasteProfile taste = profile(Set.of(), Set.of("Terror"), Set.of());
+
+        assertThat(calculator.calculate(theMovie, taste).recencyBonus()).isZero();
+    }
+
+    @Test
+    void anUpcomingFilmDatedNextYearStillGetsTheFullRecencyBonus() {
+        Movie theMovie = movie(null, List.of(), List.of(), "2027-01-01", List.of(new Rating("TMDB", 8.0, 1000)));
+        UserTasteProfile taste = profile(Set.of(), Set.of("Terror"), Set.of());
+
+        assertThat(calculator.calculate(theMovie, taste).recencyBonus()).isEqualTo(10.0);
+    }
+
+    @Test
+    void theRecencyBonusIsCappedLowerThanBothOtherBonuses() {
+        Movie theMovie = movie(Director.of("x"),
+                List.of(Genre.of("Comedia"), Genre.of("Terror"), Genre.of("Horror")),
+                List.of(), "2026-01-01", List.of(new Rating("TMDB", 10.0, 1000)));
+        UserTasteProfile taste = new UserTasteProfile(
+                java.util.Map.of("x", 1.0), java.util.Map.of("Terror", 1.0),
+                java.util.Map.of(), java.util.Map.of(), java.util.Map.of())
+                .withPatterns(List.of(new com.magomez.androidapps.movierec.scoring.TastePattern(
+                        "BLACK_COMEDY", "Comedia negra", "d", 1.0,
+                        List.of(), List.of(), List.of(), List.of())));
+
+        PersonalMatchScore score = calculator.calculate(theMovie, taste, 1.0);
+
+        assertThat(score.recencyBonus()).isEqualTo(10.0);
+        assertThat(score.recencyBonus()).isLessThan(score.accoladeBonus());
+        assertThat(score.accoladeBonus()).isLessThan(score.patternBonus());
+    }
+
     // --- the formula ----------------------------------------------------------
 
     @Test
     void quality80AndAffinity90Give865() {
         // signals: director 100, genre 100, actor 0 -> 100*0.55 + 100*0.35 + 0*0.10 = 90
+        // an old release date keeps the (unrelated) recency bonus at 0 here
         Movie theMovie = movie(Director.of("Fav Director"), List.of(Genre.of("Terror")),
-                List.of(), "2024-01-01", List.of(new Rating("TMDB", 8.0, 1000)));
+                List.of(), "2000-01-01", List.of(new Rating("TMDB", 8.0, 1000)));
         UserTasteProfile taste = profile(Set.of("Fav Director"), Set.of("Terror"), Set.of());
 
         PersonalMatchScore score = calculator.calculate(theMovie, taste);
@@ -175,8 +247,9 @@ class PersonalMatchScoreCalculatorTest {
     @Test
     void aSoleActorMatchBarelyMovesTheScore() {
         // director 0, genre 0, actor 50 (1 of 2) -> 0 + 0 + 5 = 5.0  (testimonial only)
+        // an old release date keeps the (unrelated) recency bonus at 0 here
         Movie theMovie = movie(null, List.of(),
-                List.of(Actor.of("Fav Actor"), Actor.of("Other")), "2024-01-01",
+                List.of(Actor.of("Fav Actor"), Actor.of("Other")), "2000-01-01",
                 List.of(new Rating("TMDB", 8.0, 1000)));
         UserTasteProfile taste = profile(Set.of("Fav Director"), Set.of("Terror"), Set.of("Fav Actor"));
 
@@ -257,8 +330,9 @@ class PersonalMatchScoreCalculatorTest {
 
     @Test
     void aRealAffinityOfZeroIsUsedAndIsNotTreatedAsMissing() {
+        // an old release date keeps the (unrelated) recency bonus at 0 here
         Movie theMovie = movie(null, List.of(Genre.of("Terror")), List.of(),
-                "2024-01-01", List.of(new Rating("TMDB", 8.0, 1000)));
+                "2000-01-01", List.of(new Rating("TMDB", 8.0, 1000)));
         UserTasteProfile taste = profile(Set.of("Someone Else"), Set.of("Comedia"), Set.of("Nobody"));
 
         PersonalMatchScore score = calculator.calculate(theMovie, taste);
@@ -284,9 +358,10 @@ class PersonalMatchScoreCalculatorTest {
 
     @Test
     void estimatedValueGivesTheMissingQualityShareZeroCreditInsteadOfHidingTheCandidate() {
-        // no ratings at all -> no trustworthy quality; full director/genre match
+        // no ratings at all -> no trustworthy quality; full director/genre match; an old
+        // release date keeps the (unrelated) recency bonus at 0 here
         Movie theMovie = movie(Director.of("Fav Director"), List.of(Genre.of("Terror")),
-                List.of(), "2024-01-01", List.of());
+                List.of(), "2000-01-01", List.of());
         UserTasteProfile taste = profile(Set.of("Fav Director"), Set.of("Terror"), Set.of());
 
         PersonalMatchScore score = calculator.calculate(theMovie, taste);
@@ -327,17 +402,19 @@ class PersonalMatchScoreCalculatorTest {
         assertThat(score.status()).isEqualTo(Status.MISSING_QUALITY);
         assertThat(score.patternBonus()).isGreaterThan(0.0);
         assertThat(score.accoladeBonus()).isEqualTo(10.0); // 20 * 0.5
-        // estimate = affinityContribution + patternBonus + accoladeBonus, clamped
+        assertThat(score.recencyBonus()).isEqualTo(10.0); // released this year -> full credit
+        // estimate = affinityContribution + patternBonus + accoladeBonus + recencyBonus, clamped
         double affinityContribution = score.personalAffinity().getAsDouble() * 0.65;
-        assertThat(score.estimatedValue()).hasValue(
-                Math.round((affinityContribution + score.patternBonus() + score.accoladeBonus()) * 10.0) / 10.0);
+        assertThat(score.estimatedValue()).hasValue(Math.round((affinityContribution
+                + score.patternBonus() + score.accoladeBonus() + score.recencyBonus()) * 10.0) / 10.0);
     }
 
     // --- bounds & rounding -------------------------------------------------
 
     @Test
     void staysWithinZeroAndOneHundred() {
-        Movie zero = movie(null, List.of(Genre.of("Terror")), List.of(), "2024-01-01",
+        // an old release date keeps the (unrelated) recency bonus at 0 here
+        Movie zero = movie(null, List.of(Genre.of("Terror")), List.of(), "2000-01-01",
                 List.of(new Rating("TMDB", 0.0, 5000)));
         UserTasteProfile noMatch = profile(Set.of("x"), Set.of("y"), Set.of("z"));
         assertThat(calculator.calculate(zero, noMatch).value()).hasValue(0.0);
@@ -352,7 +429,8 @@ class PersonalMatchScoreCalculatorTest {
     void roundsTheFinalScoreToOneDecimal() {
         // quality 71.3 (7.13*10); director signal 100 -> affinity 55.0
         // 71.3 * 0.35 + 55.0 * 0.65 = 24.955 + 35.75 = 60.705 -> 60.7
-        Movie theMovie = movie(Director.of("Fav"), List.of(), List.of(), "2024-01-01",
+        // an old release date keeps the (unrelated) recency bonus at 0 here
+        Movie theMovie = movie(Director.of("Fav"), List.of(), List.of(), "2000-01-01",
                 List.of(new Rating("TMDB", 7.13, 1000)));
         UserTasteProfile taste = profile(Set.of("Fav"), Set.of(), Set.of());
 

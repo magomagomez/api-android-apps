@@ -9,15 +9,17 @@ import java.util.OptionalDouble;
  * <p>Base blend, on the 0-100 scale:
  * <pre>base = quality * 0.35 + personalAffinity * 0.65</pre>
  * where {@code personalAffinity = director*0.55 + genre*0.35 + actor*0.10}. On top of the
- * base two small, bounded bonuses are added:
- * <pre>value = clamp(base + patternBonus + accoladeBonus, 0, 100)</pre>
+ * base three small, bounded bonuses are added:
+ * <pre>value = clamp(base + patternBonus + accoladeBonus + recencyBonus, 0, 100)</pre>
  * {@link #patternBonus()} rewards fitting one of the user's own narrative taste patterns
  * (Korean thriller, uncomfortable cinema, …) — personal taste. {@link #accoladeBonus()}
  * rewards external recognition (festival selections and awards) — not personal, so it is
- * capped lower. Neither bonus changes the weights above; both are derived deterministically.
+ * capped lower. {@link #recencyBonus()} rewards a recent release, so an older film does not
+ * outrank an equally-well-matched new one just by having more accumulated votes/awards.
+ * None of the bonuses change the weights above; all are derived deterministically.
  *
  * <p>Immutable and explainable: it keeps the exact {@link QualityScore}, the three
- * individual {@link PersonalAffinitySignals} (director, genre, actor) and both bonuses.
+ * individual {@link PersonalAffinitySignals} (director, genre, actor) and all three bonuses.
  *
  * <p>Missing-data policy — nothing is invented:
  * <ul>
@@ -27,8 +29,8 @@ import java.util.OptionalDouble;
  *   <li>{@link #estimatedValue()} is present whenever the personal affinity alone is
  *       known. When quality is missing it gives that share of the blend <em>zero</em>
  *       credit rather than guessing — {@code affinityContribution + patternBonus +
- *       accoladeBonus}, clamped — so an unreleased film with strong personal fit ranks
- *       somewhere honest instead of being hidden below every quality-backed film,
+ *       accoladeBonus + recencyBonus}, clamped — so an unreleased film with strong personal
+ *       fit ranks somewhere honest instead of being hidden below every quality-backed film,
  *       however weak. It equals {@link #value()} whenever that is present;</li>
  *   <li>the quality score is unavailable when the movie has no ratings;</li>
  *   <li>the personal affinity is unavailable when the profile carries no preference at all;</li>
@@ -50,6 +52,11 @@ import java.util.OptionalDouble;
  * @param accoladeBonus    the external-recognition bonus already folded into {@code value} /
  *                         {@code estimatedValue} ({@code 0} when the candidate carries no
  *                         accolade signal)
+ * @param recencyBonus     a small bonus already folded into {@code value} /
+ *                         {@code estimatedValue} rewarding a recent release — full credit
+ *                         for this year or last, decaying to {@code 0} by ten years old
+ *                         (or when the release date is unknown); see
+ *                         {@code PersonalMatchScoreCalculator}
  */
 public record PersonalMatchScore(
         OptionalDouble value,
@@ -58,7 +65,8 @@ public record PersonalMatchScore(
         PersonalAffinitySignals affinitySignals,
         OptionalDouble personalAffinity,
         double patternBonus,
-        double accoladeBonus) {
+        double accoladeBonus,
+        double recencyBonus) {
 
     /** Which halves of the blend were available. */
     public enum Status { COMPLETE, MISSING_QUALITY, MISSING_AFFINITY, MISSING_BOTH }
@@ -74,6 +82,9 @@ public record PersonalMatchScore(
         }
         if (!Double.isFinite(accoladeBonus) || accoladeBonus < 0.0) {
             throw new IllegalArgumentException("accoladeBonus must be finite and >= 0: " + accoladeBonus);
+        }
+        if (!Double.isFinite(recencyBonus) || recencyBonus < 0.0) {
+            throw new IllegalArgumentException("recencyBonus must be finite and >= 0: " + recencyBonus);
         }
 
         if (value.isPresent()) {
@@ -102,13 +113,20 @@ public record PersonalMatchScore(
         }
     }
 
+    /** Backward-compatible: no recency bonus available (defaults to {@code 0}). */
+    public PersonalMatchScore(OptionalDouble value, OptionalDouble estimatedValue, QualityScore qualityScore,
+                              PersonalAffinitySignals affinitySignals, OptionalDouble personalAffinity,
+                              double patternBonus, double accoladeBonus) {
+        this(value, estimatedValue, qualityScore, affinitySignals, personalAffinity, patternBonus, accoladeBonus, 0.0);
+    }
+
     /**
-     * Test constructor: both bonuses default to {@code 0}, {@code estimatedValue}
+     * Test constructor: all bonuses default to {@code 0}, {@code estimatedValue}
      * defaults to {@code value}.
      */
     public PersonalMatchScore(OptionalDouble value, QualityScore qualityScore,
                               PersonalAffinitySignals affinitySignals, OptionalDouble personalAffinity) {
-        this(value, value, qualityScore, affinitySignals, personalAffinity, 0.0, 0.0);
+        this(value, value, qualityScore, affinitySignals, personalAffinity, 0.0, 0.0, 0.0);
     }
 
     public Status status() {

@@ -11,6 +11,7 @@ import com.magomez.androidapps.movierec.scoring.UserTasteProfile;
 import com.magomez.androidapps.movierec.scoring.UserTasteProfileBuilder;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -319,6 +320,42 @@ class UserTasteProfileBuilderTest {
 
         assertThat(profile.genreAffinityOf("Recurring")).isEqualTo(1.0);           // 3.0 / 3.0
         assertThat(profile.genreAffinityOf("OneOff")).isCloseTo(1.0 / 3.0, within(1e-6)); // 1.0 / 3.0
+    }
+
+    @Test
+    void aGenreAsCommonOutsideFavouritesAsWithinThemIsDiscountedToZero() {
+        // "Drama" is exactly as common among favourites (4/4) as across everything rated
+        // (10/10) - lift 1.0, no real preference - so it should not out-rank "Heist",
+        // which never shows up outside the favourites at all.
+        List<RatedMovie> ratedMovies = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            ratedMovies.add(new RatedMovie(movie(Director.of("d" + i),
+                    List.of(Genre.of("Drama"), Genre.of("Heist")), List.of(), List.of(), "2020-01-01", List.of()), 8.0));
+        }
+        ratedMovies.add(new RatedMovie(movie(Director.of("d3"), List.of(Genre.of("Drama")),
+                List.of(), List.of(), "2020-01-01", List.of()), 8.0));
+        for (int i = 4; i < 10; i++) {
+            ratedMovies.add(new RatedMovie(movie(Director.of("d" + i), List.of(Genre.of("Drama")),
+                    List.of(), List.of(), "2020-01-01", List.of()), 5.0)); // not a favourite
+        }
+
+        UserTasteProfile profile = builder.build(ratedMovies);
+
+        assertThat(profile.genreAffinityOf("Drama")).isZero();
+        assertThat(profile.genreAffinityOf("Heist")).isEqualTo(1.0);
+    }
+
+    @Test
+    void withNoNonFavouriteRatingsAtAllTheDiscountIsSkippedForLackOfABaseline() {
+        // every rated movie is a favourite: there is nothing to compare against, so raw
+        // favourite frequency is used as-is rather than wrongly zeroing everything out
+        List<RatedMovie> ratedMovies = List.of(
+                new RatedMovie(fullMovie("d1", "Drama", "a1", "c1", "2020-01-01"), 8.0),
+                new RatedMovie(fullMovie("d2", "Drama", "a2", "c2", "2020-01-01"), 8.0));
+
+        UserTasteProfile profile = builder.build(ratedMovies);
+
+        assertThat(profile.genreAffinityOf("Drama")).isEqualTo(1.0);
     }
 
     @Test

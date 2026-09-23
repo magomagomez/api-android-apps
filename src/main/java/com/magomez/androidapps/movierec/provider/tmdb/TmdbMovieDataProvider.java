@@ -26,7 +26,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * {@link MovieDataProvider} backed by TMDB.
@@ -41,12 +43,17 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>several results: keep those matching the requested year (when given); then keep
  *       those whose title or original title matches exactly;</li>
  *   <li>if that leaves exactly one &rarr; IDENTIFIED;</li>
- *   <li>if it leaves several exact-title matches, keep the one whose audience vote count
- *       clearly dominates (real release vs. duplicates / shorts / fan entries); if that
- *       is decisive &rarr; IDENTIFIED;</li>
- *   <li>if it still leaves several and a director was given, fetch the details of the
- *       remaining candidates and keep those directed by that person; if that leaves
- *       exactly one &rarr; IDENTIFIED;</li>
+ *   <li>if it still leaves several exact-title matches spanning different release years
+ *       (typically because no year was given, or the requested one matched nothing), try
+ *       the most recent year first, then the next, working backward: a same-titled older
+ *       film should never win just for having accumulated more votes. Within a shared
+ *       year, the candidate whose vote count clearly dominates wins that year. A given
+ *       director confirms the pick at each year tried — a mismatch moves on to the next,
+ *       older year instead of accepting a same-titled but wrong film; if a year's pick is
+ *       confirmed (or no director was given) &rarr; IDENTIFIED;</li>
+ *   <li>if that still leaves nothing decisive and a director was given, fetch the details
+ *       of the remaining candidates (regardless of year) and keep those directed by that
+ *       person; if that leaves exactly one &rarr; IDENTIFIED;</li>
  *   <li>anything else &rarr; AMBIGUOUS.</li>
  * </ol>
  *
@@ -101,6 +108,11 @@ public class TmdbMovieDataProvider implements MovieDataProvider, MovieEnricher {
             List<TmdbSearchResult> pool = narrow(query, results);
             if (pool.size() == 1) {
                 return MovieMatch.identified(loadMovie(pool.get(0)));
+            }
+
+            Movie mostRecent = pickMostRecentConfirmed(query, pool);
+            if (mostRecent != null) {
+                return MovieMatch.identified(mostRecent);
             }
 
             if (query.hasDirector()) {
@@ -179,9 +191,9 @@ public class TmdbMovieDataProvider implements MovieDataProvider, MovieEnricher {
             return pool; // no exact title match: do not guess
         }
 
-        // Several exact title (+year) matches. The film the user means is the one whose
-        // audience clearly dwarfs the rest (duplicates / shorts / fan entries have ~none).
-        return dominantByVotes(byTitle).<List<TmdbSearchResult>>map(List::of).orElse(byTitle);
+        // Several exact title (+ possibly year) matches: identify() resolves this by
+        // recency, falling back to vote dominance only within a shared release year.
+        return byTitle;
     }
 
     private static Optional<TmdbSearchResult> dominantByVotes(List<TmdbSearchResult> candidates) {
@@ -194,6 +206,40 @@ public class TmdbMovieDataProvider implements MovieDataProvider, MovieEnricher {
             return Optional.of(sorted.get(0));
         }
         return Optional.empty();
+    }
+
+    /**
+     * Among several exact-title matches spanning different years, tries the most recent
+     * year first, then works backward one year at a time. Within a shared year, several
+     * candidates are narrowed by vote dominance same as {@link #dominantByVotes}. A given
+     * director confirms that year's pick; a mismatch does not reject the film outright but
+     * moves on to try the next, older year instead — a Sitges premiere is essentially
+     * always the newest film sharing its title, never an older homonym. Candidates with no
+     * known release year are not considered here (handled by {@link #pickByDirector}
+     * afterwards). {@code null} when nothing is confirmed.
+     */
+    private Movie pickMostRecentConfirmed(MovieQuery query, List<TmdbSearchResult> pool) throws IOException {
+        Map<Integer, List<TmdbSearchResult>> byYear = pool.stream()
+                .filter(r -> r.releaseYear() != null)
+                .collect(Collectors.groupingBy(TmdbSearchResult::releaseYear, TreeMap::new, Collectors.toList()));
+
+        List<Integer> years = new ArrayList<>(byYear.keySet());
+        years.sort(Comparator.reverseOrder()); // most recent first
+
+        for (Integer year : years) {
+            List<TmdbSearchResult> sameYear = byYear.get(year);
+            TmdbSearchResult candidate = sameYear.size() == 1 ? sameYear.get(0)
+                    : dominantByVotes(sameYear).orElse(null);
+            if (candidate == null) {
+                continue;
+            }
+            Movie movie = loadMovie(candidate);
+            String directorName = movie.director() == null ? null : movie.director().name();
+            if (!query.hasDirector() || nameMatches(query.director(), directorName)) {
+                return movie;
+            }
+        }
+        return null;
     }
 
     private Movie pickByDirector(MovieQuery query, List<TmdbSearchResult> pool) throws IOException {
