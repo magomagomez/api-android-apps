@@ -51,7 +51,12 @@ import java.util.stream.Collectors;
  *       search alone can exclude the right film entirely while still returning enough
  *       wrong ones to look "found". If that leaves exactly one &rarr; IDENTIFIED;</li>
  *   <li>otherwise, the candidate whose audience vote count clearly dominates the rest
- *       (real release vs. duplicates / shorts / fan entries have ~none) &rarr; IDENTIFIED;</li>
+ *       (real release vs. duplicates / shorts / fan entries have ~none) &rarr; IDENTIFIED —
+ *       but only once a given director confirms it too; sheer popularity must never
+ *       override an explicit, non-matching director (a brand-new premiere sharing its
+ *       title with a far more popular older film is exactly this case — votes alone would
+ *       silently pick the wrong one). A mismatch here falls through to the steps below
+ *       instead of accepting it;</li>
  *   <li>if votes are not decisive and the remaining exact-title matches span different
  *       release years (typically because no year was given at all, or every candidate has
  *       too few votes to dominate — a brand-new premiere), try the most recent year first,
@@ -133,7 +138,14 @@ public class TmdbMovieDataProvider implements MovieDataProvider, MovieEnricher {
 
             Optional<TmdbSearchResult> dominant = dominantByVotes(pool);
             if (dominant.isPresent()) {
-                return MovieMatch.identified(loadMovie(dominant.get()));
+                Movie movie = loadMovie(dominant.get());
+                String directorName = movie.director() == null ? null : movie.director().name();
+                if (!query.hasDirector() || nameMatches(query.director(), directorName)) {
+                    return MovieMatch.identified(movie);
+                }
+                // Popularity alone must not override an explicit, non-matching director -
+                // e.g. a 2026 premiere sharing a title with a much more popular older film.
+                // Keep looking via the recency/director chain below.
             }
 
             Movie mostRecent = pickMostRecentConfirmed(query, pool);

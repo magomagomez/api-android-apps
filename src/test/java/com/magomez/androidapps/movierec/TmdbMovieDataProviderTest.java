@@ -217,6 +217,27 @@ class TmdbMovieDataProviderTest {
     }
 
     @Test
+    void voteDominanceNeverOverridesAGivenDirectorThatDoesNotMatch() throws Exception {
+        // real bug, found live: "Hope" (2026, Na Hong-jin) widened against a much more
+        // popular unrelated "Hope" (2013, a different director) - votes alone must not
+        // win over an explicit, non-matching director.
+        client.onSearch("Hope", 2026, search(
+                result(1, "Hope", "2026", 85),
+                result(3, "Hope", "2026", 0))); // another same-year homonym: narrow() can't resolve to 1
+        client.onSearch("Hope", null, search(
+                result(2, "Hope", "2013", 918), // far more popular, but the wrong film
+                result(1, "Hope", "2026", 85),
+                result(3, "Hope", "2026", 0)));
+        client.onDetails(1, details(1, "Na Hong-jin"));
+        client.onDetails(2, details(2, "Lee Jun-ik"));
+
+        MovieMatch match = provider.identify(new MovieQuery("Hope", 2026, "Na Hong-jin"));
+
+        assertThat(match.status()).isEqualTo(IdentificationStatus.IDENTIFIED);
+        assertThat(match.movie().tmdbId()).isEqualTo(1);
+    }
+
+    @Test
     void aYearScopedSearchThatExcludesTheRealFilmIsWidenedAndResolvedByVotes() throws Exception {
         // "Split" logged as 2016 on Letterboxd, but TMDB's own release_date for the real
         // Shyamalan film is 2017-01-19 - a year-scoped search never even sees it.
