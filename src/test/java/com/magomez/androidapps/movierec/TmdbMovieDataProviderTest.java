@@ -199,6 +199,25 @@ class TmdbMovieDataProviderTest {
     }
 
     @Test
+    void aYearScopedSearchThatExcludesTheRealFilmIsWidenedAndResolvedByVotes() throws Exception {
+        // "Split" logged as 2016 on Letterboxd, but TMDB's own release_date for the real
+        // Shyamalan film is 2017-01-19 - a year-scoped search never even sees it.
+        client.onSearch("Split", 2016, search(
+                result(1, "Split", "2016", 57),
+                result(2, "Split", "2016", 26)));
+        client.onSearch("Split", null, search(
+                result(3, "Split", "2017", 18641), // the real film, excluded above
+                result(1, "Split", "2016", 57),
+                result(2, "Split", "2016", 26)));
+        client.onDetails(3, details(3, null));
+
+        MovieMatch match = provider.identify(new MovieQuery("Split", 2016, null));
+
+        assertThat(match.status()).isEqualTo(IdentificationStatus.IDENTIFIED);
+        assertThat(match.movie().tmdbId()).isEqualTo(3);
+    }
+
+    @Test
     void whenTheMostRecentSameTitledFilmHasTheWrongDirectorItRetreatsToAnOlderYear() throws Exception {
         // no year given; the newest "Carrie" isn't by the requested director, so this
         // should retreat to the older one that is - never just take the newest blindly

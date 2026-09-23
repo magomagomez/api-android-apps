@@ -43,11 +43,20 @@ import java.util.stream.Collectors;
  *   <li>several results: keep those matching the requested year (when given); then keep
  *       those whose title or original title matches exactly;</li>
  *   <li>if that leaves exactly one &rarr; IDENTIFIED;</li>
- *   <li>if it still leaves several exact-title matches spanning different release years
- *       (typically because no year was given, or the requested one matched nothing), try
- *       the most recent year first, then the next, working backward: a same-titled older
- *       film should never win just for having accumulated more votes. Within a shared
- *       year, the candidate whose vote count clearly dominates wins that year. A given
+ *   <li>if a year was given and this still leaves more than one, broaden once more with a
+ *       year-less search and keep every exact-title match across <em>any</em> year:
+ *       TMDB's own release date for a film is often a year off from the one a person logs
+ *       it under (festival premiere vs. wide release spanning a year boundary is common —
+ *       e.g. "Split" is logged as 2016 but TMDB dates it 2017-01-19), so a year-scoped
+ *       search alone can exclude the right film entirely while still returning enough
+ *       wrong ones to look "found". If that leaves exactly one &rarr; IDENTIFIED;</li>
+ *   <li>otherwise, the candidate whose audience vote count clearly dominates the rest
+ *       (real release vs. duplicates / shorts / fan entries have ~none) &rarr; IDENTIFIED;</li>
+ *   <li>if votes are not decisive and the remaining exact-title matches span different
+ *       release years (typically because no year was given at all, or every candidate has
+ *       too few votes to dominate — a brand-new premiere), try the most recent year first,
+ *       then the next, working backward: a same-titled older film should not win by
+ *       default. Within a shared year, the vote-dominance check applies again. A given
  *       director confirms the pick at each year tried — a mismatch moves on to the next,
  *       older year instead of accepting a same-titled but wrong film; if a year's pick is
  *       confirmed (or no director was given) &rarr; IDENTIFIED;</li>
@@ -108,6 +117,18 @@ public class TmdbMovieDataProvider implements MovieDataProvider, MovieEnricher {
             List<TmdbSearchResult> pool = narrow(query, results);
             if (pool.size() == 1) {
                 return MovieMatch.identified(loadMovie(pool.get(0)));
+            }
+
+            if (query.hasYear()) {
+                pool = widenAcrossYears(query, results, pool);
+                if (pool.size() == 1) {
+                    return MovieMatch.identified(loadMovie(pool.get(0)));
+                }
+            }
+
+            Optional<TmdbSearchResult> dominant = dominantByVotes(pool);
+            if (dominant.isPresent()) {
+                return MovieMatch.identified(loadMovie(dominant.get()));
             }
 
             Movie mostRecent = pickMostRecentConfirmed(query, pool);
@@ -192,8 +213,35 @@ public class TmdbMovieDataProvider implements MovieDataProvider, MovieEnricher {
         }
 
         // Several exact title (+ possibly year) matches: identify() resolves this by
-        // recency, falling back to vote dominance only within a shared release year.
+        // vote dominance, then by recency.
         return byTitle;
+    }
+
+    /**
+     * When a year was given but {@link #narrow} still leaves more than one candidate,
+     * fetches a year-less search too and keeps every exact-title match across the union of
+     * both (deduped by TMDB id) — never re-applying the year filter, since the whole point
+     * is that it may be excluding the right film (see class doc). Returns the original
+     * {@code pool} unchanged if this doesn't find any exact-title match at all.
+     */
+    private List<TmdbSearchResult> widenAcrossYears(
+            MovieQuery query, List<TmdbSearchResult> yearScopedResults, List<TmdbSearchResult> pool)
+            throws IOException {
+        List<TmdbSearchResult> broadened = client.searchMovies(query.title(), null).resultsOrEmpty();
+        if (broadened.isEmpty()) {
+            return pool;
+        }
+        List<TmdbSearchResult> byTitleAnyYear = merge(yearScopedResults, broadened).stream()
+                .filter(r -> titleMatches(query.title(), r))
+                .toList();
+        return byTitleAnyYear.isEmpty() ? pool : byTitleAnyYear;
+    }
+
+    private static List<TmdbSearchResult> merge(List<TmdbSearchResult> base, List<TmdbSearchResult> extra) {
+        Map<Integer, TmdbSearchResult> byId = new java.util.LinkedHashMap<>();
+        base.forEach(r -> byId.put(r.id(), r));
+        extra.forEach(r -> byId.putIfAbsent(r.id(), r));
+        return List.copyOf(byId.values());
     }
 
     private static Optional<TmdbSearchResult> dominantByVotes(List<TmdbSearchResult> candidates) {
