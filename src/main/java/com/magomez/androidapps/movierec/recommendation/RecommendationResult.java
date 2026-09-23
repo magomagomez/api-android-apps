@@ -10,20 +10,22 @@ import java.util.Objects;
  * Outcome of the recommendation pipeline for one request.
  *
  * <ul>
- *   <li>{@link #recommendations} — every identified, unseen candidate, in <b>one</b> list,
- *       ordered by {@code PersonalMatchScore.estimatedValue()} descending. A candidate
+ *   <li>{@link #recommendations} — the <b>TOP {@value RecommendationService#TOP_N}</b>
+ *       (or fewer, when there aren't that many eligible candidates) in <b>one</b> list,
+ *       ordered by {@code PersonalMatchScore.estimatedValue()} descending — this is the
+ *       project's actual deliverable, not every identified, unseen candidate. A candidate
  *       with a trustworthy external QUALITY carries the confirmed PERSONAL MATCH SCORE
- *       ({@code PersonalMatchScore.value()}); one without still ranks — honestly, on the
- *       same scale, giving the unproven quality share zero credit rather than hiding the
- *       candidate below every quality-backed film, however weak. {@code status()} on each
- *       candidate's score says which is which — see {@link PersonalMatchScore};</li>
+ *       ({@code PersonalMatchScore.value()}); one without still competes for a place on
+ *       that same scale, giving the unproven quality share zero credit rather than
+ *       guessing it. {@code status()} on each candidate's score says which is which — see
+ *       {@link PersonalMatchScore};</li>
  *   <li>{@link #excluded} — {@code NOT_FOUND} / {@code AMBIGUOUS} / already watched / duplicate.</li>
  * </ul>
  *
  * <p>Temporary and immutable; never persisted.
  *
  * @param totalCandidates how many candidates the request contained
- * @param recommendations every scored candidate, {@code estimatedValue} descending
+ * @param recommendations the top {@value RecommendationService#TOP_N}, {@code estimatedValue} descending
  * @param excluded        candidates removed before ranking, in request order
  * @param profilePatterns the narrative taste patterns detected in the user's history
  */

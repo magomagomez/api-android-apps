@@ -107,6 +107,55 @@ class RecommendationServiceTest {
         return new LetterboxdLibrary(profile, Set.of(watchedTmdbIds));
     }
 
+    // --- the TOP 50 cap ------------------------------------------------------------
+
+    @Test
+    void onlyTheTopFiftyByEstimatedValueAreReturnedEvenWithManyMoreEligibleCandidates() {
+        int total = 60;
+        List<MovieQuery> queries = new java.util.ArrayList<>();
+        List<MovieIdentificationResult> results = new java.util.ArrayList<>();
+        for (int i = 0; i < total; i++) {
+            MovieQuery q = query("M" + i);
+            // same director/genre/actor/country everywhere (constant personal affinity);
+            // only the TMDB score varies, so estimatedValue increases strictly with i -
+            // old release date keeps the (irrelevant here) recency bonus out of the way.
+            Movie movie = new Movie(i, "tt" + i, "M" + i, "M" + i, "2000-01-01", 120, "o",
+                    List.of(Genre.of("Drama")), Director.of("Fav Director"),
+                    List.of(Actor.of("Fav Actor")), List.of(Country.of("France")), null,
+                    List.of(new Rating("TMDB", 1.0 + i / 10.0, 1000)));
+            queries.add(q);
+            results.add(MovieIdentificationResult.of(q, MovieMatch.identified(movie)));
+        }
+
+        RecommendationResult result = serviceWith(library(), qs -> results).recommend(queries);
+
+        assertThat(result.recommendations()).hasSize(50);
+        // highest-scored (M59..M10) make the cut, in descending order
+        assertThat(result.recommendations()).extracting(ScoredCandidate::title)
+                .containsExactly(
+                        java.util.stream.IntStream.range(10, total)
+                                .mapToObj(i -> "M" + i)
+                                .sorted(java.util.Comparator.comparingInt(
+                                        t -> -Integer.parseInt(t.substring(1))))
+                                .toArray(String[]::new));
+    }
+
+    @Test
+    void fewerThanFiftyEligibleCandidatesAreAllReturned() {
+        MovieQuery a = query("A");
+        MovieQuery b = query("B");
+        Movie movieA = movie(1, "A", "Fav Director", "Drama", "Fav Actor", "France", "2000-01-01", 8.0);
+        Movie movieB = movie(2, "B", "Fav Director", "Drama", "Fav Actor", "France", "2000-01-01", 7.0);
+
+        RecommendationResult result = serviceWith(library(),
+                qs -> List.of(
+                        MovieIdentificationResult.of(a, MovieMatch.identified(movieA)),
+                        MovieIdentificationResult.of(b, MovieMatch.identified(movieB))))
+                .recommend(List.of(a, b));
+
+        assertThat(result.recommendations()).hasSize(2);
+    }
+
     // --- the six required cases ------------------------------------------------
 
     @Test

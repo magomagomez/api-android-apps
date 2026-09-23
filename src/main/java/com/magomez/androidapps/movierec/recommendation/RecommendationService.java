@@ -32,7 +32,8 @@ import java.util.Set;
  *   → exclude candidates already in the Letterboxd library (by TMDB id, never by title)
  *   → collapse duplicate candidates that resolve to the same TMDB id
  *   → score with the current algorithm (QualityScore + PersonalAffinity + PersonalMatchScore)
- *   → rank by PersonalMatchScore.estimatedValue descending, in one list
+ *   → rank by PersonalMatchScore.estimatedValue descending
+ *   → keep the top {@value #TOP_N}
  * </pre>
  *
  * <p>This is <b>not</b> a movie-import endpoint: it only identifies candidates so it can
@@ -41,15 +42,20 @@ import java.util.Set;
  * no scraping, no TMDB discovery, no persistence: the Letterboxd library and every
  * intermediate object live only for the duration of the call.
  *
- * <p>Every scored candidate lands in {@link RecommendationResult#recommendations()} —
- * there is no separate "affinity-only" list. A candidate without a trustworthy QUALITY
- * still ranks, by {@code estimatedValue} (see {@link com.magomez.androidapps.movierec.scoring.PersonalMatchScore}),
- * instead of being hidden below every quality-backed film. {@code ranked()} /
- * {@code affinityOnly()} on the result are just filtered views for whoever wants the
- * distinction.
+ * <p>{@link RecommendationResult#recommendations()} is the TOP {@value #TOP_N} — the
+ * project's actual deliverable, not the whole eligible pool — in <b>one</b> list; there is
+ * no separate "affinity-only" list. A candidate without a trustworthy QUALITY still ranks,
+ * by {@code estimatedValue} (see {@link com.magomez.androidapps.movierec.scoring.PersonalMatchScore}),
+ * instead of being hidden below every quality-backed film — whether it made the cut is
+ * still decided on that one shared scale. {@code ranked()} / {@code affinityOnly()} on the
+ * result are just filtered views over those (at most) {@value #TOP_N} for whoever wants
+ * the distinction.
  */
 @Service
 public class RecommendationService {
+
+    /** The project's actual deliverable: a TOP 50, not the whole eligible pool. */
+    static final int TOP_N = 50;
 
     private static final Comparator<ScoredCandidate> BY_TITLE_THEN_ID =
             Comparator.<ScoredCandidate, String>comparing(ScoredCandidate::title,
@@ -155,7 +161,10 @@ public class RecommendationService {
                 externalCallExecutor.map(eligible, result -> score(result, profile, library)));
 
         recommendations.sort(BY_ESTIMATED_VALUE);
-        return new RecommendationResult(candidates.size(), recommendations, excluded, profile.patterns());
+        List<ScoredCandidate> topN = recommendations.size() > TOP_N
+                ? recommendations.subList(0, TOP_N)
+                : recommendations;
+        return new RecommendationResult(candidates.size(), topN, excluded, profile.patterns());
     }
 
     private ScoredCandidate score(MovieIdentificationResult result, UserTasteProfile profile,
