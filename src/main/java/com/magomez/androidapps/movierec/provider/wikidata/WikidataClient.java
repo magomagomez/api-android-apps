@@ -95,12 +95,31 @@ public class WikidataClient {
         this.userAgent = userAgent == null || userAgent.isBlank() ? DEFAULT_USER_AGENT : userAgent;
     }
 
+    /**
+     * A first-time ("cold") query for a given film is often genuinely slow on Wikidata's
+     * shared public endpoint — its own query planner / cache needs warming up (measured
+     * against the real service: 11.8s cold, then 0.1-0.3s for the identical query right
+     * after) — which is exactly the kind of one-off cost {@link #httpClient}'s short
+     * timeout is tuned to reject rather than wait out. So a failed attempt is retried
+     * once immediately: the retry almost always lands on Wikidata's now-warm plan and
+     * succeeds fast, instead of this film paying the same cold-query tax again on every
+     * later request within the process's lifetime. Still bounded — never more than one
+     * retry, never a loop — so a genuinely unreachable endpoint still fails fast.
+     */
     public List<WikidataAward> awardsForImdbId(String imdbId) throws IOException {
         List<WikidataAward> cached = cache.get(imdbId);
         if (cached != null) {
             return cached;
         }
 
+        try {
+            return fetch(imdbId);
+        } catch (IOException firstAttempt) {
+            return fetch(imdbId);
+        }
+    }
+
+    private List<WikidataAward> fetch(String imdbId) throws IOException {
         HttpUrl parsed = HttpUrl.parse(endpoint);
         if (parsed == null) {
             throw new IllegalStateException("Invalid Wikidata endpoint: " + endpoint);

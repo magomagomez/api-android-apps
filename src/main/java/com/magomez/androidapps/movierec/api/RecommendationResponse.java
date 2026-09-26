@@ -13,18 +13,22 @@ import java.util.List;
  * tangible, human-facing facts (a poster, per-source ratings, real festival selections,
  * a plain-language reason) over the raw internals of how the score was computed.
  *
- * @param summary         counts for the whole request
- * @param recommendations every identified, unseen candidate, in <b>one</b> list ordered by
- *                        {@code personalMatchScore} descending
- * @param excluded        every candidate removed before ranking, with the reason
+ * @param summary                  counts for the whole request
+ * @param recommendations          the general list, ordered by {@code personalMatchScore} descending
+ * @param scheduleRecommendations  the same ranking restricted to films the festival
+ *                                 programme places at a convenient time — a film missing
+ *                                 from {@code screenings} here never appears in this list
+ * @param excluded                 every candidate removed before ranking, with the reason
  */
 public record RecommendationResponse(
         Summary summary,
         List<RecommendationItem> recommendations,
+        List<RecommendationItem> scheduleRecommendations,
         List<ExcludedItem> excluded) {
 
     public RecommendationResponse {
         recommendations = recommendations == null ? List.of() : List.copyOf(recommendations);
+        scheduleRecommendations = scheduleRecommendations == null ? List.of() : List.copyOf(scheduleRecommendations);
         excluded = excluded == null ? List.of() : List.copyOf(excluded);
     }
 
@@ -89,6 +93,8 @@ public record RecommendationResponse(
      * @param reasons              the structured facts behind the recommendation, in plain language
      * @param recommendationReason the composed, deterministic explanation
      * @param note                 optional diagnostic (e.g. a partial enrichment failure)
+     * @param screenings           when/where the festival screens this film, empty when it
+     *                             isn't in the programme (never guessed)
      */
     public record RecommendationItem(
             int position,
@@ -108,7 +114,8 @@ public record RecommendationResponse(
             List<String> accoladeHighlights,
             List<String> reasons,
             String recommendationReason,
-            String note) {
+            String note,
+            List<ScreeningView> screenings) {
 
         public RecommendationItem {
             actors = actors == null ? List.of() : List.copyOf(actors);
@@ -117,6 +124,34 @@ public record RecommendationResponse(
             festivalRecognition = festivalRecognition == null ? List.of() : List.copyOf(festivalRecognition);
             accoladeHighlights = accoladeHighlights == null ? List.of() : List.copyOf(accoladeHighlights);
             reasons = reasons == null ? List.of() : List.copyOf(reasons);
+            screenings = screenings == null ? List.of() : List.copyOf(screenings);
+        }
+    }
+
+    /**
+     * One festival screening of a recommended film — same shape as
+     * {@link ScheduleResponse.SessionView} plus the date, since a recommendation isn't
+     * scoped to a single day the way a calendar request is.
+     *
+     * @param date         ISO date, e.g. {@code "2026-10-12"}
+     * @param startTime    {@code "HH:mm"}
+     * @param endTime      {@code "HH:mm"}, or {@code null} when the programme doesn't say
+     * @param location     venue/room name, or {@code null} when the programme doesn't say
+     * @param convenient   whether this slot is realistically attendable (see
+     *                     {@link com.magomez.androidapps.movierec.schedule.SchedulePriority})
+     * @param doubleBill   {@code true} when this is a double bill / marathon (more than one
+     *                     film in {@code sessionFilms})
+     * @param sessionFilms every film playing in this same physical session, including this
+     *                     film itself — attending means watching all of them
+     * @param pageUrl      the film's own page on the festival's website, or {@code null}
+     *                     when the catalogue didn't resolve one
+     */
+    public record ScreeningView(
+            String date, String startTime, String endTime, String location, boolean convenient,
+            boolean doubleBill, List<String> sessionFilms, String pageUrl) {
+
+        public ScreeningView {
+            sessionFilms = sessionFilms == null ? List.of() : List.copyOf(sessionFilms);
         }
     }
 

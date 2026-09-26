@@ -4,7 +4,9 @@ import com.magomez.androidapps.movierec.model.IdentificationStatus;
 import com.magomez.androidapps.movierec.model.Movie;
 import com.magomez.androidapps.movierec.model.MovieIdentificationResult;
 import com.magomez.androidapps.movierec.model.MovieQuery;
+import com.magomez.androidapps.movierec.model.FilmScreening;
 import com.magomez.androidapps.movierec.provider.AggregatingAccoladeProvider;
+import com.magomez.androidapps.movierec.schedule.ScheduleService;
 import com.magomez.androidapps.movierec.scoring.PersonalMatchScore;
 import com.magomez.androidapps.movierec.scoring.PersonalMatchScoreCalculator;
 import com.magomez.androidapps.movierec.scoring.UserTasteProfile;
@@ -31,6 +33,7 @@ import java.util.Set;
  *   → exclude NOT_FOUND / AMBIGUOUS
  *   → exclude candidates already in the Letterboxd library (by TMDB id, never by title)
  *   → collapse duplicate candidates that resolve to the same TMDB id
+ *   → exclude animation / documentary / short film (see ContentFormatFilter)
  *   → score with the current algorithm (QualityScore + PersonalAffinity + PersonalMatchScore)
  *   → rank by PersonalMatchScore.estimatedValue descending
  *   → keep the top {@value #TOP_N}
@@ -42,14 +45,20 @@ import java.util.Set;
  * no scraping, no TMDB discovery, no persistence: the Letterboxd library and every
  * intermediate object live only for the duration of the call.
  *
- * <p>{@link RecommendationResult#recommendations()} is the TOP {@value #TOP_N} — the
- * project's actual deliverable, not the whole eligible pool — in <b>one</b> list; there is
- * no separate "affinity-only" list. A candidate without a trustworthy QUALITY still ranks,
- * by {@code estimatedValue} (see {@link com.magomez.androidapps.movierec.scoring.PersonalMatchScore}),
- * instead of being hidden below every quality-backed film — whether it made the cut is
- * still decided on that one shared scale. {@code ranked()} / {@code affinityOnly()} on the
- * result are just filtered views over those (at most) {@value #TOP_N} for whoever wants
- * the distinction.
+ * <p>{@link RecommendationResult#recommendations()} is the general TOP {@value #TOP_N} — the
+ * project's actual deliverable, not the whole eligible pool. A candidate without a
+ * trustworthy QUALITY still ranks, by {@code estimatedValue} (see
+ * {@link com.magomez.androidapps.movierec.scoring.PersonalMatchScore}), instead of being
+ * hidden below every quality-backed film — whether it made the cut is still decided on
+ * that one shared scale. {@code ranked()} / {@code affinityOnly()} on the result are just
+ * filtered views over those (at most) {@value #TOP_N} for whoever wants the distinction.
+ *
+ * <p>{@link RecommendationResult#scheduleRecommendations()} is a second TOP
+ * {@value #TOP_N}, drawn from the same scored pool but restricted first to candidates the
+ * festival programme actually places at a convenient time
+ * ({@link com.magomez.androidapps.movierec.schedule.SchedulePriority#isConvenient}) — a
+ * film with no matching screening, or only an inconvenient one, never appears there even
+ * if its {@code estimatedValue} would have earned it a place in the general list.
  */
 @Service
 public class RecommendationService {
@@ -85,6 +94,7 @@ public class RecommendationService {
     private final AccoladeSignalCalculator accoladeSignalCalculator;
     private final RecommendationReasoner recommendationReasoner;
     private final ExternalCallExecutor externalCallExecutor;
+    private final ScheduleService scheduleService;
 
     public RecommendationService(MovieImportService movieImportService,
                                  LetterboxdLibraryLoader letterboxdLibraryLoader,
@@ -93,7 +103,8 @@ public class RecommendationService {
                                  AggregatingAccoladeProvider accoladeProvider,
                                  AccoladeSignalCalculator accoladeSignalCalculator,
                                  RecommendationReasoner recommendationReasoner,
-                                 ExternalCallExecutor externalCallExecutor) {
+                                 ExternalCallExecutor externalCallExecutor,
+                                 ScheduleService scheduleService) {
         this.movieImportService = movieImportService;
         this.letterboxdLibraryLoader = letterboxdLibraryLoader;
         this.personalMatchScoreCalculator = personalMatchScoreCalculator;
@@ -102,6 +113,7 @@ public class RecommendationService {
         this.accoladeSignalCalculator = accoladeSignalCalculator;
         this.recommendationReasoner = recommendationReasoner;
         this.externalCallExecutor = externalCallExecutor;
+        this.scheduleService = scheduleService;
     }
 
     /**
@@ -151,6 +163,12 @@ public class RecommendationService {
                 continue;
             }
 
+            String excludedFormat = ContentFormatFilter.excludedFormatReason(result.match().movie());
+            if (excludedFormat != null) {
+                excluded.add(ExcludedCandidate.unwantedFormat(title, tmdbId, excludedFormat));
+                continue;
+            }
+
             eligible.add(result);
         }
 
@@ -161,10 +179,18 @@ public class RecommendationService {
                 externalCallExecutor.map(eligible, result -> score(result, profile, library)));
 
         recommendations.sort(BY_ESTIMATED_VALUE);
-        List<ScoredCandidate> topN = recommendations.size() > TOP_N
-                ? recommendations.subList(0, TOP_N)
-                : recommendations;
-        return new RecommendationResult(candidates.size(), topN, excluded, profile.patterns());
+        List<ScoredCandidate> topN = topN(recommendations);
+
+        List<ScoredCandidate> scheduleEligible = recommendations.stream()
+                .filter(ScoredCandidate::hasConvenientScreening)
+                .toList();
+        List<ScoredCandidate> scheduleTopN = topN(scheduleEligible);
+
+        return new RecommendationResult(candidates.size(), topN, scheduleTopN, excluded, profile.patterns());
+    }
+
+    private static List<ScoredCandidate> topN(List<ScoredCandidate> sorted) {
+        return sorted.size() > TOP_N ? List.copyOf(sorted.subList(0, TOP_N)) : sorted;
     }
 
     private ScoredCandidate score(MovieIdentificationResult result, UserTasteProfile profile,
@@ -176,8 +202,18 @@ public class RecommendationService {
         SimilaritySignal similaritySignal = similaritySignalCalculator.calculate(movie, library);
         RecommendationReason reason = recommendationReasoner.explain(
                 movie, profile, score, similaritySignal, library);
+        List<FilmScreening> screenings = screeningsOf(result.query().title());
         return new ScoredCandidate(result.query().title(), movie, score, similaritySignal,
-                accoladeSignal, reason, result.enrichmentError());
+                accoladeSignal, reason, result.enrichmentError(), screenings);
+    }
+
+    /** Never lets a schedule lookup failure break scoring — an empty list just means "not found". */
+    private List<FilmScreening> screeningsOf(String title) {
+        try {
+            return scheduleService.screeningsOf(title);
+        } catch (IOException e) {
+            return List.of();
+        }
     }
 
     private LetterboxdLibrary loadLibrary() {

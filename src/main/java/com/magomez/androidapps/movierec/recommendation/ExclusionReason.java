@@ -18,5 +18,11 @@ public enum ExclusionReason {
     ALREADY_WATCHED,
 
     /** Another candidate in the same request already resolved to this TMDB id. */
-    DUPLICATE_CANDIDATE
+    DUPLICATE_CANDIDATE,
+
+    /**
+     * A deliberate personal preference, not a data problem: animation, documentary or
+     * short film. See {@code ContentFormatFilter}.
+     */
+    UNWANTED_FORMAT
 }

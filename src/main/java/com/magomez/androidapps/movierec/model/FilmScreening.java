@@ -24,10 +24,13 @@ import java.util.Objects;
  *                      different from {@code title} (e.g. a festival markets a film
  *                      internationally under one name but its native title is another —
  *                      a requester may know it by either); {@code null} when there isn't one
+ * @param pageUrl       the film's own page on the festival's website, or {@code null} when
+ *                      the catalogue doesn't give one (e.g. the film only resolved via the
+ *                      session's own display name, never the films catalogue)
  */
 public record FilmScreening(
         String title, LocalDate date, LocalTime startTime, LocalTime endTime, String location,
-        List<String> sessionFilms, String originalTitle) {
+        List<String> sessionFilms, String originalTitle, String pageUrl) {
 
     public FilmScreening {
         Objects.requireNonNull(title, "title");
@@ -36,14 +39,20 @@ public record FilmScreening(
         sessionFilms = (sessionFilms == null || sessionFilms.isEmpty()) ? List.of(title) : List.copyOf(sessionFilms);
     }
 
-    /** Backward-compatible constructor: no separate original-language title. */
+    /** Backward-compatible constructor: no page URL. */
+    public FilmScreening(String title, LocalDate date, LocalTime startTime, LocalTime endTime, String location,
+                          List<String> sessionFilms, String originalTitle) {
+        this(title, date, startTime, endTime, location, sessionFilms, originalTitle, null);
+    }
+
+    /** Backward-compatible constructor: no separate original-language title or page URL. */
     public FilmScreening(String title, LocalDate date, LocalTime startTime, LocalTime endTime, String location,
                           List<String> sessionFilms) {
-        this(title, date, startTime, endTime, location, sessionFilms, null);
+        this(title, date, startTime, endTime, location, sessionFilms, null, null);
     }
 
     /** Backward-compatible constructor for a solo screening (its own single-film session). */
     public FilmScreening(String title, LocalDate date, LocalTime startTime, LocalTime endTime, String location) {
-        this(title, date, startTime, endTime, location, List.of(title), null);
+        this(title, date, startTime, endTime, location, List.of(title), null, null);
     }
 }

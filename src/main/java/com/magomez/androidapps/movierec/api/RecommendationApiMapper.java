@@ -1,6 +1,7 @@
 package com.magomez.androidapps.movierec.api;
 
 import com.magomez.androidapps.movierec.model.Actor;
+import com.magomez.androidapps.movierec.model.FilmScreening;
 import com.magomez.androidapps.movierec.model.Genre;
 import com.magomez.androidapps.movierec.model.Movie;
 import com.magomez.androidapps.movierec.model.MovieQuery;
@@ -10,10 +11,12 @@ import com.magomez.androidapps.movierec.recommendation.ExcludedCandidate;
 import com.magomez.androidapps.movierec.recommendation.ExclusionReason;
 import com.magomez.androidapps.movierec.recommendation.RecommendationResult;
 import com.magomez.androidapps.movierec.recommendation.ScoredCandidate;
+import com.magomez.androidapps.movierec.schedule.SchedulePriority;
 import com.magomez.androidapps.movierec.scoring.PersonalMatchScore;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +35,8 @@ public final class RecommendationApiMapper {
     /** Native scale of each rating source we currently know, for display only. */
     private static final Map<String, Integer> RATING_SCALE = Map.of(
             "TMDB", 10, "IMDb", 10, "Rotten Tomatoes", 100, "Metacritic", 100);
+
+    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm");
 
     private RecommendationApiMapper() {
     }
@@ -53,9 +58,6 @@ public final class RecommendationApiMapper {
     }
 
     public static RecommendationResponse toResponse(RecommendationResult result) {
-        List<RecommendationResponse.RecommendationItem> recommendations =
-                new ArrayList<>(result.recommendations().size());
-        int position = 1;
         int withQuality = 0;
         int withCompletePms = 0;
         for (ScoredCandidate candidate : result.recommendations()) {
@@ -66,8 +68,11 @@ public final class RecommendationApiMapper {
             if (score.isComplete()) {
                 withCompletePms++;
             }
-            recommendations.add(toRecommendationItem(position++, candidate));
         }
+
+        List<RecommendationResponse.RecommendationItem> recommendations = toItems(result.recommendations());
+        List<RecommendationResponse.RecommendationItem> scheduleRecommendations =
+                toItems(result.scheduleRecommendations());
 
         List<RecommendationResponse.ExcludedItem> excluded = result.excluded().stream()
                 .map(RecommendationApiMapper::toExcludedItem)
@@ -86,7 +91,16 @@ public final class RecommendationApiMapper {
                 withQuality,
                 withCompletePms);
 
-        return new RecommendationResponse(summary, recommendations, excluded);
+        return new RecommendationResponse(summary, recommendations, scheduleRecommendations, excluded);
+    }
+
+    private static List<RecommendationResponse.RecommendationItem> toItems(List<ScoredCandidate> candidates) {
+        List<RecommendationResponse.RecommendationItem> items = new ArrayList<>(candidates.size());
+        int position = 1;
+        for (ScoredCandidate candidate : candidates) {
+            items.add(toRecommendationItem(position++, candidate));
+        }
+        return items;
     }
 
     private static RecommendationResponse.RecommendationItem toRecommendationItem(
@@ -119,7 +133,22 @@ public final class RecommendationApiMapper {
                 candidate.reason().text(),
                 candidate.enrichmentError() == null
                         ? null
-                        : "partial enrichment failure: " + candidate.enrichmentError());
+                        : "partial enrichment failure: " + candidate.enrichmentError(),
+                candidate.screenings().stream()
+                        .map(RecommendationApiMapper::toScreeningView)
+                        .toList());
+    }
+
+    private static RecommendationResponse.ScreeningView toScreeningView(FilmScreening screening) {
+        return new RecommendationResponse.ScreeningView(
+                screening.date().toString(),
+                screening.startTime().format(TIME),
+                screening.endTime() == null ? null : screening.endTime().format(TIME),
+                screening.location(),
+                SchedulePriority.isConvenient(screening.date(), screening.startTime()),
+                screening.sessionFilms().size() > 1,
+                screening.sessionFilms(),
+                screening.pageUrl());
     }
 
     private static RecommendationResponse.RatingView toRatingView(Rating rating) {

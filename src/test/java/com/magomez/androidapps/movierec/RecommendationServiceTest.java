@@ -9,6 +9,7 @@ import com.magomez.androidapps.movierec.model.MovieIdentificationResult;
 import com.magomez.androidapps.movierec.model.MovieMatch;
 import com.magomez.androidapps.movierec.model.MovieQuery;
 import com.magomez.androidapps.movierec.model.Rating;
+import com.magomez.androidapps.movierec.model.FilmScreening;
 import com.magomez.androidapps.movierec.provider.MovieDataProvider;
 import com.magomez.androidapps.movierec.provider.MovieProviderException;
 import com.magomez.androidapps.movierec.recommendation.ExclusionReason;
@@ -16,6 +17,7 @@ import com.magomez.androidapps.movierec.recommendation.RecommendationReasoner;
 import com.magomez.androidapps.movierec.recommendation.RecommendationResult;
 import com.magomez.androidapps.movierec.recommendation.RecommendationService;
 import com.magomez.androidapps.movierec.recommendation.ScoredCandidate;
+import com.magomez.androidapps.movierec.schedule.ScheduleService;
 import com.magomez.androidapps.movierec.scoring.PersonalAffinityCalculator;
 import com.magomez.androidapps.movierec.scoring.PersonalMatchScoreCalculator;
 import com.magomez.androidapps.movierec.scoring.QualityScoreCalculator;
@@ -63,9 +65,24 @@ class RecommendationServiceTest {
         }
     };
 
+    /** No film is ever scheduled — every {@code scheduleRecommendations} list stays empty. */
+    private static final ScheduleService NO_SCREENINGS = new ScheduleService(null) {
+        @Override
+        public List<FilmScreening> screeningsOf(String title) {
+            return List.of();
+        }
+    };
+
     private RecommendationService serviceWith(
             LetterboxdLibrary library,
             Function<List<MovieQuery>, List<MovieIdentificationResult>> identify) {
+        return serviceWith(library, identify, NO_SCREENINGS);
+    }
+
+    private RecommendationService serviceWith(
+            LetterboxdLibrary library,
+            Function<List<MovieQuery>, List<MovieIdentificationResult>> identify,
+            ScheduleService scheduleService) {
 
         MovieImportService importStub = new MovieImportService(UNUSED_PROVIDER, List.of()) {
             @Override
@@ -89,7 +106,8 @@ class RecommendationServiceTest {
                 new com.magomez.androidapps.movierec.provider.AggregatingAccoladeProvider(List.of()),
                 new com.magomez.androidapps.movierec.recommendation.AccoladeSignalCalculator(),
                 new RecommendationReasoner(),
-                com.magomez.androidapps.movierec.support.ExternalCallExecutor.sequential());
+                com.magomez.androidapps.movierec.support.ExternalCallExecutor.sequential(),
+                scheduleService);
     }
 
     private static Movie movie(int tmdbId, String title, String director, String genre,
@@ -154,6 +172,67 @@ class RecommendationServiceTest {
                 .recommend(List.of(a, b));
 
         assertThat(result.recommendations()).hasSize(2);
+    }
+
+    // --- the schedule-filtered list --------------------------------------------
+
+    /** Screens {@code title} at a fixed, deliberately convenient slot: Saturday, any time. */
+    private static ScheduleService scheduleServiceWith(java.util.Map<String, java.util.List<FilmScreening>> byTitle) {
+        return new ScheduleService(null) {
+            @Override
+            public List<FilmScreening> screeningsOf(String title) {
+                return byTitle.getOrDefault(title, List.of());
+            }
+        };
+    }
+
+    @Test
+    void aFilmWithNoScreeningAtAllNeverEntersTheScheduleList() {
+        MovieQuery q = query("Sour Minnows");
+        Movie m = movie(1, "Sour Minnows", "Fav Director", "Drama", "Fav Actor", "France", "2000-01-01", 8.0);
+
+        RecommendationResult result = serviceWith(library(),
+                qs -> List.of(MovieIdentificationResult.of(q, MovieMatch.identified(m))),
+                scheduleServiceWith(java.util.Map.of()))
+                .recommend(List.of(q));
+
+        assertThat(result.recommendations()).extracting(ScoredCandidate::title).containsExactly("Sour Minnows");
+        assertThat(result.scheduleRecommendations()).isEmpty();
+    }
+
+    @Test
+    void aFilmOnlyScreeningAtAnInconvenientTimeNeverEntersTheScheduleList() {
+        MovieQuery q = query("Weekday Matinee");
+        Movie m = movie(1, "Weekday Matinee", "Fav Director", "Drama", "Fav Actor", "France", "2000-01-01", 8.0);
+        // a Tuesday at noon - never convenient (see SchedulePriority)
+        FilmScreening screening = new FilmScreening("Weekday Matinee",
+                java.time.LocalDate.of(2026, 10, 13), java.time.LocalTime.of(12, 0), null, "Auditori");
+
+        RecommendationResult result = serviceWith(library(),
+                qs -> List.of(MovieIdentificationResult.of(q, MovieMatch.identified(m))),
+                scheduleServiceWith(java.util.Map.of("Weekday Matinee", List.of(screening))))
+                .recommend(List.of(q));
+
+        assertThat(result.scheduleRecommendations()).isEmpty();
+    }
+
+    @Test
+    void aFilmWithAConvenientScreeningEntersBothListsCarryingItsScreening() {
+        MovieQuery q = query("Saturday Premiere");
+        Movie m = movie(1, "Saturday Premiere", "Fav Director", "Drama", "Fav Actor", "France", "2000-01-01", 8.0);
+        // a Saturday - always convenient
+        FilmScreening screening = new FilmScreening("Saturday Premiere",
+                java.time.LocalDate.of(2026, 10, 10), java.time.LocalTime.of(11, 0), null, "Auditori");
+
+        RecommendationResult result = serviceWith(library(),
+                qs -> List.of(MovieIdentificationResult.of(q, MovieMatch.identified(m))),
+                scheduleServiceWith(java.util.Map.of("Saturday Premiere", List.of(screening))))
+                .recommend(List.of(q));
+
+        assertThat(result.recommendations()).extracting(ScoredCandidate::title).containsExactly("Saturday Premiere");
+        assertThat(result.scheduleRecommendations()).extracting(ScoredCandidate::title)
+                .containsExactly("Saturday Premiere");
+        assertThat(result.scheduleRecommendations().get(0).screenings()).containsExactly(screening);
     }
 
     // --- the six required cases ------------------------------------------------
@@ -282,6 +361,68 @@ class RecommendationServiceTest {
         });
     }
 
+    // --- the content-format filter (animation / documentary / short film) -----------
+
+    @Test
+    void anAnimatedFilmIsExcludedRegardlessOfHowWellItMatchesTheProfile() {
+        MovieQuery q = query("Perfect Match Cartoon");
+        Movie m = movie(1, "Perfect Match Cartoon", "Fav Director", "Animación", "Fav Actor",
+                "France", "2026-01-01", 8.0);
+
+        RecommendationResult result = serviceWith(library(),
+                queries -> List.of(MovieIdentificationResult.of(q, MovieMatch.identified(m))))
+                .recommend(List.of(q));
+
+        assertThat(result.recommendations()).isEmpty();
+        assertThat(result.excluded()).singleElement().satisfies(e -> {
+            assertThat(e.reason()).isEqualTo(ExclusionReason.UNWANTED_FORMAT);
+            assertThat(e.title()).isEqualTo("Perfect Match Cartoon");
+        });
+    }
+
+    @Test
+    void aDocumentaryIsExcluded() {
+        MovieQuery q = query("Doc");
+        Movie m = movie(1, "Doc", "Fav Director", "Documental", "Fav Actor",
+                "France", "2026-01-01", 8.0);
+
+        RecommendationResult result = serviceWith(library(),
+                queries -> List.of(MovieIdentificationResult.of(q, MovieMatch.identified(m))))
+                .recommend(List.of(q));
+
+        assertThat(result.excluded()).singleElement()
+                .satisfies(e -> assertThat(e.reason()).isEqualTo(ExclusionReason.UNWANTED_FORMAT));
+    }
+
+    @Test
+    void aFilmOfFortyMinutesOrLessIsExcludedAsAShort() {
+        MovieQuery q = query("Short");
+        Movie m = new Movie(1, "tt1", "Short", "Short", "2026-01-01", 15, "o",
+                List.of(Genre.of("Drama")), Director.of("Fav Director"), List.of(Actor.of("Fav Actor")),
+                List.of(Country.of("France")), null, List.of(new Rating("TMDB", 8.0, 1000)));
+
+        RecommendationResult result = serviceWith(library(),
+                queries -> List.of(MovieIdentificationResult.of(q, MovieMatch.identified(m))))
+                .recommend(List.of(q));
+
+        assertThat(result.excluded()).singleElement()
+                .satisfies(e -> assertThat(e.reason()).isEqualTo(ExclusionReason.UNWANTED_FORMAT));
+    }
+
+    @Test
+    void aRegularFeatureFilmIsNotAffectedByTheFormatFilter() {
+        MovieQuery q = query("Feature");
+        Movie m = movie(1, "Feature", "Fav Director", "Drama", "Fav Actor",
+                "France", "2026-01-01", 8.0);
+
+        RecommendationResult result = serviceWith(library(),
+                queries -> List.of(MovieIdentificationResult.of(q, MovieMatch.identified(m))))
+                .recommend(List.of(q));
+
+        assertThat(result.excluded()).isEmpty();
+        assertThat(result.recommendations()).extracting(ScoredCandidate::title).containsExactly("Feature");
+    }
+
     @Test
     void rankingIsOrderedByPersonalMatchScoreDescending() {
         MovieQuery high = query("High Match");
@@ -398,7 +539,7 @@ class RecommendationServiceTest {
             }
         };
         RecommendationService service = new RecommendationService(
-                null, notReadyYet, null, null, null, null, null, null);
+                null, notReadyYet, null, null, null, null, null, null, null);
 
         assertThat(service.isReady()).isFalse();
     }

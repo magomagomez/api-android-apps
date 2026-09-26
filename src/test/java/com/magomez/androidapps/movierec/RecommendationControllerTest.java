@@ -59,7 +59,7 @@ class RecommendationControllerTest {
 
     @BeforeEach
     void setUp() {
-        RecommendationService stub = new RecommendationService(null, null, null, null, null, null, null, null) {
+        RecommendationService stub = new RecommendationService(null, null, null, null, null, null, null, null, null) {
             @Override
             public boolean isReady() {
                 return ready;

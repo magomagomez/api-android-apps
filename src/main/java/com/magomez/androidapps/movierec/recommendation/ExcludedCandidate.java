@@ -46,4 +46,8 @@ public record ExcludedCandidate(
         return new ExcludedCandidate(title, tmdbId, ExclusionReason.DUPLICATE_CANDIDATE, List.of(),
                 "another candidate in this request resolves to the same TMDB id");
     }
+
+    public static ExcludedCandidate unwantedFormat(String title, Integer tmdbId, String reason) {
+        return new ExcludedCandidate(title, tmdbId, ExclusionReason.UNWANTED_FORMAT, List.of(), reason);
+    }
 }

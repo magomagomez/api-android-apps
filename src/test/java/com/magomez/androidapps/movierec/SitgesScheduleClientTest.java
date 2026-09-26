@@ -182,6 +182,35 @@ class SitgesScheduleClientTest {
     }
 
     @Test
+    void resolvesTheFilmsOwnPageUrlFromTheCatalogue() throws IOException {
+        manifestWithOnePage();
+        responses.put("/api/v1/se/films/2026/films/manifest",
+                "{\"pages\":[{\"url\":\"" + baseUrl() + "/public/api/se/films/2026/films.json\"}]}");
+        responses.put("/public/api/se/films/2026/films.json", "{\"films\":["
+                + "{\"id\":\"14307-film\",\"international_title\":\"Full Phil\","
+                + "\"url\":{\"es\":\"/es/film/2026/full-phil\"}}]}");
+        responses.put("/public/api/se/films/2026/sessions.json", "{\"sessions\":[{"
+                + "\"name\":{\"es\":\"Full Phil\"},\"start_date\":\"2026-10-09T19:00:00\","
+                + "\"locations\":[],\"films\":[\"14307-film\"]}]}");
+
+        List<FilmScreening> screenings = client().screenings();
+
+        assertThat(screenings).singleElement().satisfies(s ->
+                assertThat(s.pageUrl()).isEqualTo(baseUrl() + "/es/film/2026/full-phil"));
+    }
+
+    @Test
+    void aFilmResolvedOnlyThroughTheSessionsOwnNameHasNoPageUrl() throws IOException {
+        manifestWithOnePage();
+        responses.put("/public/api/se/films/2026/sessions.json", "{\"sessions\":[{"
+                + "\"name\":{\"es\":\"Buddy\"},\"start_date\":\"2026-10-09T19:00:00\",\"locations\":[]}]}");
+
+        List<FilmScreening> screenings = client().screenings();
+
+        assertThat(screenings).singleElement().satisfies(s -> assertThat(s.pageUrl()).isNull());
+    }
+
+    @Test
     void aFailingVenueLookupLeavesLocationNull() throws IOException {
         statusCodes.put("/public/api/films/locations.json", 500);
         manifestWithOnePage();

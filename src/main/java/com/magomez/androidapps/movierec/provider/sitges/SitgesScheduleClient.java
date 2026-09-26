@@ -148,7 +148,7 @@ public class SitgesScheduleClient implements ScheduleSource {
             // own display name so the session isn't silently dropped.
             String fallback = session.name() == null ? null : session.name().get("es");
             if (fallback != null && !fallback.isBlank()) {
-                resolved.add(new FilmTitle(fallback.trim(), null));
+                resolved.add(new FilmTitle(fallback.trim(), null, null));
             }
         }
 
@@ -156,7 +156,7 @@ public class SitgesScheduleClient implements ScheduleSource {
         List<FilmScreening> screenings = new ArrayList<>(resolved.size());
         for (FilmTitle title : resolved) {
             screenings.add(new FilmScreening(title.display(), start.toLocalDate(), start.toLocalTime(),
-                    end == null ? null : end.toLocalTime(), location, sessionFilms, title.original()));
+                    end == null ? null : end.toLocalTime(), location, sessionFilms, title.original(), title.pageUrl()));
         }
         return screenings;
     }
@@ -213,7 +213,9 @@ public class SitgesScheduleClient implements ScheduleSource {
                 if (original != null && (original.isEmpty() || original.equalsIgnoreCase(display))) {
                     original = null;
                 }
-                map.put(film.id(), new FilmTitle(display, original));
+                String relativeUrl = film.url() == null ? null : film.url().get("es");
+                String filmPageUrl = relativeUrl == null || relativeUrl.isBlank() ? null : baseUrl + relativeUrl;
+                map.put(film.id(), new FilmTitle(display, original, filmPageUrl));
             }
             return map;
         } catch (IOException e) {
@@ -283,10 +285,14 @@ public class SitgesScheduleClient implements ScheduleSource {
             String id,
             @JsonProperty("international_title") String internationalTitle,
             @JsonProperty("original_title") String originalTitle,
-            Map<String, String> title) {
+            Map<String, String> title,
+            Map<String, String> url) {
     }
 
-    /** A film's display name plus its native-language name, when the catalogue gives a different one. */
-    private record FilmTitle(String display, String original) {
+    /**
+     * A film's display name plus its native-language name (when the catalogue gives a
+     * different one) and its own page on the festival's website.
+     */
+    private record FilmTitle(String display, String original, String pageUrl) {
     }
 }

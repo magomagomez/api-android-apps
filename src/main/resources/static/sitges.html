@@ -247,6 +247,43 @@
     letter-spacing: .04em;
   }
 
+  .tabs {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: 1.1rem;
+  }
+
+  .tab {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: .85rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: .5rem 1.1rem;
+    cursor: pointer;
+    color: var(--ink-soft);
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+  }
+
+  .tab-count {
+    font-family: var(--font-mono);
+    margin-left: .3rem;
+    opacity: .8;
+  }
+
+  .tab-hint {
+    font-size: .82rem;
+    color: var(--ink-soft);
+    margin: -.4rem 0 1.1rem;
+    line-height: 1.5;
+  }
+
   .toolbar {
     display: flex;
     justify-content: space-between;
@@ -291,7 +328,7 @@
 
   .row {
     display: grid;
-    grid-template-columns: 84px 68px 1fr;
+    grid-template-columns: 140px 68px 1fr;
     grid-template-areas: "poster score main";
     gap: 1.15rem;
     align-items: start;
@@ -301,9 +338,9 @@
 
   .poster {
     grid-area: poster;
-    width: 84px;
-    height: 126px;
-    border-radius: 6px;
+    width: 140px;
+    height: 210px;
+    border-radius: 8px;
     background: var(--surface-2);
     background-size: cover;
     background-position: center;
@@ -405,6 +442,52 @@
   .movie-meta {
     font-size: .85rem;
     color: var(--ink-soft);
+  }
+
+  .sitges-link {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .sitges-link:hover { text-decoration: underline; }
+
+  .synopsis {
+    font-size: .88rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 70ch;
+    margin: 0;
+  }
+
+  .schedule-inline {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+  }
+
+  .schedule-inline.empty {
+    font-size: .78rem;
+    color: var(--ink-soft);
+    margin: 0;
+    font-style: italic;
+  }
+
+  .schedule-row {
+    font-size: .82rem;
+    font-family: var(--font-mono);
+    color: var(--ink-soft);
+  }
+
+  .schedule-row.convenient {
+    color: var(--confirmed);
+    font-weight: 600;
+  }
+
+  .schedule-row .double-bill-tag {
+    margin-left: .4rem;
   }
 
   .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
@@ -659,13 +742,13 @@
 
   @media (max-width: 560px) {
     .row {
-      grid-template-columns: 72px 1fr;
+      grid-template-columns: 100px 1fr;
       grid-template-areas:
         "poster score"
         "main   main";
       row-gap: .7rem;
     }
-    .poster { width: 72px; height: 108px; }
+    .poster { width: 100px; height: 150px; }
     .score-col { align-items: flex-start; }
   }
 </style>
@@ -711,13 +794,13 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
   var runBtn = document.getElementById('run-btn');
   var statusLine = document.getElementById('status-line');
   var results = document.getElementById('results');
-  var lastRecommendations = [];
 
   var REASON_LABEL = {
     NOT_FOUND: 'No encontrada',
     AMBIGUOUS: 'Ambigua',
     ALREADY_WATCHED: 'Ya vista',
-    DUPLICATE_CANDIDATE: 'Duplicada'
+    DUPLICATE_CANDIDATE: 'Duplicada',
+    UNWANTED_FORMAT: 'Animación/documental/corto'
   };
 
   function escapeHtml(value) {
@@ -841,6 +924,33 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
     return '<div class="poster placeholder"><span>' + escapeHtml(initial) + '</span></div>';
   }
 
+  function screeningsInline(item) {
+    var list = item.screenings || [];
+    if (!list.length) {
+      return '<p class="schedule-inline empty">Sin sesión en el programa</p>';
+    }
+    var rows = list.map(function (s) {
+      var cls = 'schedule-row' + (s.convenient ? ' convenient' : '');
+      var day = parseInt(s.date.split('-')[2], 10);
+      var bits = [weekdayEs(s.date), day, s.startTime];
+      // real venue names already carry their own type ("Sala Auditori Meliá", "Cinema
+      // Retiro", "Museu Maricel"...) - never prepend a made-up "Sala" label over them.
+      if (s.location) bits.push(s.location);
+      var text = escapeHtml(bits.join(' '));
+      var doubleBillTag = s.doubleBill ? ' <span class="double-bill-tag">Sesión doble</span>' : '';
+      return '<div class="' + cls + '">' + text + doubleBillTag + '</div>';
+    }).join('');
+    return '<div class="schedule-inline">' + rows + '</div>';
+  }
+
+  function filmPageUrl(item) {
+    var list = item.screenings || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].pageUrl) return list[i].pageUrl;
+    }
+    return null;
+  }
+
   function card(item) {
     var pct = item.personalMatchScore === null || item.personalMatchScore === undefined
       ? 0 : Math.max(0, Math.min(100, item.personalMatchScore));
@@ -851,6 +961,8 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
     var metaBits = [];
     if (item.year) metaBits.push(item.year);
     if (item.director) metaBits.push(escapeHtml(item.director));
+
+    var pageUrl = filmPageUrl(item);
 
     var html = '';
     html += '<div class="row" data-title="' + escapeHtml((item.title || '').toLowerCase()) + '">';
@@ -865,7 +977,12 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
     html += '    <div class="head-line">';
     html += '      <p class="movie-title">' + escapeHtml(item.title) + '</p>';
     if (metaBits.length) html += '      <span class="movie-meta">' + metaBits.join(' · ') + '</span>';
+    if (pageUrl) {
+      html += '      <a class="sitges-link" href="' + escapeHtml(pageUrl) + '" target="_blank" rel="noopener">Ficha en Sitges ↗</a>';
+    }
     html += '    </div>';
+    if (item.synopsis) html += '<p class="synopsis">' + escapeHtml(item.synopsis) + '</p>';
+    html += screeningsInline(item);
     html += ratingChips(item.ratings);
     html += festivalBadges(item.festivalRecognition);
     if (item.recommendationReason) html += '<p class="reason">' + escapeHtml(item.recommendationReason) + '</p>';
@@ -932,58 +1049,90 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
     return html;
   }
 
-  function renderSchedule(data) {
-    var container = document.getElementById('schedule-results');
-    if (!container) return;
-    var html;
-    if (!data.days || !data.days.length) {
-      html = '<div class="empty-state">Ninguno de esos títulos aparece todavía en el programa publicado.</div>';
-    } else {
-      html = '<div class="schedule-list">' + data.days.map(scheduleDayHtml).join('') + '</div>';
-    }
-    if (data.notScheduled && data.notScheduled.length) {
-      html += '<p class="schedule-not-scheduled"><b>Sin sesión en el programa:</b> ' +
-        escapeHtml(data.notScheduled.join(', ')) + '</p>';
-    }
-    container.innerHTML = html;
+  var WEEKDAYS_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+  function weekdayEs(iso) {
+    var p = iso.split('-').map(Number);
+    return WEEKDAYS_ES[new Date(p[0], p[1] - 1, p[2]).getDay()];
   }
 
-  function runSchedule() {
-    var titles = lastRecommendations.slice(0, 50).map(function (r) { return r.title; });
-    if (!titles.length) return;
-
-    var scheduleBtn = document.getElementById('schedule-btn');
-    var scheduleStatus = document.getElementById('schedule-status');
-    scheduleBtn.disabled = true;
-    scheduleStatus.classList.remove('is-error');
-    scheduleStatus.textContent = 'Consultando el programa del festival…';
-
-    postWithWarmupRetry('/api/schedule', { titles: titles }, function (attempt, maxAttempts) {
-      scheduleStatus.textContent = 'Cargando el programa (arranque en curso)… reintentando (' + attempt + '/' + maxAttempts + ')';
-    })
-      .then(function (data) {
-        scheduleStatus.textContent = 'Listo — ' + titles.length + ' títulos consultados.';
-        renderSchedule(data);
-      })
-      .catch(function (err) {
-        scheduleStatus.classList.add('is-error');
-        scheduleStatus.textContent = err && err.message ? err.message : 'No se pudo consultar el programa.';
-      })
-      .finally(function () {
-        scheduleBtn.disabled = false;
+  /**
+   * Builds a day-by-day calendar straight from the screenings already embedded in
+   * `items` (each recommendation carries its own, from the same backend lookup) — no
+   * separate /api/schedule round trip needed.
+   */
+  function buildScheduleDays(items) {
+    var byDate = {};
+    items.forEach(function (item) {
+      (item.screenings || []).forEach(function (s) {
+        var list = byDate[s.date] || (byDate[s.date] = []);
+        list.push({
+          title: item.title,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          location: s.location,
+          convenient: s.convenient,
+          doubleBill: s.doubleBill,
+          sessionFilms: s.sessionFilms
+        });
       });
+    });
+    return Object.keys(byDate).sort().map(function (date) {
+      var sessions = byDate[date].slice().sort(function (a, b) {
+        return a.startTime.localeCompare(b.startTime);
+      });
+      return {
+        date: date,
+        weekday: weekdayEs(date),
+        holiday: parseInt(date.split('-')[2], 10) === 12,
+        sessions: sessions
+      };
+    });
   }
 
-  function render(data) {
-    var s = data.summary || {};
-    var statsHtml = '<div class="stats">' +
-      statTile(s.totalCandidates, 'Candidatas') +
-      statTile(s.identified, 'Identificadas') +
-      statTile(s.recommended, 'Recomendadas') +
-      statTile(s.withCompletePersonalMatchScore, 'Confirmadas') +
-      statTile(s.alreadyWatched, 'Ya vistas') +
-      statTile(s.notFound + s.ambiguous, 'Sin resolver') +
-      '</div>';
+  function calendarSectionHtml(items) {
+    var days = buildScheduleDays(items);
+    var legend = '<div class="legend" style="margin-top:.8rem">' +
+      '<span><span class="dot" style="background:var(--confirmed)"></span>' +
+      'Conveniente: entre semana desde las 18:00, o fin de semana / día 12 a cualquier hora</span></div>';
+    var body = days.length
+      ? '<div class="schedule-list">' + days.map(scheduleDayHtml).join('') + '</div>'
+      : '<div class="empty-state">Ninguna de estas películas tiene todavía sesión publicada en el programa.</div>';
+    return '<section class="schedule-section"><h2>Calendario</h2>' + legend + body + '</section>';
+  }
+
+  // --- two lists: general vs. schedule-compatible -----------------------------
+
+  var currentData = null;
+  var activeTab = 'general';
+
+  var TAB_HINT = {
+    general: 'El TOP del festival por afinidad, tengan sesión conveniente o no.',
+    schedule: 'Solo las que caben de verdad en tu horario: entre semana desde las 18:00, ' +
+      'o fin de semana / día 12 a cualquier hora.'
+  };
+
+  function itemsForTab(tab) {
+    if (!currentData) return [];
+    return (tab === 'schedule' ? currentData.scheduleRecommendations : currentData.recommendations) || [];
+  }
+
+  function tabsHtml() {
+    var generalCount = itemsForTab('general').length;
+    var scheduleCount = itemsForTab('schedule').length;
+    return '<div class="tabs">' +
+      '<button class="tab' + (activeTab === 'general' ? ' active' : '') + '" data-tab="general">' +
+      'General <span class="tab-count">' + generalCount + '</span></button>' +
+      '<button class="tab' + (activeTab === 'schedule' ? ' active' : '') + '" data-tab="schedule">' +
+      'Mi horario <span class="tab-count">' + scheduleCount + '</span></button>' +
+      '</div>' +
+      '<p class="tab-hint">' + TAB_HINT[activeTab] + '</p>';
+  }
+
+  function renderTabBody() {
+    var body = document.getElementById('tab-body');
+    if (!body) return;
+    var items = itemsForTab(activeTab);
 
     var toolbarHtml = '<div class="toolbar">' +
       '<input class="filter" id="filter-input" type="text" placeholder="Filtrar por título…">' +
@@ -991,31 +1140,19 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
       '<span><span class="dot" style="background:var(--provisional)"></span>Estimado</span></div>' +
       '</div>';
 
-    lastRecommendations = data.recommendations || [];
-
-    var listHtml;
-    var scheduleSectionHtml = '';
-    if (!data.recommendations || !data.recommendations.length) {
-      listHtml = '<div class="empty-state">Sin recomendaciones — puede que ya las hayas visto todas, o que no se identificara ninguna candidata. Revisa las excluidas más abajo.</div>';
+    var listHtml, calendarHtml;
+    if (!items.length) {
+      var emptyMsg = activeTab === 'schedule'
+        ? 'Ninguna recomendación tiene todavía una sesión en horario conveniente.'
+        : 'Sin recomendaciones — puede que ya las hayas visto todas, o que no se identificara ninguna candidata. Revisa las excluidas más abajo.';
+      listHtml = '<div class="empty-state">' + emptyMsg + '</div>';
+      calendarHtml = '';
     } else {
-      listHtml = '<div class="list" id="list">' + data.recommendations.map(card).join('') + '</div>';
-      var topN = Math.min(50, data.recommendations.length);
-      scheduleSectionHtml = '<section class="schedule-section">' +
-        '<h2>Calendario del festival</h2>' +
-        '<p class="field-hint">Cruza tu top ' + topN + ' con el programa real de Sitges: qué días proyectan cada película y a qué hora.</p>' +
-        '<div class="panel-footer">' +
-        '<button class="primary" id="schedule-btn">Generar calendario (Top ' + topN + ')</button>' +
-        '<span class="status-line" id="schedule-status"></span>' +
-        '</div>' +
-        '<div class="legend" style="margin-top:.8rem">' +
-        '<span><span class="dot" style="background:var(--confirmed)"></span>' +
-        'Conveniente: entre semana desde las 18:00, o fin de semana / día 12 a cualquier hora</span>' +
-        '</div>' +
-        '<div id="schedule-results"></div>' +
-        '</section>';
+      listHtml = '<div class="list" id="list">' + items.map(card).join('') + '</div>';
+      calendarHtml = calendarSectionHtml(items);
     }
 
-    results.innerHTML = '<h2>Cartelera</h2>' + statsHtml + toolbarHtml + listHtml + scheduleSectionHtml + renderExcluded(data.excluded);
+    body.innerHTML = toolbarHtml + listHtml + calendarHtml;
 
     var filterInput = document.getElementById('filter-input');
     if (filterInput) {
@@ -1026,11 +1163,39 @@ Cold War|2012|Longman Leung &amp; Sunny Luk</textarea>
         });
       });
     }
+  }
 
-    var scheduleBtn = document.getElementById('schedule-btn');
-    if (scheduleBtn) {
-      scheduleBtn.addEventListener('click', runSchedule);
-    }
+  function render(data) {
+    currentData = data;
+    activeTab = 'general';
+
+    var s = data.summary || {};
+    var statsHtml = '<div class="stats">' +
+      statTile(s.totalCandidates, 'Candidatas') +
+      statTile(s.identified, 'Identificadas') +
+      statTile(s.recommended, 'Recomendadas') +
+      statTile(s.withCompletePersonalMatchScore, 'Confirmadas') +
+      statTile(s.alreadyWatched, 'Ya vistas') +
+      statTile(s.notFound + s.ambiguous, 'Sin resolver') +
+      '</div>';
+
+    results.innerHTML = '<h2>Cartelera</h2>' + statsHtml + tabsHtml() +
+      '<div id="tab-body"></div>' + renderExcluded(data.excluded);
+
+    results.querySelectorAll('.tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (btn.getAttribute('data-tab') === activeTab) return;
+        activeTab = btn.getAttribute('data-tab');
+        results.querySelectorAll('.tab').forEach(function (b) {
+          b.classList.toggle('active', b === btn);
+        });
+        var hint = results.querySelector('.tab-hint');
+        if (hint) hint.textContent = TAB_HINT[activeTab];
+        renderTabBody();
+      });
+    });
+
+    renderTabBody();
   }
 
   function run() {

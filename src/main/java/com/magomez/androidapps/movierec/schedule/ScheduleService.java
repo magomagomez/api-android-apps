@@ -52,16 +52,22 @@ public class ScheduleService {
         loadScreenings();
     }
 
+    /**
+     * Every screening of {@code title} (matched the same accent/prefix-tolerant way
+     * {@link #buildSchedule} does), in source order. Empty when nothing matches — never
+     * guessed. For plugging schedule facts onto a single film (e.g. a recommendation),
+     * not the whole calendar.
+     */
+    public List<FilmScreening> screeningsOf(String title) throws IOException {
+        Objects.requireNonNull(title, "title");
+        List<FilmScreening> matches = findMatches(title, indexByNormalizedTitle());
+        return matches == null ? List.of() : matches;
+    }
+
     public ScheduleResult buildSchedule(List<String> requestedTitles) throws IOException {
         Objects.requireNonNull(requestedTitles, "requestedTitles");
 
-        Map<String, List<FilmScreening>> byNormalizedTitle = new LinkedHashMap<>();
-        for (FilmScreening screening : loadScreenings()) {
-            index(byNormalizedTitle, screening.title(), screening);
-            if (screening.originalTitle() != null) {
-                index(byNormalizedTitle, screening.originalTitle(), screening);
-            }
-        }
+        Map<String, List<FilmScreening>> byNormalizedTitle = indexByNormalizedTitle();
 
         List<String> notScheduled = new ArrayList<>();
         Map<java.time.LocalDate, List<ScheduledSession>> sessionsByDate = new LinkedHashMap<>();
@@ -88,6 +94,17 @@ public class ScheduleService {
                 .toList();
 
         return new ScheduleResult(requestedTitles, notScheduled, days);
+    }
+
+    private Map<String, List<FilmScreening>> indexByNormalizedTitle() throws IOException {
+        Map<String, List<FilmScreening>> byNormalizedTitle = new LinkedHashMap<>();
+        for (FilmScreening screening : loadScreenings()) {
+            index(byNormalizedTitle, screening.title(), screening);
+            if (screening.originalTitle() != null) {
+                index(byNormalizedTitle, screening.originalTitle(), screening);
+            }
+        }
+        return byNormalizedTitle;
     }
 
     private static void index(Map<String, List<FilmScreening>> byNormalizedTitle, String title, FilmScreening screening) {
