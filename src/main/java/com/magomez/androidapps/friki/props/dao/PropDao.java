@@ -7,6 +7,7 @@ import com.magomez.androidapps.friki.props.mapper.PropMapper;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -56,8 +57,8 @@ public class PropDao {
         String query = SELECT_ALL + FROM + TABLE_PROPS + " " + WHERE + COLUMN_ID + "= ?";
         try {
             return jdbcTemplate.queryForObject(query, new PropMapper(), propId);
-        } catch(Exception e){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Comic not found");
+        } catch(EmptyResultDataAccessException e){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Prop not found");
         }
     }
 

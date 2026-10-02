@@ -7,6 +7,7 @@ import com.magomez.androidapps.jctravels.rides.dto.UpdateRide;
 import com.magomez.androidapps.jctravels.rides.mapper.RideMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -52,8 +53,8 @@ public class RideDao {
         try {
             return jdbcTemplate.queryForObject(query, new RideMapper(), rideId);
         }
-        catch(Exception e){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Monument not found");
+        catch(EmptyResultDataAccessException e){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ride not found");
         }
     }
 

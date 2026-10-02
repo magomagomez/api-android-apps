@@ -99,7 +99,7 @@ public class EscapeRoomsDao {
                     query = query + " AND done = 0 AND javi_done is null AND cris_done is null";
                 }
                 else{
-                    query = query + " AND done = 1 OR javi_done=1 OR cris_done = 1";
+                    query = query + " AND (done = 1 OR javi_done = 1 OR cris_done = 1)";
                 }
             }
             if (filter.valoracion() != null) {

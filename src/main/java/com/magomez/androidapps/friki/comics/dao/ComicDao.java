@@ -7,6 +7,7 @@ import com.magomez.androidapps.friki.comics.mapper.ComicMapper;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -61,7 +62,7 @@ public class ComicDao {
         String query = SELECT_ALL + FROM + TABLE_COMICS + " " + WHERE + COLUMN_ID + "= ?";
         try {
             return jdbcTemplate.queryForObject(query, new ComicMapper(), comicId);
-        } catch(Exception e){
+        } catch(EmptyResultDataAccessException e){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Comic not found");
         }
     }

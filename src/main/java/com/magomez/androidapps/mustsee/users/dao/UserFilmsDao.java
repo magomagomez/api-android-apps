@@ -32,7 +32,7 @@ public class UserFilmsDao {
     }
 
     public String getUserName(Integer userId) {
-        String query = "name" + FROM + TABLE_USERS + " " + WHERE + " id_user = ?";
+        String query = "select name" + FROM + TABLE_USERS + " " + WHERE + " id = ?";
         return jdbcTemplate.queryForObject(query, String.class, userId);
     }
 

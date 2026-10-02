@@ -7,6 +7,7 @@ import com.magomez.androidapps.jctravels.parks.dto.ParkFilter;
 import com.magomez.androidapps.jctravels.parks.dto.CreatePark;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -52,7 +53,7 @@ public class ParkDao {
         try {
             return jdbcTemplate.queryForObject(query, new ParkMapper(), parkId);
         }
-        catch(Exception e){
+        catch(EmptyResultDataAccessException e){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Park not found");
         }
     }

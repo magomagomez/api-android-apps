@@ -7,6 +7,7 @@ import com.magomez.androidapps.jctravels.outlets.dto.CreateOutlet;
 import com.magomez.androidapps.jctravels.outlets.dto.Outlet;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -52,7 +53,7 @@ public class OutletDao {
         try {
             return jdbcTemplate.queryForObject(query, new OutletMapper(), outletId);
         }
-        catch(Exception e){
+        catch(EmptyResultDataAccessException e){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Outlet not found");
         }
     }

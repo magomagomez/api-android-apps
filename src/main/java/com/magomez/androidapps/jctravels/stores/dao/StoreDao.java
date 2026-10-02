@@ -7,6 +7,7 @@ import com.magomez.androidapps.jctravels.stores.dto.UpdateStore;
 import com.magomez.androidapps.jctravels.stores.mapper.StoreMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -46,7 +47,7 @@ public class StoreDao {
         try {
             return jdbcTemplate.queryForObject(query, new StoreMapper(), storeId);
         }
-        catch(Exception e){
+        catch(EmptyResultDataAccessException e){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Store not found");
         }
     }

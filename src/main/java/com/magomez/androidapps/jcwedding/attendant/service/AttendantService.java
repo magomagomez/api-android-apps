@@ -41,6 +41,9 @@ public class AttendantService {
     }
 
     public void updateAttendants(RequestAttendantDTO requestAttendantDTO){
+        if(requestAttendantDTO == null || requestAttendantDTO.getId() == null || requestAttendantDTO.getId().isEmpty()){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No attendant ids");
+        }
         attendantRepository.updateAttendants(requestAttendantDTO);
         confirmationMail(requestAttendantDTO);
     }

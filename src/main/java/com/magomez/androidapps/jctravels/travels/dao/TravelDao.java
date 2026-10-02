@@ -5,6 +5,7 @@ import com.magomez.androidapps.jctravels.travels.dto.Travel;
 import com.magomez.androidapps.jctravels.travels.mapper.TravelMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -41,8 +42,8 @@ public class TravelDao {
         try {
             return jdbcTemplate.queryForObject(query, new TravelMapper(), travelId);
         }
-        catch(Exception e){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "City not found");
+        catch(EmptyResultDataAccessException e){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Travel not found");
         }
     }
 

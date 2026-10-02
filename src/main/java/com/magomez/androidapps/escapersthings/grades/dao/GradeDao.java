@@ -5,6 +5,7 @@ import com.magomez.androidapps.escapersthings.grades.mapper.GradeMapper;
 import com.magomez.androidapps.escapersthings.grades.dto.Grade;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -53,8 +54,7 @@ public class GradeDao {
                 + " where cn." + COL_ESCAPE_ID + " = ? and cn." + COL_USER_ID + " = ?";
         try {
             return jdbcTemplate.queryForObject(query, new GradeMapper(), escapeId, userId);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (EmptyResultDataAccessException e) {
             return null;
         }
     }

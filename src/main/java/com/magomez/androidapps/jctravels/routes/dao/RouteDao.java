@@ -7,6 +7,7 @@ import com.magomez.androidapps.jctravels.routes.mapper.RouteMapper;
 import com.magomez.androidapps.jctravels.routes.dto.RouteFilter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -55,8 +56,8 @@ public class RouteDao {
         try {
             return jdbcTemplate.queryForObject(query, new RouteMapper(), routeId);
         }
-        catch(Exception e){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Park not found");
+        catch(EmptyResultDataAccessException e){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Route not found");
         }
     }
 
