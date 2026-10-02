@@ -10,8 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
 
@@ -25,13 +23,13 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * <p>NOT a unit test and NOT run by {@code mvn test} / {@code mvn package}: the class
  * name ends in {@code IT} (outside Surefire's default include patterns) and it is
  * gated behind the {@code omdb.integration} system property. It also skips itself when
- * the {@code OMDB_API_KEY} environment variable (or its line in the local {@code .env}) is not set.
+ * {@code omdb.api.key} is not configured yet.
  *
- * <p>Run it explicitly (after setting {@code OMDB_API_KEY}):
+ * <p>Run it explicitly (after setting {@code omdb.api.key} in application.properties):
  * <pre>mvn test -Dtest=OmdbRatingsRealIT -Domdb.integration=true -DfailIfNoTests=false</pre>
  *
  * <p>Uses the real {@link OmdbMovieEnricher} / {@link OmdbClient}. The API key is read
- * from the environment or {@code .env}, never hardcoded here.
+ * from {@code application.properties}, never hardcoded here.
  */
 @EnabledIfSystemProperty(named = "omdb.integration", matches = "true")
 class OmdbRatingsRealIT {
@@ -42,8 +40,8 @@ class OmdbRatingsRealIT {
     @Test
     void enrichesAMovieWithRealOmdbRatingsKeepingTheExistingTmdbRating() throws Exception {
         Properties config = loadApplicationProperties();
-        String apiKey = omdbApiKey();
-        assumeTrue(apiKey != null && !apiKey.isBlank(), "OMDB_API_KEY not configured");
+        String apiKey = config.getProperty("omdb.api.key", "");
+        assumeTrue(apiKey != null && !apiKey.isBlank(), "omdb.api.key not configured");
 
         OmdbClient client = new OmdbClient(
                 apiKey, config.getProperty("omdb.api.base-url", "https://www.omdbapi.com/"));
@@ -68,22 +66,6 @@ class OmdbRatingsRealIT {
         // coherence with the live OMDb payload (no hardcoded expected values)
         OmdbResponse live = client.byImdbId(THE_SUBSTANCE_IMDB_ID);
         assertThat(imdb.score()).isEqualTo(Double.parseDouble(live.imdbRating()));
-    }
-
-    private static String omdbApiKey() throws Exception {
-        String fromEnv = System.getenv("OMDB_API_KEY");
-        if (fromEnv != null) {
-            return fromEnv;
-        }
-        Path dotEnv = Path.of(".env");
-        if (!Files.exists(dotEnv)) {
-            return null;
-        }
-        Properties local = new Properties();
-        try (InputStream in = Files.newInputStream(dotEnv)) {
-            local.load(in);
-        }
-        return local.getProperty("OMDB_API_KEY");
     }
 
     private static Properties loadApplicationProperties() throws Exception {

@@ -1,6 +1,5 @@
 package com.magomez.androidapps.whatsapp.service;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.mail.Authenticator;
@@ -15,17 +14,11 @@ import java.util.Properties;
 
 @Service
 public class WebMailService {
-
-    private final String password;
-
-    public WebMailService(@Value("${web-mail.password}") String password) {
-        this.password = password;
-    }
-
     public void sendmail(String text) {
 
         // Configura tu correo y contraseña
         final String username = "webmagomez@gmail.com";
+        final String password = "enwlfoeoxsahgenp";
 
         // Configura al destinatario
         String toEmail = "magomagomez@gmail.com";
