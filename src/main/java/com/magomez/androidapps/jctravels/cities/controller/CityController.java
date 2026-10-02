@@ -2,7 +2,7 @@ package com.magomez.androidapps.jctravels.cities.controller;
 import com.magomez.androidapps.jctravels.cities.dto.CityDTO;
 import com.magomez.androidapps.jctravels.cities.dto.CityFilterRequest;
 import com.magomez.androidapps.jctravels.cities.dto.CreateCityRequest;
-import com.magomez.androidapps.jctravels.cities.dto.UpdateCitytRequest;
+import com.magomez.androidapps.jctravels.cities.dto.UpdateCityRequest;
 import com.magomez.androidapps.jctravels.cities.service.CityService;
 import com.magomez.androidapps.jctravels.config.ApiConfig;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +52,7 @@ public class CityController {
 
     @PutMapping("{cityId}")
     public void updateCity(@PathVariable Integer cityId,
-                               @RequestBody UpdateCitytRequest request) {
+                               @RequestBody UpdateCityRequest request) {
 
         cityService.updateCity(cityId, request);
     }

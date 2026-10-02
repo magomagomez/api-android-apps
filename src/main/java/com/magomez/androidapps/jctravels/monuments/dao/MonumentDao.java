@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.magomez.androidapps.jctravels.config.JcTravelsConfig.AND;
@@ -37,26 +38,25 @@ public class MonumentDao {
     }
 
     public List<Monument> getAllMonuments(MonumentFilter filter) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_MONUMENTS + " ";
-        query = query + WHERE +" 1=1 ";
+        List<Object> args = new ArrayList<>();
+        String query = SELECT_ALL + FROM + TABLE_MONUMENTS + " " + WHERE +" 1=1 ";
         if( filter.city() != null) {
-            query = query + AND + COLUMN_CITY + " = '" + filter.city() + "' ";
+            query = query + AND + COLUMN_CITY + " = ? ";
+            args.add(filter.city());
         }
         if( filter.route() != null){
-            query = query + AND + COLUMN_ROUTE + " = " + filter.route();
+            query = query + AND + COLUMN_ROUTE + " = ?";
+            args.add(filter.route());
         }
 
         query = query + " order by done asc, priority asc, name asc";
-        return  jdbcTemplate.query(query, new MonumentMapper());
+        return jdbcTemplate.query(query, new MonumentMapper(), args.toArray());
     }
 
     public Monument getMonument(Integer monumentId) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_MONUMENTS + " ";
-        query = query + WHERE + COLUMN_ID + "= "+ monumentId;
+        String query = SELECT_ALL + FROM + TABLE_MONUMENTS + " " + WHERE + COLUMN_ID + "= ?";
         try {
-            return jdbcTemplate.queryForObject(query, new MonumentMapper());
+            return jdbcTemplate.queryForObject(query, new MonumentMapper(), monumentId);
         }
         catch(Exception e){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Monument not found");
@@ -71,19 +71,24 @@ public class MonumentDao {
     }
 
     public void updateMonument(Integer monumentId, UpdateMonument monument) {
-        String query = UPDATE + TABLE_MONUMENTS + SET + COLUMN_ID + " = " + monumentId + " ";
-        query = getUpdateValues(monument, query);
-        query = query + WHERE + COLUMN_ID + " = "+ monumentId;
-        jdbcTemplate.update(query);
+        List<Object> args = new ArrayList<>();
+        String query = UPDATE + TABLE_MONUMENTS + SET + COLUMN_ID + " = ? ";
+        args.add(monumentId);
+        query = getUpdateValues(monument, query, args);
+        query = query + WHERE + COLUMN_ID + " = ?";
+        args.add(monumentId);
+        jdbcTemplate.update(query, args.toArray());
     }
 
-    private String getUpdateValues(UpdateMonument monument, String query) {
+    private String getUpdateValues(UpdateMonument monument, String query, List<Object> args) {
         if(monument.done() != null){
             Integer done = Boolean.TRUE.equals(monument.done())?1:0;
-            query = query + ",done = " + done;
+            query = query + ",done = ?";
+            args.add(done);
         }
         if(monument.route() != null){
-            query = query + ",route = " + monument.route();
+            query = query + ",route = ?";
+            args.add(monument.route());
         }
         return query;
     }

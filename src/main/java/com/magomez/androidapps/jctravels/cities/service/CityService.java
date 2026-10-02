@@ -9,7 +9,7 @@ import com.magomez.androidapps.jctravels.cities.dto.CreateCityRequest;
 import com.magomez.androidapps.jctravels.cities.dto.City;
 import com.magomez.androidapps.jctravels.cities.dto.CityFilter;
 import com.magomez.androidapps.jctravels.cities.dto.CityFilterRequest;
-import com.magomez.androidapps.jctravels.cities.dto.UpdateCitytRequest;
+import com.magomez.androidapps.jctravels.cities.dto.UpdateCityRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -47,7 +47,7 @@ public class CityService {
         cityDao.createCity(city);
     }
 
-    public void updateCity(Integer cityId, UpdateCitytRequest request){
+    public void updateCity(Integer cityId, UpdateCityRequest request){
         if(request == null || (request.name() == null && request.travel() == null)){
             throw new ResponseStatusException(HttpStatus.CONFLICT, INVALID_PARAMETERS);
         }

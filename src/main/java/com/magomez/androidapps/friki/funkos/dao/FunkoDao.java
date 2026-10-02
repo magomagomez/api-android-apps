@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.magomez.androidapps.friki.config.FrikiConfig.AND;
@@ -36,26 +37,25 @@ public class FunkoDao {
     }
 
     public List<Funko> search(FunkoFilterRequest filter) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_FUNKOS + " ";
-        query = query + WHERE +" 1=1 ";
+        List<Object> args = new ArrayList<>();
+        String query = SELECT_ALL + FROM + TABLE_FUNKOS + " " + WHERE +" 1=1 ";
         if( filter.name() != null) {
-            query = query + AND + COLUMN_NAME + " = '" + filter.name() + "' ";
+            query = query + AND + COLUMN_NAME + " = ? ";
+            args.add(filter.name());
         }
         if(filter.wish() != null){
-            query = query + AND + COLUMN_WISH + " = " + (BooleanUtils.isTrue(filter.wish()) ? 1:0) ;
+            query = query + AND + COLUMN_WISH + " = ?" ;
+            args.add(BooleanUtils.isTrue(filter.wish()) ? 1:0);
         }
         query = query + ORDER_BY_NAME;
 
-        return  jdbcTemplate.query( query, new FunkoMapper());
+        return jdbcTemplate.query(query, new FunkoMapper(), args.toArray());
     }
 
     public Funko getFunko(Integer funkoId) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_FUNKOS + " ";
-        query = query + WHERE + COLUMN_ID + "= "+ funkoId;
+        String query = SELECT_ALL + FROM + TABLE_FUNKOS + " " + WHERE + COLUMN_ID + "= ?";
         try {
-            return jdbcTemplate.queryForObject(query, new FunkoMapper());
+            return jdbcTemplate.queryForObject(query, new FunkoMapper(), funkoId);
         } catch(Exception e){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Funko not found");
         }

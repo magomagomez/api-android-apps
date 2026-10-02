@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.magomez.androidapps.jctravels.config.JcTravelsConfig.FROM;
@@ -35,20 +36,15 @@ public class StoreDao {
     }
 
     public List<Store> getAllOutlets(StoreFilter filter) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_STORES + " ";
-        query = query + WHERE +" " + COLUMN_OUTLET + " = " + filter.outlet();
-
+        String query = SELECT_ALL + FROM + TABLE_STORES + " " + WHERE +" " + COLUMN_OUTLET + " = ?";
         query = query + " order by priority asc, name asc";
-        return  jdbcTemplate.query(query, new StoreMapper());
+        return jdbcTemplate.query(query, new StoreMapper(), filter.outlet());
     }
 
     public Store getStore(Integer storeId) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_STORES + " ";
-        query = query + WHERE + COLUMN_ID + "= "+ storeId;
+        String query = SELECT_ALL + FROM + TABLE_STORES + " " + WHERE + COLUMN_ID + "= ?";
         try {
-            return jdbcTemplate.queryForObject(query, new StoreMapper());
+            return jdbcTemplate.queryForObject(query, new StoreMapper(), storeId);
         }
         catch(Exception e){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Store not found");
@@ -63,16 +59,20 @@ public class StoreDao {
     }
 
     public void updateStore(Integer storeId, UpdateStore store) {
-        String query = UPDATE + TABLE_STORES + SET + COLUMN_ID + " = " + storeId + " ";
-        query = getUpdateValues(store, query);
-        query = query + WHERE + COLUMN_ID + " = "+ storeId;
-        jdbcTemplate.update(query);
+        List<Object> args = new ArrayList<>();
+        String query = UPDATE + TABLE_STORES + SET + COLUMN_ID + " = ? ";
+        args.add(storeId);
+        query = getUpdateValues(store, query, args);
+        query = query + WHERE + COLUMN_ID + " = ?";
+        args.add(storeId);
+        jdbcTemplate.update(query, args.toArray());
     }
 
-    private String getUpdateValues(UpdateStore store, String query) {
+    private String getUpdateValues(UpdateStore store, String query, List<Object> args) {
         if(store.done() != null){
             int done = Boolean.TRUE.equals(store.done())?1:0;
-            query = query + ",done = " + done;
+            query = query + ",done = ?";
+            args.add(done);
         }
         return query;
     }

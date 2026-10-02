@@ -45,7 +45,7 @@ public class UserStatsDao {
         String query = "select er.name, er.id , ucn.enigma, ucn.game_master, ucn.inmersion, ucn.horror, ucn.global ";
         query = query + "from user_categoria_nota ucn ";
         query = query + "inner join  escape_rooms er on er.id = ucn.escape_room_id ";
-        query = query + "where ucn.user_id = " + userId;
+        query = query + "where ucn.user_id = ?";
         query = switch (order == null ? "" : order) {
             case "W" -> query + " AND ucn.global IS NOT NULL ORDER BY ucn.global ASC, ucn.horror ASC LIMIT 5";
             case "G" -> query + " AND ucn.game_master IS NOT NULL ORDER BY ucn.game_master DESC, ucn.global DESC LIMIT 5";
@@ -54,6 +54,6 @@ public class UserStatsDao {
             case "A" -> query + " AND ucn.global IS NOT NULL ORDER BY ucn.global DESC, ucn.horror DESC LIMIT 5";
             default -> query + " AND ucn.global IS NOT NULL ORDER BY ucn.global DESC, ucn.horror DESC";
         };
-        return jdbcTemplate.query(query, new GradeStatsMapper());
+        return jdbcTemplate.query(query, new GradeStatsMapper(), userId);
     }
 }

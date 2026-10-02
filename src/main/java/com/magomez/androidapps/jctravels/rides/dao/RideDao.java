@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.magomez.androidapps.jctravels.config.JcTravelsConfig.FROM;
@@ -35,22 +36,21 @@ public class RideDao {
     }
 
     public List<Ride> getAllRides(RideFilter filter) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_RIDES + " ";
+        List<Object> args = new ArrayList<>();
+        String query = SELECT_ALL + FROM + TABLE_RIDES + " ";
         if(filter.park() != null) {
-                query = query + WHERE + COLUMN_PARK + " = '" + filter.park() + "' ";
+                query = query + WHERE + COLUMN_PARK + " = ? ";
+                args.add(filter.park());
         }
 
         query = query + "order by done asc, name asc";
-        return  jdbcTemplate.query(query, new RideMapper());
+        return jdbcTemplate.query(query, new RideMapper(), args.toArray());
     }
 
     public Ride getRide(Integer rideId) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_RIDES + " ";
-        query = query + WHERE + COLUMN_ID + " = " + rideId + " ";
+        String query = SELECT_ALL + FROM + TABLE_RIDES + " " + WHERE + COLUMN_ID + " = ? ";
         try {
-            return  jdbcTemplate.queryForObject(query, new RideMapper());
+            return jdbcTemplate.queryForObject(query, new RideMapper(), rideId);
         }
         catch(Exception e){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Monument not found");
@@ -64,22 +64,28 @@ public class RideDao {
     }
 
     public void updateRide(Integer rideId, UpdateRide ride) {
-        String query = UPDATE + TABLE_RIDES + SET + COLUMN_ID + " = " + rideId + " ";
-        query = getUpdateValues(ride, query);
-        query = query + WHERE + COLUMN_ID + " = "+ rideId;
-        jdbcTemplate.update(query);
+        List<Object> args = new ArrayList<>();
+        String query = UPDATE + TABLE_RIDES + SET + COLUMN_ID + " = ? ";
+        args.add(rideId);
+        query = getUpdateValues(ride, query, args);
+        query = query + WHERE + COLUMN_ID + " = ?";
+        args.add(rideId);
+        jdbcTemplate.update(query, args.toArray());
     }
 
-    private String getUpdateValues(UpdateRide ride, String query) {
+    private String getUpdateValues(UpdateRide ride, String query, List<Object> args) {
         if(ride.name() != null){
-            query = query + ",name = '" + ride.name() + "'";
+            query = query + ",name = ?";
+            args.add(ride.name());
         }
         if(ride.done() != null){
             int done = Boolean.TRUE.equals(ride.done())?1:0;
-            query = query + ",done = " + done;
+            query = query + ",done = ?";
+            args.add(done);
         }
         if(ride.park() != null){
-            query = query + ",park = " + ride.park();
+            query = query + ",park = ?";
+            args.add(ride.park());
         }
         return query;
     }

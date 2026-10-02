@@ -7,7 +7,7 @@ import com.magomez.androidapps.jctravels.cities.dto.CityDTO;
 import com.magomez.androidapps.jctravels.cities.dto.CityFilter;
 import com.magomez.androidapps.jctravels.cities.dto.CityFilterRequest;
 import com.magomez.androidapps.jctravels.cities.dto.UpdateCity;
-import com.magomez.androidapps.jctravels.cities.dto.UpdateCitytRequest;
+import com.magomez.androidapps.jctravels.cities.dto.UpdateCityRequest;
 
 import java.util.List;
 
@@ -40,7 +40,7 @@ public class CityConverter {
         );
     }
 
-    public static UpdateCity toRecord(UpdateCitytRequest request) {
+    public static UpdateCity toRecord(UpdateCityRequest request) {
         return new UpdateCity(
                 request.name(),
                 request.travel()

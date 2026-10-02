@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,25 +41,21 @@ public class EscapeRoomsDao {
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     public List<EscapeRoom> getAllEscapeRooms(EscapeRoomFilter filter) {
-        String query = "select * ";
-        query = query + "from " + TABLE_ESCAPE_ROOM + " ";
-        String where = buildWhere(filter);
-        query = query + where;
-        return  jdbcTemplate.query(query, new EscapeRoomMapper());
+        List<Object> args = new ArrayList<>();
+        String query = "select * from " + TABLE_ESCAPE_ROOM + " " + buildWhere(filter, args);
+        return jdbcTemplate.query(query, new EscapeRoomMapper(), args.toArray());
     }
 
     public EscapeRoom getEscapeRoomById(Integer escapeId) {
-        String query = "select * ";
-        query = query + "from " + TABLE_ESCAPE_ROOM + " where " + COL_ID + " =" + escapeId;
-        return  jdbcTemplate.queryForObject(query , new EscapeRoomMapper());
+        String query = "select * from " + TABLE_ESCAPE_ROOM + " where " + COL_ID + " = ?";
+        return jdbcTemplate.queryForObject(query, new EscapeRoomMapper(), escapeId);
     }
 
     public List<EscapeRoom> getPendingEscapeRooms(Integer userId) {
-        String query = "select * ";
-        query = query + "from " + TABLE_ESCAPE_ROOM +
+        String query = "select * from " + TABLE_ESCAPE_ROOM +
                 " where " + COL_DONE + " = 1 and " + COL_ID + " not in("+
-                "select ucn.escape_room_id from user_categoria_nota ucn where ucn.user_id = "+ userId +") " ;
-        return  jdbcTemplate.query(query , new EscapeRoomMapper());
+                "select ucn.escape_room_id from user_categoria_nota ucn where ucn.user_id = ?) " ;
+        return jdbcTemplate.query(query, new EscapeRoomMapper(), userId);
     }
 
     public void createEscapeRoom(CreateEscapeRoom escapeRoom) {
@@ -75,8 +72,9 @@ public class EscapeRoomsDao {
             .map(s-> s+" = :" + s)
             .collect(Collectors.joining(",")) +
             " WHERE " +
-            COL_ID + " = " + escapeId;
+            COL_ID + " = :" + COL_ID;
         Map<String, Object> parameters = getParametersUpdate(escapeRoom);
+        parameters.put(COL_ID, escapeId);
         namedParameterJdbcTemplate.update(query, parameters);
     }
 
@@ -93,7 +91,7 @@ public class EscapeRoomsDao {
         return parameters;
     }
 
-    private String buildWhere(EscapeRoomFilter filter){
+    private String buildWhere(EscapeRoomFilter filter, List<Object> args){
             String query = "WHERE 1=1";
 
             if (filter.finalizado() != null) {
@@ -123,7 +121,8 @@ public class EscapeRoomsDao {
                 }
             }
             if (filter.tipo() != null && !filter.tipo().equals("ALL")) {
-                query = query + " AND type = '" + filter.tipo() +"'";
+                query = query + " AND type = ?";
+                args.add(filter.tipo());
             }
             if (filter.order() != null) {
                 switch (filter.order()) {

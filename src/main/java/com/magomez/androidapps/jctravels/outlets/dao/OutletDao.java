@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.magomez.androidapps.jctravels.config.JcTravelsConfig.AND;
@@ -36,22 +37,20 @@ public class OutletDao {
     }
 
     public List<Outlet> getAllOutlets(OutletFilter filter) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_OUTLETS + " ";
-        query = query + WHERE +" 1=1 ";
+        List<Object> args = new ArrayList<>();
+        String query = SELECT_ALL + FROM + TABLE_OUTLETS + " " + WHERE +" 1=1 ";
         if(filter.city() != null) {
-            query = query + AND + COLUMN_CITY + " = '" + filter.city() + "' ";
+            query = query + AND + COLUMN_CITY + " = ? ";
+            args.add(filter.city());
         }
         query = query + " order by name asc";
-        return  jdbcTemplate.query(query, new OutletMapper());
+        return jdbcTemplate.query(query, new OutletMapper(), args.toArray());
     }
 
     public Outlet getOutlet(Integer outletId) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_OUTLETS + " ";
-        query = query + WHERE + COLUMN_ID + "= "+ outletId;
+        String query = SELECT_ALL + FROM + TABLE_OUTLETS + " " + WHERE + COLUMN_ID + "= ?";
         try {
-            return jdbcTemplate.queryForObject(query, new OutletMapper());
+            return jdbcTemplate.queryForObject(query, new OutletMapper(), outletId);
         }
         catch(Exception e){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Outlet not found");
@@ -65,18 +64,23 @@ public class OutletDao {
     }
 
     public void updateOutlet(Integer outletId, UpdateOutlet outlet) {
-        String query = UPDATE + TABLE_OUTLETS + SET + COLUMN_ID + " = " + outletId + " ";
-        query = getUpdateValues(outlet, query);
-        query = query + WHERE + COLUMN_ID + " = "+ outletId;
-        jdbcTemplate.update(query);
+        List<Object> args = new ArrayList<>();
+        String query = UPDATE + TABLE_OUTLETS + SET + COLUMN_ID + " = ? ";
+        args.add(outletId);
+        query = getUpdateValues(outlet, query, args);
+        query = query + WHERE + COLUMN_ID + " = ?";
+        args.add(outletId);
+        jdbcTemplate.update(query, args.toArray());
     }
 
-    private String getUpdateValues(UpdateOutlet outlet, String query) {
+    private String getUpdateValues(UpdateOutlet outlet, String query, List<Object> args) {
         if(outlet.name() != null){
-            query = query + ",name = '" + outlet.name() + "'";
+            query = query + ",name = ?";
+            args.add(outlet.name());
         }
         if(outlet.city() != null){
-            query = query + ",city = " + outlet.city();
+            query = query + ",city = ?";
+            args.add(outlet.city());
         }
         return query;
     }

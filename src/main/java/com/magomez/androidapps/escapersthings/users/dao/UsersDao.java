@@ -22,22 +22,18 @@ public class UsersDao {
 
 
     public Integer getUserByUserName(String name) {
-        String query = "select id from " + TABLE_USERS;
-        query = query + " where " + COL_USER_NAME + " = '" + name +"'";
-        return  jdbcTemplate.queryForObject(query, Integer.class);
+        String query = "select id from " + TABLE_USERS + " where " + COL_USER_NAME + " = ?";
+        return jdbcTemplate.queryForObject(query, Integer.class, name);
     }
 
     public UserLogin getUserById(Integer id) {
-        String query = "select * from " + TABLE_USERS;
-        query = query + " where  id = " + id;
-        return  jdbcTemplate.queryForObject(query, new UserMapper());
+        String query = "select * from " + TABLE_USERS + " where id = ?";
+        return jdbcTemplate.queryForObject(query, new UserMapper(), id);
     }
 
     public UserLogin loginUser(LoginUser user) {
-        String query = "select * from " + TABLE_USERS;
-        query = query + " where " + COL_USER_NAME + " = '" + user.nombre() +"' AND "
-                + COL_PASSWORD + " = '" + user.password() + "'" ;
-        return  jdbcTemplate.queryForObject(query, new UserMapper());
+        String query = "select * from " + TABLE_USERS + " where " + COL_USER_NAME + " = ? AND " + COL_PASSWORD + " = ?";
+        return jdbcTemplate.queryForObject(query, new UserMapper(), user.nombre(), user.password());
     }
 
 }

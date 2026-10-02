@@ -37,11 +37,9 @@ public class TravelDao {
     }
 
     public Travel getCity(Integer travelId) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_TRAVELS + " ";
-        query = query + WHERE + COLUMN_ID + "= "+ travelId;
+        String query = SELECT_ALL + FROM + TABLE_TRAVELS + " " + WHERE + COLUMN_ID + "= ?";
         try {
-            return jdbcTemplate.queryForObject(query, new TravelMapper());
+            return jdbcTemplate.queryForObject(query, new TravelMapper(), travelId);
         }
         catch(Exception e){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "City not found");

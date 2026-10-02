@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serial;
 import java.io.Serializable;
 
-public record UpdateCitytRequest(
+public record UpdateCityRequest(
         @JsonProperty("name")
         String name,
         @JsonProperty("travel")

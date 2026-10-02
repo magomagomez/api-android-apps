@@ -32,50 +32,42 @@ public class UserFilmsDao {
     }
 
     public String getUserName(Integer userId) {
-        String query = "name";
-        query = query + FROM + TABLE_USERS + " ";
-        query = query + WHERE + " id_user =  " + userId;
-
-        return  jdbcTemplate.queryForObject(query, String.class);
+        String query = "name" + FROM + TABLE_USERS + " " + WHERE + " id_user = ?";
+        return jdbcTemplate.queryForObject(query, String.class, userId);
     }
 
     public List<User> getRecommendationUserList(Integer userId) {
+        String query = "Select tu.id, tu.name"
+                + FROM + TABLE_USERS + " tu "
+                + " inner join " + TABLE_MOVIES + " tm "
+                + " on tu.id = tm.id_friend"
+                + WHERE + " tm.id_user = ?";
 
-        String query = "Select tu.id, tu.name";
-        query = query + FROM + TABLE_USERS + " tu ";
-        query = query + " inner join " + TABLE_MOVIES + " tm ";
-        query = query + " on tu.id = tm.id_friend";
-        query = query + WHERE + " tm.id_user =  " + userId;
-
-        return  jdbcTemplate.query(query, new UserMapper());
+        return jdbcTemplate.query(query, new UserMapper(), userId);
     }
 
     public List<User> getUserVisibility(Integer userId) {
+        String query = "Select tu.id, tu.name"
+                + FROM + TABLE_USERS + " tu "
+                + " inner join " + TABLE_USERS_VISIBILITY + " tv "
+                + " on tu.id = tv.id_friend"
+                + WHERE + " tv.id_user = ?";
 
-        String query = "Select tu.id, tu.name";
-        query = query + FROM + TABLE_USERS + " tu ";
-        query = query + " inner join " + TABLE_USERS_VISIBILITY + " tv ";
-        query = query + " on tu.id = tv.id_friend";
-        query = query + WHERE + " tv.id_user =  " + userId;
-
-        return  jdbcTemplate.query(query, new UserMapper());
+        return jdbcTemplate.query(query, new UserMapper(), userId);
     }
 
     public List<UserRecommend> getUserWithFilmRecommended(Integer filmId) {
+        String query = "Select distinct (id_user), id_friend "
+                + FROM + TABLE_MOVIES + " tm "
+                + WHERE + " tm.id_external = ?";
 
-        String query = "Select distinct (id_user), id_friend ";
-        query = query + FROM + TABLE_MOVIES + " tm ";
-        query = query + WHERE + " tm.id_external =  " + filmId;
-
-        return  jdbcTemplate.query(query, new UserRecommendMapper());
+        return jdbcTemplate.query(query, new UserRecommendMapper(), filmId);
     }
 
-
     public UserLogin loginUser(LoginUser user) {
-        String query = "select * from " + TABLE_USERS;
-        query = query + " where " + COL_USER_NAME + " = '" + user.getName() +"' AND "
-                + COL_PASSWORD + " = '" + user.getPassword() + "'" ;
-        return  jdbcTemplate.queryForObject(query, new UserLoginMapper());
+        String query = "select * from " + TABLE_USERS
+                + " where " + COL_USER_NAME + " = ? AND " + COL_PASSWORD + " = ?";
+        return jdbcTemplate.queryForObject(query, new UserLoginMapper(), user.getName(), user.getPassword());
     }
 
 }

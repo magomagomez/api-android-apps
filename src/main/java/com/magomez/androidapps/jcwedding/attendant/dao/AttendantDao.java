@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.magomez.androidapps.jctravels.config.JcTravelsConfig.FROM;
@@ -30,50 +32,40 @@ public class AttendantDao {
     }
 
     public List<Attendant> searchAttendants(SearchAttendantDTO attendant) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_FRIENDS + " ";
-        query = buildWhere(attendant, query);
+        String query = SELECT_ALL + FROM + TABLE_FRIENDS + " ";
+        List<Object> args = new ArrayList<>();
+        if (attendant != null && attendant.getName() != null && attendant.getSurname() != null) {
+            query = query + WHERE + "name = ? AND surname = ?";
+            args.add(getNameLowerCase(attendant));
+            args.add(getSurnameLowerCase(attendant));
+        }
         query = query + " ORDER BY id asc";
 
-        return  jdbcTemplate.query(query, new AttendantMapper());
+        return jdbcTemplate.query(query, new AttendantMapper(), args.toArray());
     }
 
     public List<Companion> searchCompanions(Integer id) {
+        String query = SELECT_ALL + FROM + TABLE_FRIENDS + " wf "
+                + " INNER JOIN " + TABLE_RELATIONS + " wr on wr.id_companion = wf.id"
+                + " where wr.id_user = ?";
 
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_FRIENDS + " wf ";
-        query = query + " INNER JOIN " + TABLE_RELATIONS + " wr on wr.id_companion = wf.id";
-        query = query + " where wr.id_user = " + id;
-
-        return  jdbcTemplate.query(query, new CompanionMapper());
+        return jdbcTemplate.query(query, new CompanionMapper(), id);
     }
 
     public void updateAttendants(RequestAttendantDTO requestAttendantDTO) {
+        List<Integer> ids = requestAttendantDTO.getId();
+        String placeholders = String.join(",", Collections.nCopies(ids.size(), "?"));
+        String query = "UPDATE " + TABLE_FRIENDS + " SET attendance = 1 where id in (" + placeholders + ")";
 
-        String query = "UPDATE " + TABLE_FRIENDS;
-        query = query + " SET attendance = 1";
-        String ids = requestAttendantDTO.getId().toString();
-        query = query + " where id in (" + ids.substring(1, ids.length()-1) + ")";
-
-        jdbcTemplate.update(query);
+        jdbcTemplate.update(query, ids.toArray());
     }
 
     public List<Attendant> getAttendantsByIds(RequestAttendantDTO requestAttendantDTO) {
+        List<Integer> ids = requestAttendantDTO.getId();
+        String placeholders = String.join(",", Collections.nCopies(ids.size(), "?"));
+        String query = "Select * from " + TABLE_FRIENDS + " where id in (" + placeholders + ")";
 
-        String query = "Select * from " + TABLE_FRIENDS;
-        String ids = requestAttendantDTO.getId().toString();
-        query = query + " where id in (" + ids.substring(1, ids.length()-1) + ")";
-
-        return  jdbcTemplate.query(query, new AttendantMapper());
-    }
-
-    private String buildWhere(SearchAttendantDTO attendant, String query) {
-        if(attendant != null && attendant.getName() != null && attendant.getSurname() != null) {
-            String attendantName = getNameLowerCase(attendant);
-            String attendantSurname = getSurnameLowerCase(attendant);
-            query = query + WHERE + "name =  '" + attendantName + "' AND surname = '" + attendantSurname +"'" ;
-        }
-        return query;
+        return jdbcTemplate.query(query, new AttendantMapper(), ids.toArray());
     }
 
     private String getSurnameLowerCase(SearchAttendantDTO attendant) {

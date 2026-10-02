@@ -29,11 +29,10 @@ public class FilmsDao {
     }
 
     public List<Film> getFilms(Integer userId, Integer type) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_MOVIES + " ";
-        query = query + WHERE + " id_user =  " + userId + " AND film_type = " + type + " AND done = 0" ;
+        String query = SELECT_ALL + FROM + TABLE_MOVIES + " "
+                + WHERE + " id_user = ? AND film_type = ? AND done = 0" ;
 
-        return  jdbcTemplate.query(query, new MoviesMapper());
+        return jdbcTemplate.query(query, new MoviesMapper(), userId, type);
     }
 
     public void insertRecomendation(FilmRecomendation film, Integer userId){
@@ -44,9 +43,9 @@ public class FilmsDao {
     }
 
     public void markFilmAsSeen(Integer userId, Integer movieId){
-        String query = UPDATE + TABLE_MOVIES;
-        query = query +" " + SET +" done = 1" + WHERE +" id_user = "+userId+" AND id_external =  " +movieId;
-        jdbcTemplate.update(query);
+        String query = UPDATE + TABLE_MOVIES
+                + " " + SET +" done = 1" + WHERE +" id_user = ? AND id_external = ?";
+        jdbcTemplate.update(query, userId, movieId);
     }
 
 }

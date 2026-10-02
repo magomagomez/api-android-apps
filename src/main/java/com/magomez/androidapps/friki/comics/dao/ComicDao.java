@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.magomez.androidapps.friki.config.FrikiConfig.AND;
@@ -37,30 +38,29 @@ public class ComicDao {
     }
 
     public List<Comic> search(ComicFilterRequest filter) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_COMICS + " ";
-        query = query + WHERE +" 1=1 ";
+        List<Object> args = new ArrayList<>();
+        String query = SELECT_ALL + FROM + TABLE_COMICS + " " + WHERE +" 1=1 ";
         if( filter.name() != null) {
-            query = query + AND + COLUMN_NAME + " = '" + filter.name() + "' ";
+            query = query + AND + COLUMN_NAME + " = ? ";
+            args.add(filter.name());
         }
         if(filter.wish() != null){
-            query = query + AND + COLUMN_WISH + " = " + (BooleanUtils.isTrue(filter.wish()) ? 1:0) ;
+            query = query + AND + COLUMN_WISH + " = ?" ;
+            args.add(BooleanUtils.isTrue(filter.wish()) ? 1:0);
         }
         if(filter.marvel() != null){
-            query = query + AND + COLUMN_MARVEL + " = " + + (BooleanUtils.isTrue(filter.marvel()) ? 1:0) ;
+            query = query + AND + COLUMN_MARVEL + " = ?" ;
+            args.add(BooleanUtils.isTrue(filter.marvel()) ? 1:0);
         }
         query = query + ORDER_BY_NAME;
 
-
-        return  jdbcTemplate.query( query, new ComicMapper());
+        return jdbcTemplate.query(query, new ComicMapper(), args.toArray());
     }
 
     public Comic getComic(Integer comicId) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_COMICS + " ";
-        query = query + WHERE + COLUMN_ID + "= "+ comicId;
+        String query = SELECT_ALL + FROM + TABLE_COMICS + " " + WHERE + COLUMN_ID + "= ?";
         try {
-            return jdbcTemplate.queryForObject(query, new ComicMapper());
+            return jdbcTemplate.queryForObject(query, new ComicMapper(), comicId);
         } catch(Exception e){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Comic not found");
         }

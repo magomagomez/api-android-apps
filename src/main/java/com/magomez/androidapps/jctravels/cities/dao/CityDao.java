@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.magomez.androidapps.jctravels.config.JcTravelsConfig.AND;
@@ -37,23 +38,21 @@ public class CityDao {
     }
 
     public List<City> getAllCities(CityFilter filter) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_CIUDADES + " ";
-        query = query + WHERE +" 1=1 ";
+        List<Object> args = new ArrayList<>();
+        String query = SELECT_ALL + FROM + TABLE_CIUDADES + " " + WHERE +" 1=1 ";
         if(filter.travel() != null){
-            query = query + AND + COLUMN_TRAVEL + " = " + filter.travel();
+            query = query + AND + COLUMN_TRAVEL + " = ?";
+            args.add(filter.travel());
         }
 
         query = query + " order by name asc";
-        return  jdbcTemplate.query(query, new CityMapper());
+        return jdbcTemplate.query(query, new CityMapper(), args.toArray());
     }
 
     public City getCity(Integer cityId) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_CIUDADES + " ";
-        query = query + WHERE + COLUMN_ID + "= "+ cityId;
+        String query = SELECT_ALL + FROM + TABLE_CIUDADES + " " + WHERE + COLUMN_ID + "= ?";
         try {
-            return jdbcTemplate.queryForObject(query, new CityMapper());
+            return jdbcTemplate.queryForObject(query, new CityMapper(), cityId);
         }
         catch(Exception e){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "City not found");
@@ -67,18 +66,23 @@ public class CityDao {
     }
 
     public void updateCity(Integer cityId, UpdateCity city) {
-        String query = UPDATE + TABLE_CIUDADES + SET + COLUMN_ID + " = " + cityId + " ";
-        query = getUpdateValues(city, query);
-        query = query  + WHERE + COLUMN_ID + " = "+ cityId;
-        jdbcTemplate.update(query);
+        List<Object> args = new ArrayList<>();
+        String query = UPDATE + TABLE_CIUDADES + SET + COLUMN_ID + " = ? ";
+        args.add(cityId);
+        query = getUpdateValues(city, query, args);
+        query = query  + WHERE + COLUMN_ID + " = ?";
+        args.add(cityId);
+        jdbcTemplate.update(query, args.toArray());
     }
 
-    private String getUpdateValues(UpdateCity city, String query) {
+    private String getUpdateValues(UpdateCity city, String query, List<Object> args) {
         if(city.name() != null){
-            query = query + ", " + COLUMN_NAME +  "= '" + city.name() +"'";
+            query = query + ", " + COLUMN_NAME +  "= ?";
+            args.add(city.name());
         }
         if(city.travel() != null){
-            query = query + ", " + COLUMN_TRAVEL +  "= " +  city.travel();
+            query = query + ", " + COLUMN_TRAVEL +  "= ?";
+            args.add(city.travel());
         }
         return query;
     }

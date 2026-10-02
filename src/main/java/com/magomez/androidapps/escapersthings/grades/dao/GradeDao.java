@@ -38,28 +38,23 @@ public class GradeDao {
 
 
     public List<Grade> getGrades(Integer escapeId) {
-        String query = "select u."+COL_NAME+", cn."+COL_ENIGMA+", cn."+COL_GM+", cn."+COL_INM+", cn."+COL_HORROR+", cn."+ COL_GLOBAL;
-        query = query + " from " + TABLE_GRADE + " cn ";
-        query = query + " inner join " + TABLE_USERS+ " u on u."+COL_ID+" = cn."+COL_USER_ID;
-        query = query + " where cn." + COL_ESCAPE_ID + " =" + escapeId;
-        query = query + " order by cn."+COL_USER_ID;
-        return  jdbcTemplate.query(query , new GradeMapper());
+        String query = "select u."+COL_NAME+", cn."+COL_ENIGMA+", cn."+COL_GM+", cn."+COL_INM+", cn."+COL_HORROR+", cn."+ COL_GLOBAL
+                + " from " + TABLE_GRADE + " cn "
+                + " inner join " + TABLE_USERS+ " u on u."+COL_ID+" = cn."+COL_USER_ID
+                + " where cn." + COL_ESCAPE_ID + " = ?"
+                + " order by cn."+COL_USER_ID;
+        return jdbcTemplate.query(query, new GradeMapper(), escapeId);
     }
 
     public Grade getGradeByUserId(Integer escapeId, Integer userId) {
-        String query = "select u."+COL_NAME+", cn."+COL_ENIGMA+", cn."+COL_GM+", cn."+COL_INM+", cn."+COL_HORROR+", cn."+ COL_GLOBAL;
-        query = query + " from " + TABLE_GRADE + " cn ";
-        query = query + " inner join " + TABLE_USERS+ " u on u."+COL_ID+" = cn."+COL_USER_ID;
-        query = query + " where cn." + COL_ESCAPE_ID + " =" + escapeId +" and cn." + COL_USER_ID + " =" + userId;
-        try{
-            return  jdbcTemplate.queryForObject(query,new GradeMapper());
-        }
-        catch (Exception e){
-            try {
-                throw new Exception(e.getMessage() + ": " + query);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+        String query = "select u."+COL_NAME+", cn."+COL_ENIGMA+", cn."+COL_GM+", cn."+COL_INM+", cn."+COL_HORROR+", cn."+ COL_GLOBAL
+                + " from " + TABLE_GRADE + " cn "
+                + " inner join " + TABLE_USERS+ " u on u."+COL_ID+" = cn."+COL_USER_ID
+                + " where cn." + COL_ESCAPE_ID + " = ? and cn." + COL_USER_ID + " = ?";
+        try {
+            return jdbcTemplate.queryForObject(query, new GradeMapper(), escapeId, userId);
+        } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
     }
@@ -70,16 +65,20 @@ public class GradeDao {
                         .map(s-> s+" = :" + s)
                         .collect(Collectors.joining(",")) +
                 " WHERE " +
-                COL_USER_ID + " = " + userId + " and " + COL_ESCAPE_ID +" = "+ escapeId;
+                COL_USER_ID + " = :" + COL_USER_ID + " and " + COL_ESCAPE_ID + " = :" + COL_ESCAPE_ID;
         Map<String, Object> parameters = getParametersUpdate(grade);
+        parameters.put(COL_USER_ID, userId);
+        parameters.put(COL_ESCAPE_ID, escapeId);
         namedParameterJdbcTemplate.update(query, parameters);
     }
 
     public void insertGrade(Integer escapeId, Integer userId , Grade grade) {
-        String query = "INSERT INTO " + TABLE_GRADE;
-        query = query +" VALUES (" + userId +","+ escapeId +","+ grade.getEnigma() +",";
-        query = query + grade.getGameMaster() +","+  grade.getInmersion() +","+  grade.getHorror() +","+  grade.getGlobal()+")";
+        String query = "INSERT INTO " + TABLE_GRADE
+                + " (" + COL_USER_ID + "," + COL_ESCAPE_ID + "," + COL_ENIGMA + "," + COL_GM + "," + COL_INM + "," + COL_HORROR + "," + COL_GLOBAL + ")"
+                + " VALUES (:" + COL_USER_ID + ", :" + COL_ESCAPE_ID + ", :" + COL_ENIGMA + ", :" + COL_GM + ", :" + COL_INM + ", :" + COL_HORROR + ", :" + COL_GLOBAL + ")";
         Map<String, Object> parameters = getParametersUpdate(grade);
+        parameters.put(COL_USER_ID, userId);
+        parameters.put(COL_ESCAPE_ID, escapeId);
         namedParameterJdbcTemplate.update(query, parameters);
     }
 

@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.magomez.androidapps.jctravels.config.JcTravelsConfig.AND;
@@ -36,22 +37,20 @@ public class ParkDao {
     }
 
     public List<Park> getAllParks(ParkFilter filter) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_PARQUES + " ";
-        query = query + WHERE +" 1=1 ";
+        List<Object> args = new ArrayList<>();
+        String query = SELECT_ALL + FROM + TABLE_PARQUES + " " + WHERE +" 1=1 ";
         if(filter.city() != null) {
-            query = query + AND + COLUMN_CITY + " = '" + filter.city() + "' ";
+            query = query + AND + COLUMN_CITY + " = ? ";
+            args.add(filter.city());
         }
         query = query + " order by name asc";
-        return  jdbcTemplate.query(query, new ParkMapper());
+        return jdbcTemplate.query(query, new ParkMapper(), args.toArray());
     }
 
     public Park getPark(Integer parkId) {
-        String query = SELECT_ALL;
-        query = query + FROM + TABLE_PARQUES + " ";
-        query = query + WHERE + COLUMN_ID + "= "+ parkId;
+        String query = SELECT_ALL + FROM + TABLE_PARQUES + " " + WHERE + COLUMN_ID + "= ?";
         try {
-            return jdbcTemplate.queryForObject(query, new ParkMapper());
+            return jdbcTemplate.queryForObject(query, new ParkMapper(), parkId);
         }
         catch(Exception e){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Park not found");
@@ -65,18 +64,23 @@ public class ParkDao {
     }
 
     public void updatePark(Integer parkId, UpdatePark park) {
-        String query = UPDATE + TABLE_PARQUES + SET + COLUMN_ID + " = " + parkId + " ";
-        query = getUpdateValues(park, query);
-        query = query + WHERE + COLUMN_ID + " = "+ parkId;
-        jdbcTemplate.update(query);
+        List<Object> args = new ArrayList<>();
+        String query = UPDATE + TABLE_PARQUES + SET + COLUMN_ID + " = ? ";
+        args.add(parkId);
+        query = getUpdateValues(park, query, args);
+        query = query + WHERE + COLUMN_ID + " = ?";
+        args.add(parkId);
+        jdbcTemplate.update(query, args.toArray());
     }
 
-    private String getUpdateValues(UpdatePark park, String query) {
+    private String getUpdateValues(UpdatePark park, String query, List<Object> args) {
         if(park.name() != null){
-            query = query + ",name = '" + park.name() + "'";
+            query = query + ",name = ?";
+            args.add(park.name());
         }
         if(park.city() != null){
-            query = query + ",city = " + park.city();
+            query = query + ",city = ?";
+            args.add(park.city());
         }
         return query;
     }
