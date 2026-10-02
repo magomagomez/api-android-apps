@@ -1,5 +1,6 @@
 package com.magomez.androidapps.magicEmail;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.mail.Address;
@@ -30,13 +31,11 @@ public class EmailService {
         private static final String IMAP_HOST = "imap.gmail.com"; // Example: imap.gmail.com, outlook.office365.com
         private static final String IMAP_PORT = "993"; // Standard port for IMAPS (SSL/TLS)
         private static final String IMAP_USERNAME = "unasenlamangashow@gmail.com"; // Your full email address
-        private static final String IMAP_PASSWORD = "netgdbvvaekgrfge"; // Your IMAP app-specific password
 
         // SMTP (Outgoing Mail) Settings
         private static final String SMTP_HOST = "smtp.gmail.com"; // Example: smtp.gmail.com, smtp.office365.com
         private static final String SMTP_PORT = "587"; // Standard port for SMTP with STARTTLS (587) or SSL/TLS (465)
         private static final String SMTP_USERNAME = "unasenlamangashow@gmail.com"; // Your full email address
-        private static final String SMTP_PASSWORD = "ekqdisgrmggjhxir"; // Your SMTP app-specific password
         private static final String REPLY_FROM_EMAIL = "unasenlamangashow@gmail.com"; // The email address replies will appear to come from
         private static final String REPLY_SUBJECT_PREFIX = "Recuerdo de un As en La Manga";
 
@@ -62,6 +61,15 @@ public class EmailService {
                         "</body>" +
                         "</html>";
 
+        private final String imapPassword;
+        private final String smtpPassword;
+
+        public EmailService(@Value("${magic-email.imap.password}") String imapPassword,
+                            @Value("${magic-email.smtp.password}") String smtpPassword) {
+                this.imapPassword = imapPassword;
+                this.smtpPassword = smtpPassword;
+        }
+
         public void mailing() {
             System.out.println("MagoEmailBot starting...");
 
@@ -84,7 +92,7 @@ public class EmailService {
 
                 System.out.println("Connecting to IMAP store at " + IMAP_HOST + "...");
                 store = imapSession.getStore("imaps");
-                store.connect(IMAP_HOST, IMAP_USERNAME, IMAP_PASSWORD);
+                store.connect(IMAP_HOST, IMAP_USERNAME, imapPassword);
                 System.out.println("Successfully connected to IMAP store.");
 
                 // Get the INBOX folder and open it
@@ -148,7 +156,7 @@ public class EmailService {
                 System.err.println("Error: No such mail provider. Check protocol name (e.g., 'imaps').");
                 e.printStackTrace();
             } catch (AuthenticationFailedException e) {
-                System.err.println("Error: IMAP authentication failed. Check IMAP_USERNAME and IMAP_PASSWORD.");
+                System.err.println("Error: IMAP authentication failed. Check the IMAP username and MAGIC_EMAIL_IMAP_PASSWORD.");
                 e.printStackTrace();
             } catch (MessagingException e) {
                 System.err.println("Error during IMAP operations (connecting, fetching messages, etc.).");
@@ -179,7 +187,7 @@ public class EmailService {
          * @param recipientEmail The email address of the original sender.
          * @param originalSubject The subject of the original message.
          */
-        private static void sendReplyEmail(Message originalMessage, String recipientEmail, String originalSubject) {
+        private void sendReplyEmail(Message originalMessage, String recipientEmail, String originalSubject) {
             Transport transport = null;
             try {
                 // --- SMTP Configuration ---
@@ -195,7 +203,7 @@ public class EmailService {
                 Session smtpSession = Session.getInstance(smtpProps, new Authenticator() {
                     @Override
                     protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(SMTP_USERNAME, SMTP_PASSWORD);
+                        return new PasswordAuthentication(SMTP_USERNAME, smtpPassword);
                     }
                 });
                 smtpSession.setDebug(false); // Set to true for verbose SMTP debug output
@@ -233,12 +241,12 @@ public class EmailService {
                 // --- Send the email ---
                 System.out.println("Attempting to send reply to: " + recipientEmail + " with subject: " + replySubject);
                 transport = smtpSession.getTransport("smtp");
-                transport.connect(SMTP_HOST, SMTP_USERNAME, SMTP_PASSWORD); // Explicitly connect the transport
+                transport.connect(SMTP_HOST, SMTP_USERNAME, smtpPassword); // Explicitly connect the transport
                 transport.sendMessage(replyMessage, replyMessage.getAllRecipients());
                 System.out.println("Reply email sent successfully to " + recipientEmail);
 
             } catch (AuthenticationFailedException e) {
-                System.err.println("Error: SMTP authentication failed. Check SMTP_USERNAME and SMTP_PASSWORD.");
+                System.err.println("Error: SMTP authentication failed. Check the SMTP username and MAGIC_EMAIL_SMTP_PASSWORD.");
                 e.printStackTrace();
             } catch (MessagingException e) {
                 System.err.println("Error sending reply email to " + recipientEmail + ".");
