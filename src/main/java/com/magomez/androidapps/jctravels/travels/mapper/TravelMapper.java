@@ -12,6 +12,7 @@ public class TravelMapper implements RowMapper<Travel> {
     public Travel mapRow(ResultSet rs, int rowNum) throws SQLException {
         return new Travel(
                 rs.getInt("id"),
-                rs.getString("name"));
+                rs.getString("name"),
+                rs.getBoolean("hidden"));
     }
 }

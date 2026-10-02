@@ -9,7 +9,9 @@ public record Travel(
         @JsonProperty("id")
         Integer id,
         @JsonProperty("name")
-        String name
+        String name,
+        @JsonProperty("hidden")
+        Boolean hidden
 ) implements Serializable {
 
     @Serial

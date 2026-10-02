@@ -20,7 +20,8 @@ public class TravelConverter {
     public static TravelDTO toDto(Travel travel) {
         return new TravelDTO(
                 travel.id(),
-                travel.name()
+                travel.name(),
+                travel.hidden()
         );
     }
 
