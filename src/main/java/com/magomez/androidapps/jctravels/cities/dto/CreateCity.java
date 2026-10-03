@@ -5,7 +5,10 @@ import java.io.Serializable;
 
 public record CreateCity(
         String name,
-        Integer travel
+        Integer travel,
+        Boolean hasMonuments,
+        Boolean hasParks,
+        Boolean hasOutlets
 ) implements Serializable {
 
     @Serial

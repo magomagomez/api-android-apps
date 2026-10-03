@@ -6,6 +6,8 @@ import com.magomez.androidapps.jctravels.monuments.dto.CreateMonument;
 import com.magomez.androidapps.jctravels.monuments.dto.MonumentFilter;
 import com.magomez.androidapps.jctravels.monuments.dto.UpdateMonument;
 import com.magomez.androidapps.jctravels.monuments.dto.UpdateMonumentRequest;
+import com.magomez.androidapps.jctravels.cities.dao.CityDao;
+import com.magomez.androidapps.jctravels.cities.dto.CityContent;
 import com.magomez.androidapps.jctravels.routes.dao.RouteDao;
 import com.magomez.androidapps.jctravels.routes.dto.Route;
 import com.magomez.androidapps.jctravels.monuments.dto.CreateMonumentRequest;
@@ -26,9 +28,11 @@ public class MonumentService {
     private static final String INVALID_PARAMETERS = "Invalid Parameters";
     private final MonumentDao monumentDao;
     private final RouteDao routeDao;
+    private final CityDao cityDao;
 
     @Autowired
-    public MonumentService(MonumentDao monumentDao,RouteDao routeDao){
+    public MonumentService(MonumentDao monumentDao, RouteDao routeDao, CityDao cityDao){
+        this.cityDao = cityDao;
         this.monumentDao = monumentDao;
         this.routeDao = routeDao;
     }
@@ -51,6 +55,7 @@ public class MonumentService {
         CreateMonument monument = MonumentConverter.toRecord(request);
         Integer route = monument.route() != null ? monument.route() : defaultRouteOf(monument.city());
         monumentDao.createMonument(monument, route);
+        cityDao.markHas(monument.city(), CityContent.MONUMENTS);
     }
 
     /** The city's default route; a city without one needs the route in the request (409, not 500). */

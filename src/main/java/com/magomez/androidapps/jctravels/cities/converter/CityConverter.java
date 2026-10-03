@@ -36,7 +36,10 @@ public class CityConverter {
     public static CreateCity toRecord(CreateCityRequest request) {
         return new CreateCity(
                 request.name(),
-                request.travel()
+                request.travel(),
+                request.hasMonuments(),
+                request.hasParks(),
+                request.hasOutlets()
         );
     }
 

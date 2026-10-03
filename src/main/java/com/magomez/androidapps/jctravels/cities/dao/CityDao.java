@@ -1,6 +1,7 @@
 package com.magomez.androidapps.jctravels.cities.dao;
 
 import com.magomez.androidapps.jctravels.cities.dto.City;
+import com.magomez.androidapps.jctravels.cities.dto.CityContent;
 import com.magomez.androidapps.jctravels.cities.dto.CityFilter;
 import com.magomez.androidapps.jctravels.cities.dto.CreateCity;
 import com.magomez.androidapps.jctravels.cities.dto.UpdateCity;
@@ -61,9 +62,16 @@ public class CityDao {
     }
 
     public void createCity(CreateCity city) {
-        String query = INSERT + TABLE_CIUDADES + " (name,travel) " +
-                VALUES + "(?,?)";
-        jdbcTemplate.update(query , city.name(), city.travel());
+        String query = INSERT + TABLE_CIUDADES + " (name,travel,has_monuments,has_parks,has_outlets) " +
+                VALUES + "(?,?,?,?,?)";
+        jdbcTemplate.update(query, city.name(), city.travel(),
+                Boolean.TRUE.equals(city.hasMonuments()), Boolean.TRUE.equals(city.hasParks()), Boolean.TRUE.equals(city.hasOutlets()));
+    }
+
+    /** Turns a content flag on once the city gets something for it; flags are never turned off here. */
+    public void markHas(Integer cityId, CityContent content) {
+        String query = "UPDATE " + TABLE_CIUDADES + " SET " + content.column() + " = true WHERE id = ?";
+        jdbcTemplate.update(query, cityId);
     }
 
     public void updateCity(Integer cityId, UpdateCity city) {

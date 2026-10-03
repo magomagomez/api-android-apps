@@ -9,7 +9,14 @@ public record CreateCityRequest(
         @JsonProperty("name")
         String name,
         @JsonProperty("travel")
-        Integer travel
+        Integer travel,
+        // Optional: what the city will have; all false when absent (as for the Cordova app).
+        @JsonProperty("has_monuments")
+        Boolean hasMonuments,
+        @JsonProperty("has_parks")
+        Boolean hasParks,
+        @JsonProperty("has_outlets")
+        Boolean hasOutlets
 ) implements Serializable {
 
     @Serial

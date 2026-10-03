@@ -3,6 +3,8 @@ package com.magomez.androidapps.jctravels.parks.service;
 import com.magomez.androidapps.jctravels.parks.converter.ParkConverter;
 import com.magomez.androidapps.jctravels.parks.dto.ParkDTO;
 import com.magomez.androidapps.jctravels.parks.dto.ParkFilterRequest;
+import com.magomez.androidapps.jctravels.cities.dao.CityDao;
+import com.magomez.androidapps.jctravels.cities.dto.CityContent;
 import com.magomez.androidapps.jctravels.parks.dao.ParkDao;
 import com.magomez.androidapps.jctravels.parks.dto.Park;
 import com.magomez.androidapps.jctravels.parks.dto.ParkFilter;
@@ -22,11 +24,12 @@ public class ParkService {
 
     private static final String INVALID_PARAMETERS = "Invalid Parameters";
     private final ParkDao parkDao;
+    private final CityDao cityDao;
 
     @Autowired
-    public ParkService(ParkDao parkDao){
-
+    public ParkService(ParkDao parkDao, CityDao cityDao){
         this.parkDao = parkDao;
+        this.cityDao = cityDao;
     }
 
     public List<ParkDTO> getParks(ParkFilterRequest requestFilter){
@@ -46,6 +49,7 @@ public class ParkService {
         }
         CreatePark park = ParkConverter.toRecord(request);
         parkDao.createPark(park);
+        cityDao.markHas(park.city(), CityContent.PARKS);
     }
 
     public void updatePark(Integer parkId, UpdateParkRequest request){
