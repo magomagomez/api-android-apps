@@ -68,8 +68,8 @@ public class RouteDao {
     }
 
     public void createRoute(CreateRoute route) {
-        String query = INSERT + TABLE_ROUTES + " (name,city,def) " + VALUES + "(?,?,?)";
-        jdbcTemplate.update(query , route.name(),route.city(),0);
+        String query = INSERT + TABLE_ROUTES + " (name,city,def,day,month) " + VALUES + "(?,?,?,?,?)";
+        jdbcTemplate.update(query, route.name(), route.city(), 0, route.day(), route.month());
     }
 
     public void updateRoute(Integer routeId, UpdateRoute route) {

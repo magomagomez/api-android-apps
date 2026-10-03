@@ -17,6 +17,8 @@ class RecordingJdbcTemplate extends JdbcTemplate {
     String lastSql;
     Object[] lastArgs;
     Object nextResult;
+    /** Every SQL statement run, in order (the last one is also in lastSql). */
+    final List<String> history = new java.util.ArrayList<>();
     DataAccessException nextFailure;
 
     @Override
@@ -56,6 +58,7 @@ class RecordingJdbcTemplate extends JdbcTemplate {
     }
 
     private void record(String sql, Object[] args) {
+        this.history.add(sql);
         this.lastSql = sql;
         this.lastArgs = args;
     }

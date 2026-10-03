@@ -13,7 +13,10 @@ public record CreateMonumentRequest(
         @JsonProperty("schedule")
         String schedule,
         @JsonProperty("price")
-        String price
+        String price,
+        // Optional: the day route to file it under; the city's default route when absent.
+        @JsonProperty("route")
+        Integer route
 ) implements Serializable {
 
     @Serial

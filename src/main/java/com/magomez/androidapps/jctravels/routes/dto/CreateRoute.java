@@ -5,7 +5,9 @@ import java.io.Serializable;
 
 public record CreateRoute(
         String name,
-        Integer city
+        Integer city,
+        String day,
+        String month
 ) implements Serializable {
 
     @Serial

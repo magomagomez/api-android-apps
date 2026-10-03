@@ -13,6 +13,7 @@ import com.magomez.androidapps.jctravels.monuments.dto.Monument;
 import com.magomez.androidapps.jctravels.monuments.dto.MonumentDTO;
 import com.magomez.androidapps.jctravels.monuments.dto.MonumentFilterRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -48,8 +49,17 @@ public class MonumentService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, INVALID_PARAMETERS);
         }
         CreateMonument monument = MonumentConverter.toRecord(request);
-        Route defaultRoute = routeDao.getDefaultRoute(monument.city());
-        monumentDao.createMonument(monument,defaultRoute.id());
+        Integer route = monument.route() != null ? monument.route() : defaultRouteOf(monument.city());
+        monumentDao.createMonument(monument, route);
+    }
+
+    /** The city's default route; a city without one needs the route in the request (409, not 500). */
+    private Integer defaultRouteOf(Integer city) {
+        try {
+            return routeDao.getDefaultRoute(city).id();
+        } catch (EmptyResultDataAccessException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "City " + city + " has no default route: pass one");
+        }
     }
 
     public void updateMonument(Integer monumentId, UpdateMonumentRequest request){

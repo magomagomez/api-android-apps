@@ -9,7 +9,12 @@ public record CreateRouteRequest(
         @JsonProperty("name")
         String name,
         @JsonProperty("city")
-        Integer city
+        Integer city,
+        // Optional date of a day route ("19", "Agost"); absent for named groups like "Central Park".
+        @JsonProperty("day")
+        String day,
+        @JsonProperty("month")
+        String month
 ) implements Serializable {
 
     @Serial

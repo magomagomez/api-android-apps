@@ -40,7 +40,8 @@ public class MonumentConverter {
                 request.name(),
                 request.city(),
                 request.schedule(),
-                request.price()
+                request.price(),
+                request.route()
         );
     }
 

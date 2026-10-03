@@ -34,7 +34,9 @@ public class RouteConverter {
     public static CreateRoute toRecord(CreateRouteRequest request) {
         return new CreateRoute(
                 request.name(),
-                request.city()
+                request.city(),
+                request.day(),
+                request.month()
         );
     }
 
