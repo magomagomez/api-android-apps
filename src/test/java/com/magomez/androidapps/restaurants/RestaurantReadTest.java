@@ -33,7 +33,7 @@ class RestaurantReadTest {
     @BeforeEach
     void setUp() {
         jdbc = new RecordingJdbcTemplate();
-        service = new RestaurantService(new RestaurantDao(jdbc));
+        service = new RestaurantService(new RestaurantDao(jdbc), java.time.Clock.systemUTC());
     }
 
     @Test
