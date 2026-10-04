@@ -65,12 +65,17 @@ public class CityDao {
         String query = INSERT + TABLE_CIUDADES + " (name,travel,has_monuments,has_parks,has_outlets) " +
                 VALUES + "(?,?,?,?,?)";
         jdbcTemplate.update(query, city.name(), city.travel(),
-                Boolean.TRUE.equals(city.hasMonuments()), Boolean.TRUE.equals(city.hasParks()), Boolean.TRUE.equals(city.hasOutlets()));
+                flag(city.hasMonuments()), flag(city.hasParks()), flag(city.hasOutlets()));
+    }
+
+    /** The flag columns are integers (0/1), not booleans. */
+    private static int flag(Boolean value) {
+        return Boolean.TRUE.equals(value) ? 1 : 0;
     }
 
     /** Turns a content flag on once the city gets something for it; flags are never turned off here. */
     public void markHas(Integer cityId, CityContent content) {
-        String query = "UPDATE " + TABLE_CIUDADES + " SET " + content.column() + " = true WHERE id = ?";
+        String query = "UPDATE " + TABLE_CIUDADES + " SET " + content.column() + " = 1 WHERE id = ?";
         jdbcTemplate.update(query, cityId);
     }
 

@@ -77,7 +77,7 @@ class JcTravelsCreateTest {
     void aNewMonumentTurnsOnTheCityMonumentsFlag() {
         monuments.createMonument(new CreateMonumentRequest("Bellagio fountains", 8, null, null, 41));
 
-        assertThat(jdbc.normalizedSql()).isEqualTo("UPDATE cities SET has_monuments = true WHERE id = ?");
+        assertThat(jdbc.normalizedSql()).isEqualTo("UPDATE cities SET has_monuments = 1 WHERE id = ?");
         assertThat(jdbc.lastArgs).containsExactly(8);
     }
 
@@ -86,7 +86,7 @@ class JcTravelsCreateTest {
         parks.createPark(new CreateParkRequest("SeaWorld", 4));
 
         assertThat(jdbc.history.get(0)).containsIgnoringCase("insert");
-        assertThat(jdbc.normalizedSql()).isEqualTo("UPDATE cities SET has_parks = true WHERE id = ?");
+        assertThat(jdbc.normalizedSql()).isEqualTo("UPDATE cities SET has_parks = 1 WHERE id = ?");
     }
 
     @Test
@@ -94,14 +94,14 @@ class JcTravelsCreateTest {
         cities.createCity(new CreateCityRequest("Miami", 1, false, true, true));
 
         assertThat(jdbc.normalizedSql()).contains("(name,travel,has_monuments,has_parks,has_outlets)");
-        assertThat(jdbc.lastArgs).containsExactly("Miami", 1, false, true, true);
+        assertThat(jdbc.lastArgs).containsExactly("Miami", 1, 0, 1, 1);
     }
 
     @Test
     void aNewCityWithoutFlagsHasNothingYet() {
         cities.createCity(new CreateCityRequest("Miami", 1, null, null, null));
 
-        assertThat(jdbc.lastArgs).containsExactly("Miami", 1, false, false, false);
+        assertThat(jdbc.lastArgs).containsExactly("Miami", 1, 0, 0, 0);
     }
 
     @Test

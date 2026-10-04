@@ -16,6 +16,7 @@ import com.magomez.androidapps.jctravels.parks.dto.ParkHoursDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
@@ -63,6 +64,7 @@ public class ParkService {
         }
     }
 
+    @Transactional
     public void createPark(CreateParkRequest request){
         if(request == null || request.name() == null || request.city() == null){
             throw new ResponseStatusException(HttpStatus.CONFLICT, INVALID_PARAMETERS);

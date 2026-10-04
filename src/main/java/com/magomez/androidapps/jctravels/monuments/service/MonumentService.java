@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -48,6 +49,7 @@ public class MonumentService {
         return MonumentConverter.toDto(monument);
     }
 
+    @Transactional
     public void createMonument(CreateMonumentRequest request){
         if(request == null || request.name() == null || request.city() == null){
             throw new ResponseStatusException(HttpStatus.CONFLICT, INVALID_PARAMETERS);
