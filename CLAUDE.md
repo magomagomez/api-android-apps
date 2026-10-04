@@ -39,6 +39,10 @@ No introducir dependencias innecesarias.
 
 ## 3. Regla fundamental: NO PERSISTENCIA
 
+Ámbito: esta regla es del motor de recomendación de películas (`movierec`). Los módulos de
+las apps (`friki`, `jctravels`, `restaurants`, `escapersthings`...) sí guardan sus datos en
+Postgres con `JdbcTemplate`, como siempre.
+
 Este proyecto es completamente stateless respecto a los datos cinematográficos y personales.
 
 NO utilizar:
