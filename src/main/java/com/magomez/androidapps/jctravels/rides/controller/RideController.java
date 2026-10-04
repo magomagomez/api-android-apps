@@ -3,9 +3,11 @@ package com.magomez.androidapps.jctravels.rides.controller;
 import com.magomez.androidapps.jctravels.config.ApiConfig;
 import com.magomez.androidapps.jctravels.rides.dto.CreateRideRequest;
 import com.magomez.androidapps.jctravels.rides.dto.RideDTO;
+import com.magomez.androidapps.jctravels.rides.dto.RideForecastDTO;
 import com.magomez.androidapps.jctravels.rides.dto.RideFilterRequest;
 import com.magomez.androidapps.jctravels.rides.dto.RidesDTO;
 import com.magomez.androidapps.jctravels.rides.dto.UpdateRideRequest;
+import com.magomez.androidapps.jctravels.rides.service.RideForecastService;
 import com.magomez.androidapps.jctravels.rides.service.RideService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -27,11 +29,12 @@ import java.io.IOException;
 public class RideController {
 
     private final RideService rideService;
+    private final RideForecastService rideForecastService;
 
     @Autowired
-    public RideController(RideService rideService){
-
+    public RideController(RideService rideService, RideForecastService rideForecastService){
         this.rideService = rideService;
+        this.rideForecastService = rideForecastService;
     }
 
     @GetMapping
@@ -44,6 +47,12 @@ public class RideController {
     public RideDTO getRide(@PathVariable Integer rideId){
 
         return rideService.getRide(rideId);
+    }
+
+    /** Today's expected waits (park.fan); empty when there is no forecast for this ride. */
+    @GetMapping("{rideId}/forecast")
+    public RideForecastDTO getForecast(@PathVariable Integer rideId) {
+        return rideForecastService.forecast(rideId);
     }
 
     @PostMapping
