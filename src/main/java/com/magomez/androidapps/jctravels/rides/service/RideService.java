@@ -49,12 +49,12 @@ public class RideService {
         RideFilter filter = RideConverter.toFilter(requestFilter);
         List<Ride> rides =  rideDao.getAllRides(filter);
         Park park = parkDao.getPark(requestFilter.park());
-        ParkInfo parkInfo = rideQueueService.getRideQueueTimes(park.queueId());
+        ParkInfo parkInfo = liveOf(park);
         List<RideDTO> must = new ArrayList<>();
         List<RideDTO> maybe = new ArrayList<>();
         for (Ride ride : rides){
             RideDTO rideDTO = RideConverter.toDto(ride);
-            if(parkInfo.getLiveData() != null) {
+            if(parkInfo != null && parkInfo.getLiveData() != null) {
                 getRideTime(ride.code(), rideDTO, parkInfo.getLiveData());
             }
             if(Boolean.TRUE.equals(ride.must())){
@@ -71,15 +71,20 @@ public class RideService {
         try {
             Ride ride = rideDao.getRide(rideId);
             Park park = parkDao.getPark(ride.park());
-            ParkInfo parkInfo = rideQueueService.getRideQueueTimes(park.queueId());
+            ParkInfo parkInfo = liveOf(park);
             RideDTO rideDTO = RideConverter.toDto(ride);
-            if(parkInfo.getLiveData() != null) {
+            if(parkInfo != null && parkInfo.getLiveData() != null) {
                 getRideTime(ride.code(), rideDTO, parkInfo.getLiveData());
             }
             return rideDTO;
         }catch (IOException ex){
             throw new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage());
         }
+    }
+
+    /** Live data of the park, or null for a park added from the app without a themeparks.wiki code. */
+    private ParkInfo liveOf(Park park) throws IOException {
+        return park.queueId() == null ? null : rideQueueService.getRideQueueTimes(park.queueId());
     }
 
     private void getRideTime(String rideCode, RideDTO rideDTO, List<RideInfo> ridesTime ) {
