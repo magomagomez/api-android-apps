@@ -18,7 +18,6 @@ import com.magomez.androidapps.jctravels.rides.dto.WaitTime;
 import com.magomez.androidapps.jctravels.rides.dto.WaitTimeDTO;
 
 import java.util.List;
-import java.util.Objects;
 
 public class RideConverter {
 
@@ -30,7 +29,9 @@ public class RideConverter {
         rideDTO.setName(ride.name());
         rideDTO.setImagePath(ride.imagePath());
         rideDTO.setDone(ride.done());
-        rideDTO.setPark(Objects.requireNonNull(ParksName.get(ride.park())).name());
+        // Only the parks of the original trips have a photo folder code; one added from the app has none.
+        ParksName parkName = ParksName.get(ride.park());
+        rideDTO.setPark(parkName == null ? null : parkName.name());
         rideDTO.setLocationPath(ride.locationPath());
         return rideDTO;
     }
