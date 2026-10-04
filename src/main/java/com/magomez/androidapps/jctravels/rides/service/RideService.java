@@ -101,9 +101,7 @@ public class RideService {
     }
 
     private void getWaitTimes(RideDTO rideDTO, RideInfo rideTime) {
-        if(rideTime.getQueue() != null && rideTime.getQueue().getStandby() != null) {
-            rideDTO.setQueueTime(rideTime.getQueue().getStandby().getWaitTime());
-        }
+        RideConverter.applyQueues(rideDTO, rideTime.getQueue());
     }
 
     private void getForecast(RideDTO rideDTO, RideInfo rideTime) {

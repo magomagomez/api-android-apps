@@ -1,0 +1,47 @@
+{
+  "id": "1c84a229-8862-4648-9c71-378ddd2c7693",
+  "name": "Disney's Animal Kingdom Theme Park",
+  "entityType": "PARK",
+  "liveData": [
+    {
+      "id": "64a6915f-a835-4226-ba5c-8389fc4cade3",
+      "name": "Expedition Everest - Legend of the Forbidden Mountain",
+      "entityType": "ATTRACTION",
+      "status": "OPERATING",
+      "lastUpdated": "2026-10-04T14:02:11Z",
+      "queue": {
+        "STANDBY": { "waitTime": 45 },
+        "SINGLE_RIDER": { "waitTime": 10 },
+        "RETURN_TIME": { "state": "AVAILABLE", "returnStart": "2026-10-04T10:15:00-04:00", "returnEnd": "2026-10-04T11:15:00-04:00" }
+      }
+    },
+    {
+      "id": "24cf863c-b6ba-4826-a056-0b698989cbf7",
+      "name": "Avatar Flight of Passage",
+      "entityType": "ATTRACTION",
+      "status": "OPERATING",
+      "lastUpdated": "2026-10-04T14:02:11Z",
+      "queue": {
+        "STANDBY": { "waitTime": 70 },
+        "PAID_RETURN_TIME": {
+          "price": { "amount": 1900, "currency": "USD", "formatted": "$19.00" },
+          "state": "AVAILABLE",
+          "returnStart": "2026-10-04T16:55:00-04:00",
+          "returnEnd": "2026-10-04T17:55:00-04:00"
+        }
+      }
+    },
+    {
+      "id": "8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0",
+      "name": "Kilimanjaro Safaris",
+      "entityType": "ATTRACTION",
+      "status": "OPERATING",
+      "lastUpdated": "2026-10-04T14:02:11Z",
+      "queue": {
+        "STANDBY": { "waitTime": 20 },
+        "SINGLE_RIDER": { "waitTime": null },
+        "RETURN_TIME": { "state": "FINISHED", "returnStart": null, "returnEnd": null }
+      }
+    }
+  ]
+}

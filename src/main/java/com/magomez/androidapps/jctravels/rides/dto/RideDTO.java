@@ -33,6 +33,12 @@ public class RideDTO implements Serializable {
     private List<WaitTimeDTO> forecast;
     @JsonProperty("show_time")
     private List<ShowTimeDTO> showtimes;
+    @JsonProperty("single_rider")
+    private Integer singleRider;
+    @JsonProperty("return_time")
+    private ReturnTimeDTO returnTime;
+    @JsonProperty("paid_return_time")
+    private ReturnTimeDTO paidReturnTime;
 
     public Integer getId() {
         return id;
@@ -120,5 +126,29 @@ public class RideDTO implements Serializable {
 
     public void setShowtimes(List<ShowTimeDTO> showtimes) {
         this.showtimes = showtimes;
+    }
+
+    public Integer getSingleRider() {
+        return singleRider;
+    }
+
+    public void setSingleRider(Integer singleRider) {
+        this.singleRider = singleRider;
+    }
+
+    public ReturnTimeDTO getReturnTime() {
+        return returnTime;
+    }
+
+    public void setReturnTime(ReturnTimeDTO returnTime) {
+        this.returnTime = returnTime;
+    }
+
+    public ReturnTimeDTO getPaidReturnTime() {
+        return paidReturnTime;
+    }
+
+    public void setPaidReturnTime(ReturnTimeDTO paidReturnTime) {
+        this.paidReturnTime = paidReturnTime;
     }
 }

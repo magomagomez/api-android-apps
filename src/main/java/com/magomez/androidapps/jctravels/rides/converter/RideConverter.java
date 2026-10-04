@@ -3,6 +3,9 @@ package com.magomez.androidapps.jctravels.rides.converter;
 import com.magomez.androidapps.jctravels.rides.dto.CreateRide;
 import com.magomez.androidapps.jctravels.rides.dto.CreateRideRequest;
 import com.magomez.androidapps.jctravels.rides.dto.ParksName;
+import com.magomez.androidapps.jctravels.rides.dto.QueueTimes;
+import com.magomez.androidapps.jctravels.rides.dto.ReturnTime;
+import com.magomez.androidapps.jctravels.rides.dto.ReturnTimeDTO;
 import com.magomez.androidapps.jctravels.rides.dto.Ride;
 import com.magomez.androidapps.jctravels.rides.dto.RideDTO;
 import com.magomez.androidapps.jctravels.rides.dto.RideFilter;
@@ -30,6 +33,29 @@ public class RideConverter {
         rideDTO.setPark(Objects.requireNonNull(ParksName.get(ride.park())).name());
         rideDTO.setLocationPath(ride.locationPath());
         return rideDTO;
+    }
+
+    /** Standby, Single Rider and Lightning Lane from the live queue; absent queues stay null. */
+    public static void applyQueues(RideDTO rideDTO, QueueTimes queue) {
+        if (queue == null) {
+            return;
+        }
+        if (queue.getStandby() != null) {
+            rideDTO.setQueueTime(queue.getStandby().getWaitTime());
+        }
+        if (queue.getSingleRider() != null) {
+            rideDTO.setSingleRider(queue.getSingleRider().getWaitTime());
+        }
+        rideDTO.setReturnTime(toDto(queue.getReturnTime()));
+        rideDTO.setPaidReturnTime(toDto(queue.getPaidReturnTime()));
+    }
+
+    private static ReturnTimeDTO toDto(ReturnTime returnTime) {
+        if (returnTime == null) {
+            return null;
+        }
+        String price = returnTime.price() == null ? null : returnTime.price().formatted();
+        return new ReturnTimeDTO(returnTime.state(), returnTime.returnStart(), returnTime.returnEnd(), price);
     }
 
     public static List<WaitTimeDTO> toWaitTimeList(List<WaitTime> waitTimes){
