@@ -1,6 +1,7 @@
 package com.magomez.androidapps.jctravels.parks.converter;
 
 import com.magomez.androidapps.jctravels.parks.dto.Park;
+import com.magomez.androidapps.jctravels.parks.dto.ParkHoursDTO;
 import com.magomez.androidapps.jctravels.parks.dto.ParkDTO;
 import com.magomez.androidapps.jctravels.parks.dto.ParkFilter;
 import com.magomez.androidapps.jctravels.parks.dto.ParkFilterRequest;
@@ -15,18 +16,13 @@ public class ParkConverter {
 
     private ParkConverter(){}
 
-    public static List<ParkDTO> toDtoList(List<Park> parks){
-        return parks.stream()
-                .map(ParkConverter::toDto)
-                .toList();
-    }
-
-    public static ParkDTO toDto(Park park) {
+    public static ParkDTO toDto(Park park, ParkHoursDTO hours) {
         return new ParkDTO(
                 park.id(),
                 park.name(),
                 park.queueId(),
-                park.city()
+                park.city(),
+                hours
         );
     }
 

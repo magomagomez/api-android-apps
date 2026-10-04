@@ -8,6 +8,7 @@ import com.magomez.androidapps.jctravels.monuments.dto.CreateMonumentRequest;
 import com.magomez.androidapps.jctravels.monuments.service.MonumentService;
 import com.magomez.androidapps.jctravels.parks.dao.ParkDao;
 import com.magomez.androidapps.jctravels.parks.dto.CreateParkRequest;
+import com.magomez.androidapps.jctravels.parks.service.ParkScheduleService;
 import com.magomez.androidapps.jctravels.parks.service.ParkService;
 import com.magomez.androidapps.jctravels.routes.dao.RouteDao;
 import com.magomez.androidapps.jctravels.routes.dto.CreateRouteRequest;
@@ -41,7 +42,7 @@ class JcTravelsCreateTest {
         CityDao cityDao = new CityDao(jdbc);
         monuments = new MonumentService(new MonumentDao(jdbc), routeDao, cityDao);
         routes = new RouteService(routeDao);
-        parks = new ParkService(new ParkDao(jdbc), cityDao);
+        parks = new ParkService(new ParkDao(jdbc), cityDao, new ParkScheduleService());
         cities = new CityService(cityDao);
     }
 

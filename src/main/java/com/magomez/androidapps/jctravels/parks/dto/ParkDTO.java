@@ -13,7 +13,10 @@ public record ParkDTO(
         @JsonProperty("queue_id")
         String queueId,
         @JsonProperty("city")
-        Integer city
+        Integer city,
+        // Current or next opening; null when the schedule is unknown or could not be read.
+        @JsonProperty("hours")
+        ParkHoursDTO hours
 ) implements Serializable {
 
     @Serial
