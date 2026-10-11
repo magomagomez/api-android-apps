@@ -25,9 +25,11 @@ import java.util.List;
 public class RoomsController {
 
     private final RoomService roomService;
+    private final PlayService playService;
 
-    public RoomsController(RoomService roomService) {
+    public RoomsController(RoomService roomService, PlayService playService) {
         this.roomService = roomService;
+        this.playService = playService;
     }
 
     @Operation(summary = "Every room by name, with group averages, players and my grade")
@@ -63,5 +65,19 @@ public class RoomsController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable int roomId) {
         roomService.delete(roomId);
+    }
+
+    @Operation(summary = "Who played the room and when (replaces the list; grades are kept)")
+    @PutMapping("{roomId}/players")
+    public RoomSummary players(@PathVariable int roomId, @RequestBody PlayersRequest request,
+                               @Parameter(hidden = true) @RequestAttribute(CurrentUser.ATTRIBUTE) CurrentUser user) {
+        return playService.replacePlayers(roomId, request, user.id());
+    }
+
+    @Operation(summary = "My five scores, each optional, 0-10 in quarter points (409 if I did not play it)")
+    @PutMapping("{roomId}/grades/me")
+    public RoomSummary myGrade(@PathVariable int roomId, @RequestBody Grade request,
+                               @Parameter(hidden = true) @RequestAttribute(CurrentUser.ATTRIBUTE) CurrentUser user) {
+        return playService.saveMyGrade(roomId, request, user.id());
     }
 }
