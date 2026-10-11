@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
+@Deprecated(since = "escapers-api v2")
 @RequestMapping(ApiConfig.BASE_URL + "/escapeRooms/{escapeRoomId}/grades")
 @CrossOrigin(origins = "*", methods= {RequestMethod.GET,RequestMethod.POST})
 public class GradeController {

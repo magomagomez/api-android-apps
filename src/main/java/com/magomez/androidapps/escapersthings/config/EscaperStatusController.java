@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Deprecated(since = "escapers-api v2")
 @RequestMapping(ApiConfig.BASE_URL)
 @CrossOrigin(origins = "*", methods= {RequestMethod.GET})
 public class EscaperStatusController {

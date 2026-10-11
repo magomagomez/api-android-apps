@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
+@Deprecated(since = "escapers-api v2")
 @RequestMapping(ApiConfig.BASE_URL + "/user/{userId}")
 @CrossOrigin(origins = "*", methods= {RequestMethod.GET,RequestMethod.POST})
 public class UserStatsController {

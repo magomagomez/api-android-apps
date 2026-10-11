@@ -21,6 +21,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 @RestController
+@Deprecated(since = "escapers-api v2")
 @RequestMapping(ApiConfig.BASE_URL + "/escapeRooms")
 @CrossOrigin(origins = "*", methods= {RequestMethod.GET, RequestMethod.POST,RequestMethod.PUT})
 public class EscapeRoomsController {
