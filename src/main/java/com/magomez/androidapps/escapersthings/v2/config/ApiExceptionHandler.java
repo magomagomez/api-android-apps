@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -21,17 +22,22 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ApiError> handle(ApiException e) {
-        return ResponseEntity.status(e.getStatus()).body(new ApiError(e.getCode(), e.getMessage()));
+        return json(e.getStatus(), new ApiError(e.getCode(), e.getMessage()));
     }
 
     @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
     public ResponseEntity<ApiError> handleBadRequest(Exception e) {
-        return ResponseEntity.badRequest().body(BAD_REQUEST);
+        return json(HttpStatus.BAD_REQUEST, BAD_REQUEST);
     }
 
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<ApiError> handleDatabase(DataAccessException e) {
         log.error("escapers-api v2: database error", e);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(SERVER_ERROR);
+        return json(HttpStatus.INTERNAL_SERVER_ERROR, SERVER_ERROR);
+    }
+
+    /** Always JSON, whatever the client accepts (the photo GET is asked for image/*). */
+    private static ResponseEntity<ApiError> json(HttpStatus status, ApiError error) {
+        return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(error);
     }
 }
