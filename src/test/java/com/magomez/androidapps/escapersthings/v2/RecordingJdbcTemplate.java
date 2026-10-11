@@ -87,6 +87,11 @@ class RecordingJdbcTemplate extends JdbcTemplate {
     }
 
     @Override
+    public <T> T queryForObject(String sql, Class<T> requiredType) {
+        return queryForObject(sql, requiredType, new Object[0]);
+    }
+
+    @Override
     public int update(String sql, Object... args) {
         record(sql, args);
         Integer count = lookup(updateCounts, sql);
