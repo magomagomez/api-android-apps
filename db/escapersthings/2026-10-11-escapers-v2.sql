@@ -12,6 +12,7 @@
 -- Datos que cambia:
 -- - Borra las salas de prueba 168, 217 y 218 y sus notas.
 -- - Borra las notas de salas inexistentes (0, 82, 83, 84, 200) o de usuarios inexistentes.
+-- - escape_rooms.name: recorta espacios ("Vieja Carnicería ").
 -- - escape_rooms.type: recorta espacios; Cinefilo -> Cinéfilo, Aventuras -> Aventura,
 --   Battle Royal -> Battle Royale. Si queda alguna fuera de la lista cerrada, aborta.
 -- - escape_rooms.ubication: recorta espacios ('' -> null) y corrige:
@@ -31,6 +32,9 @@ DELETE FROM escape_rooms WHERE id IN (168, 217, 218);
 DELETE FROM user_categoria_nota n
  WHERE NOT EXISTS (SELECT 1 FROM escape_rooms e WHERE e.id = n.escape_room_id)
     OR NOT EXISTS (SELECT 1 FROM users u WHERE u.id = n.user_id);
+
+-- Nombres sin espacios sobrantes ("Vieja Carnicería ").
+UPDATE escape_rooms SET name = trim(name) WHERE name <> trim(name);
 
 -- 2. Categorías a la lista cerrada ------------------------------------------------------
 
