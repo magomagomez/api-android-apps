@@ -7,11 +7,11 @@
 // ESCAPERS_OLD_IMAGES cambia el origen de las imágenes (solo para probar el script en local).
 
 const API = (process.env.ESCAPERS_API || 'https://api-android-app.herokuapp.com').replace(/\/$/, '') + '/escapers-api/v2';
-const OLD_IMAGES = process.env.ESCAPERS_OLD_IMAGES || 'https://magomagomez.com/escapersthings/web/images/escapes';
+const OLD_IMAGES = process.env.ESCAPERS_OLD_IMAGES || 'https://magomagomez.com/escapersthings/web/images';
 
 // kind de la API -> campo del listado y carpeta de la web antigua.
 const KINDS = [
-  { kind: 'poster', field: 'poster', folder: '' },
+  { kind: 'poster', field: 'poster', folder: '/escapes' },
   { kind: 'group', field: 'groupPhoto', folder: '/done' },
 ];
 
