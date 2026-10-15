@@ -1,6 +1,7 @@
 package com.magomez.androidapps.escapersthings.mail;
 
 import com.magomez.androidapps.escapersthings.escaperooms.dto.UsersEnum;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.mail.Message;
@@ -16,12 +17,17 @@ import java.util.logging.Logger;
 @Service
 public class MailService {
 
-    private static final String PWD = "lduvcmpguxukedid";
     private static final String APP_ESCAPERS = "App Escapers";
     private static final String TEXT_HTML_CHARSET_UTF_8 = "text/html; charset=utf-8";
     private static final String SMTP = "smtp";
 
     final Logger logger = Logger.getLogger("com.magomez.escapersthings.mail.MailService");
+
+    private final String password;
+
+    public MailService(@Value("${escapers.mail.password}") String password) {
+        this.password = password;
+    }
 
 
     public void sendMail(MailDTO mailDTO){
@@ -78,7 +84,7 @@ public class MailService {
     public void sendMail(String email, String name, Integer id, String image, String userName){
         MailDTO mailDTO = new MailDTO();
         mailDTO.setFrom(UsersEnum.DEFAULT.getMail());
-        mailDTO.setPassword(PWD);
+        mailDTO.setPassword(password);
         mailDTO.setTo(email);
         mailDTO.setSub("Vota " + name);
 
