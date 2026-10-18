@@ -63,14 +63,14 @@ class JcfitBearerTokenFilterTest {
 
     @Test
     void liveTokenPassesWithTheUserAsAttribute() throws Exception {
-        jdbc.rows(TOUCH, row("id", 1, "username", "magomez", "token_hash", JcfitSha256.hex(VALID)));
+        jdbc.rows(TOUCH, row("id", 1, "name", "Magomez", "token_hash", JcfitSha256.hex(VALID)));
         MockHttpServletRequest request = withToken("GET", "/jcfit-api/v1/admin/exercises", VALID);
 
         MockFilterChain chain = run(request, new MockHttpServletResponse());
 
         assertThat(chain.getRequest()).isNotNull();
         assertThat(request.getAttribute(JcfitCurrentUser.ATTRIBUTE))
-                .isEqualTo(new JcfitCurrentUser(1, "magomez", JcfitSha256.hex(VALID)));
+                .isEqualTo(new JcfitCurrentUser(1, "Magomez", JcfitSha256.hex(VALID)));
     }
 
     @Test
@@ -129,7 +129,7 @@ class JcfitBearerTokenFilterTest {
     }
 
     private MockFilterChain run(MockHttpServletRequest request, MockHttpServletResponse response) throws Exception {
-        JcfitAuthService service = new JcfitAuthService(new JcfitUserDao(jdbc), new JcfitTokenDao(jdbc), HASHER);
+        JcfitAuthService service = new JcfitAuthService(new JcfitUserDao(jdbc), new JcfitTokenDao(jdbc), HASHER, 1);
         MockFilterChain chain = new MockFilterChain();
         new JcfitBearerTokenFilter(service).doFilter(request, response, chain);
         return chain;

@@ -1,5 +1,5 @@
 package com.magomez.androidapps.jcfit.auth;
 
-/** A jcfit_users row as login needs it. */
-record JcfitCredentials(int id, String username, String passwordHash) {
+/** A users row as the JCFit login needs it. */
+record JcfitCredentials(int id, String name, String passwordHash) {
 }

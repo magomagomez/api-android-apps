@@ -7,20 +7,17 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/**
+ * The accounts are those of the shared users table (escapers-api v2 keeps their
+ * password_hash). Which of them may use JCFit is {@link JcfitAuthService}'s call.
+ */
 @Repository
 public class JcfitUserDao {
 
-    private static final String BY_USERNAME =
-            "SELECT id, username, password_hash FROM jcfit_users WHERE username = ?";
-    private static final String ANY_USER = "SELECT EXISTS (SELECT 1 FROM jcfit_users)";
-    /** Only inserts into an empty table, so two instances starting at once create one user. */
-    private static final String INSERT_FIRST = """
-            INSERT INTO jcfit_users (username, password_hash)
-            SELECT ?, ? WHERE NOT EXISTS (SELECT 1 FROM jcfit_users)
-            """;
+    private static final String BY_NAME = "SELECT id, name, password_hash FROM users WHERE name = ?";
 
     private static final RowMapper<JcfitCredentials> CREDENTIALS = (rs, rowNum) ->
-            new JcfitCredentials(rs.getInt("id"), rs.getString("username"), rs.getString("password_hash"));
+            new JcfitCredentials(rs.getInt("id"), rs.getString("name"), rs.getString("password_hash"));
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -28,16 +25,7 @@ public class JcfitUserDao {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    Optional<JcfitCredentials> findByUsername(String username) {
-        return jdbcTemplate.query(BY_USERNAME, CREDENTIALS, username).stream().findFirst();
-    }
-
-    boolean anyUser() {
-        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(ANY_USER, Boolean.class));
-    }
-
-    /** False when someone else created a user first. */
-    boolean insertFirst(String username, String passwordHash) {
-        return jdbcTemplate.update(INSERT_FIRST, username, passwordHash) > 0;
+    Optional<JcfitCredentials> findByName(String name) {
+        return jdbcTemplate.query(BY_NAME, CREDENTIALS, name).stream().findFirst();
     }
 }

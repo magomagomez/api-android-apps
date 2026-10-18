@@ -17,14 +17,14 @@ public class JcfitTokenDao {
             WITH used AS (
                 UPDATE jcfit_tokens SET last_used_at = now() WHERE token_hash = ? RETURNING user_id, token_hash
             )
-            SELECT u.id, u.username, used.token_hash
+            SELECT u.id, u.name, used.token_hash
             FROM used
-            JOIN jcfit_users u ON u.id = used.user_id
+            JOIN users u ON u.id = used.user_id
             """;
     private static final String DELETE = "DELETE FROM jcfit_tokens WHERE token_hash = ?";
 
     private static final RowMapper<JcfitCurrentUser> CURRENT_USER = (rs, rowNum) ->
-            new JcfitCurrentUser(rs.getInt("id"), rs.getString("username"), rs.getString("token_hash"));
+            new JcfitCurrentUser(rs.getInt("id"), rs.getString("name"), rs.getString("token_hash"));
 
     private final JdbcTemplate jdbcTemplate;
 
