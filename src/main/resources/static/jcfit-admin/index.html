@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>JCFit Backoffice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+<script type="module" src="admin.js"></script>
+</head>
+<body>
+
+<!-- Login -->
+<main id="login-view" class="login" hidden>
+  <form id="login-form" class="login-card" novalidate>
+    <p class="eyebrow">Backoffice</p>
+    <h1 class="display">JCFit</h1>
+    <p id="login-notice" class="notice" role="status" hidden></p>
+    <div class="field">
+      <label for="login-username">Usuario</label>
+      <input id="login-username" name="username" autocomplete="username" required>
+    </div>
+    <div class="field">
+      <label for="login-password">Contraseña</label>
+      <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+    </div>
+    <p id="login-error" class="alert" role="alert" hidden></p>
+    <button id="login-submit" type="submit" class="btn btn-primary btn-block">Entrar</button>
+  </form>
+</main>
+
+<!-- App -->
+<div id="app-view" hidden>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <p class="brand"><span class="display">JCFit</span><span class="eyebrow">Backoffice</span></p>
+      <nav class="tabs" aria-label="Secciones">
+        <button type="button" class="tab" data-tab="exercises" aria-current="page">Ejercicios</button>
+        <button type="button" class="tab" data-tab="program">Programa</button>
+      </nav>
+      <button id="logout" type="button" class="btn btn-ghost">Salir</button>
+    </div>
+  </header>
+
+  <p id="toast" class="toast" role="status" aria-live="polite"></p>
+
+  <!-- Ejercicios -->
+  <main id="exercises-view" class="page">
+    <div class="page-head">
+      <h1 class="display">Ejercicios</h1>
+      <div class="page-actions">
+        <label class="check"><input id="show-archived" type="checkbox"> Ver archivados</label>
+        <button id="new-exercise" type="button" class="btn btn-primary">Nuevo ejercicio</button>
+      </div>
+    </div>
+    <div class="split">
+      <section aria-labelledby="exercise-list-title" class="panel">
+        <h2 id="exercise-list-title" class="visually-hidden">Listado</h2>
+        <p id="exercise-list-status" class="muted" role="status"></p>
+        <ul id="exercise-list" class="exercise-list"></ul>
+      </section>
+
+      <section id="exercise-editor" class="panel editor" aria-labelledby="exercise-editor-title" hidden>
+        <form id="exercise-form" novalidate>
+          <div class="editor-head">
+            <h2 id="exercise-editor-title" class="title">Nuevo ejercicio</h2>
+            <span id="exercise-archived-badge" class="badge" hidden>Archivado</span>
+          </div>
+          <div class="field">
+            <label for="ex-name">Nombre</label>
+            <input id="ex-name" name="name" maxlength="80" required data-field="name">
+          </div>
+          <div class="field">
+            <label for="ex-youtube">Enlace de YouTube <span class="optional">opcional</span></label>
+            <input id="ex-youtube" name="youtubeUrl" type="url" inputmode="url" placeholder="https://youtu.be/…" data-field="youtubeUrl">
+            <div id="ex-preview" class="preview" hidden>
+              <img id="ex-thumb" alt="" width="160" height="90">
+              <a id="ex-open" target="_blank" rel="noopener noreferrer">Abrir en YouTube</a>
+            </div>
+          </div>
+          <div class="field">
+            <label for="ex-muscle">Grupo muscular <span class="optional">opcional</span></label>
+            <input id="ex-muscle" name="muscleGroup" maxlength="60" placeholder="Femoral" data-field="muscleGroup">
+          </div>
+          <div class="field">
+            <label for="ex-instructions">Indicaciones <span class="optional">opcional</span></label>
+            <textarea id="ex-instructions" name="instructions" rows="5" maxlength="1000" data-field="instructions"></textarea>
+          </div>
+          <p id="exercise-error" class="alert" role="alert" hidden></p>
+          <div class="form-actions">
+            <button id="exercise-save" type="submit" class="btn btn-primary">Guardar</button>
+            <button id="exercise-archive" type="button" class="btn btn-ghost" hidden>Archivar</button>
+            <button id="exercise-restore" type="button" class="btn btn-ghost" hidden>Recuperar</button>
+            <button id="exercise-cancel" type="button" class="btn btn-ghost">Cancelar</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <!-- Programa -->
+  <main id="program-view" class="page" hidden>
+    <div class="page-head">
+      <h1 class="display">Programa</h1>
+    </div>
+    <p id="program-status" class="muted" role="status"></p>
+    <p id="program-load-error" class="alert" role="alert" hidden></p>
+
+    <section id="program-panel" class="panel" aria-labelledby="program-form-title" hidden>
+      <form id="program-form" class="program-form" novalidate>
+        <h2 id="program-form-title" class="title">Programa activo</h2>
+        <p id="program-empty" class="muted" hidden>Todavía no hay un programa activo. Ponle nombre y fecha de inicio para crearlo.</p>
+        <div class="program-fields">
+          <div class="field">
+            <label for="pr-name">Nombre</label>
+            <input id="pr-name" name="name" required data-field="name">
+          </div>
+          <div class="field">
+            <label for="pr-start">Fecha de inicio</label>
+            <input id="pr-start" name="startDate" type="date" required data-field="startDate">
+          </div>
+          <button id="program-save" type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+        <p id="program-error" class="alert" role="alert" hidden></p>
+      </form>
+    </section>
+
+    <section id="week-panel" aria-labelledby="week-title" hidden>
+      <h2 id="week-title" class="title">Semana</h2>
+      <ol id="week" class="week"></ol>
+    </section>
+
+    <section id="day-editor" class="panel editor" aria-labelledby="day-editor-title" hidden>
+      <form id="day-form" novalidate>
+        <div class="editor-head">
+          <h2 id="day-editor-title" class="title" tabindex="-1">Lunes</h2>
+          <button id="day-back" type="button" class="btn btn-ghost">Volver a la semana</button>
+        </div>
+        <div class="day-fields">
+          <div class="field">
+            <label for="day-name">Nombre del entreno</label>
+            <input id="day-name" name="name" maxlength="60" placeholder="Empuje" required data-field="name">
+          </div>
+          <div class="field">
+            <label for="day-muscles">Músculos <span class="optional">opcional</span></label>
+            <input id="day-muscles" name="muscles" maxlength="120" placeholder="Pecho · Hombro · Tríceps" data-field="muscles">
+          </div>
+        </div>
+        <h3 class="subtitle">Ejercicios</h3>
+        <p id="day-exercises-error" class="field-error" data-error-for="exercises" hidden></p>
+        <ol id="day-rows" class="day-rows"></ol>
+        <button id="day-add-row" type="button" class="btn btn-dashed btn-block">Añadir ejercicio</button>
+        <p id="day-error" class="alert" role="alert" hidden></p>
+        <div class="form-actions">
+          <button id="day-save" type="submit" class="btn btn-primary">Guardar día</button>
+          <button id="day-to-rest" type="button" class="btn btn-ghost btn-danger" hidden>Convertir en descanso</button>
+        </div>
+        <div id="rest-confirm" class="confirm" role="alertdialog" aria-labelledby="rest-confirm-text" hidden>
+          <p id="rest-confirm-text">Este día pasará a descanso y se quitarán sus ejercicios. Las sesiones ya hechas conservan su historial.</p>
+          <div class="form-actions">
+            <button id="rest-confirm-yes" type="button" class="btn btn-danger-solid">Sí, convertir en descanso</button>
+            <button id="rest-confirm-no" type="button" class="btn btn-ghost">Cancelar</button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </main>
+</div>
+
+</body>
+</html>
