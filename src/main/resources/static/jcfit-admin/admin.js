@@ -17,12 +17,14 @@ import {
     weekDays,
     DAY_NAMES,
     errorMessageFrom,
+    authFailureNotice,
 } from './admin-logic.js';
+import { createNotificationsTab } from './admin-notifications.js';
+import { createProgressTab } from './admin-progress.js';
 
 const API_BASE = '/jcfit-api/v1';
 const TOKEN_KEY = 'jcfit-admin-token';
 const NETWORK_ERROR = 'No se pudo conectar con el servidor. Comprueba la conexión y vuelve a intentarlo.';
-const SESSION_EXPIRED = 'Falta la sesión o ha caducado; vuelve a entrar';
 const TOAST_MS = 2600;
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 const NEW_ROW = { exerciseId: '', exerciseName: '', archived: false, sets: '3', repsMin: '8', repsMax: '12', restSeconds: '90' };
@@ -64,10 +66,11 @@ function writeToken(token) {
 // ---------- Red ----------
 
 class ApiError extends Error {
-    constructor(message, { status = 0, code = null, sessionExpired = false } = {}) {
+    constructor(message, { status = 0, code = null, body = null, sessionExpired = false } = {}) {
         super(message);
         this.status = status;
         this.code = code;
+        this.body = body;
         this.sessionExpired = sessionExpired;
     }
 }
@@ -94,14 +97,15 @@ async function api(method, path, body, { auth = true } = {}) {
         throw new ApiError(NETWORK_ERROR);
     }
     const data = await readJson(response);
-    if (response.status === 401 && auth) {
-        const message = typeof data?.message === 'string' && data.message.trim() ? data.message : SESSION_EXPIRED;
+    // 401: sin sesión o caducada. 403: el token es de la cuenta de la app, que no entra en /admin.
+    const notice = auth ? authFailureNotice(response.status, data) : null;
+    if (notice) {
         writeToken(null);
-        showLogin(message);
-        throw new ApiError(message, { status: 401, code: data?.error ?? null, sessionExpired: true });
+        showLogin(notice);
+        throw new ApiError(notice, { status: response.status, code: data?.error ?? null, sessionExpired: true });
     }
     if (!response.ok) {
-        throw new ApiError(errorMessageFrom(response.status, data), { status: response.status, code: data?.error ?? null });
+        throw new ApiError(errorMessageFrom(response.status, data), { status: response.status, code: data?.error ?? null, body: data });
     }
     return data;
 }
@@ -256,13 +260,10 @@ function selectTab(name) {
             tab.removeAttribute('aria-current');
         }
     });
-    $('exercises-view').hidden = name !== 'exercises';
-    $('program-view').hidden = name !== 'program';
-    if (name === 'exercises') {
-        loadExercises();
-    } else {
-        loadProgram();
+    for (const [tab, { view }] of Object.entries(TABS)) {
+        $(view).hidden = tab !== name;
     }
+    TABS[name].load();
 }
 
 // ---------- Login ----------
@@ -278,7 +279,7 @@ async function onLogin(event) {
     showAlert($('login-error'), '');
     try {
         await whileBusy([$('login-submit')], 'Entrando…', async () => {
-            const data = await api('POST', '/auth/login', { username, password }, { auth: false });
+            const data = await api('POST', '/admin/auth/login', { username, password }, { auth: false });
             if (!data || typeof data.token !== 'string' || !data.token) {
                 throw new ApiError('El servidor no devolvió una sesión válida');
             }
@@ -295,7 +296,7 @@ async function onLogin(event) {
 async function onLogout() {
     const button = $('logout');
     try {
-        await whileBusy([button], 'Saliendo…', () => api('POST', '/auth/logout'));
+        await whileBusy([button], 'Saliendo…', () => api('POST', '/admin/auth/logout'));
     } catch (err) {
         if (err.sessionExpired) {
             return;
@@ -316,6 +317,8 @@ function resetState() {
     state.dayEdit = null;
     $('exercise-editor').hidden = true;
     $('day-editor').hidden = true;
+    notificationsTab.reset();
+    progressTab.reset();
 }
 
 // ---------- Ejercicios ----------
@@ -809,6 +812,19 @@ async function onConfirmRest() {
         }
     }
 }
+
+// ---------- Avisos y Progreso de Cris (en sus propios módulos) ----------
+
+const ui = { $, api, el, showAlert, toast, whileBusy, showFieldErrors, clearFieldErrors };
+const notificationsTab = createNotificationsTab(ui);
+const progressTab = createProgressTab(ui);
+
+const TABS = {
+    exercises: { view: 'exercises-view', load: () => loadExercises() },
+    program: { view: 'program-view', load: () => loadProgram() },
+    notifications: { view: 'notifications-view', load: () => notificationsTab.load() },
+    progress: { view: 'progress-view', load: () => progressTab.load() },
+};
 
 // ---------- Arranque ----------
 

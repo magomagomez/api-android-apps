@@ -18,6 +18,7 @@
   <form id="login-form" class="login-card" novalidate>
     <p class="eyebrow">Backoffice</p>
     <h1 class="display">JCFit</h1>
+    <p class="login-lead">Entra con la cuenta del backoffice. La cuenta de Cris en la app no sirve aquí.</p>
     <p id="login-notice" class="notice" role="status" hidden></p>
     <div class="field">
       <label for="login-username">Usuario</label>
@@ -28,7 +29,7 @@
       <input id="login-password" name="password" type="password" autocomplete="current-password" required>
     </div>
     <p id="login-error" class="alert" role="alert" hidden></p>
-    <button id="login-submit" type="submit" class="btn btn-primary btn-block">Entrar</button>
+    <button id="login-submit" type="submit" class="btn btn-primary btn-block">Entrar al backoffice</button>
   </form>
 </main>
 
@@ -40,6 +41,8 @@
       <nav class="tabs" aria-label="Secciones">
         <button type="button" class="tab" data-tab="exercises" aria-current="page">Ejercicios</button>
         <button type="button" class="tab" data-tab="program">Programa</button>
+        <button type="button" class="tab" data-tab="notifications">Avisos</button>
+        <button type="button" class="tab" data-tab="progress">Progreso de Cris</button>
       </nav>
       <button id="logout" type="button" class="btn btn-ghost">Salir</button>
     </div>
@@ -166,6 +169,129 @@
           </div>
         </div>
       </form>
+    </section>
+  </main>
+
+  <!-- Avisos -->
+  <main id="notifications-view" class="page" hidden>
+    <div class="page-head">
+      <h1 class="display">Avisos</h1>
+    </div>
+    <div class="split">
+      <section class="panel" aria-labelledby="notify-form-title">
+        <form id="notify-form" novalidate>
+          <div class="editor-head">
+            <h2 id="notify-form-title" class="title">Nuevo aviso</h2>
+          </div>
+          <p class="muted notify-lead">Le llega a Cris como notificación en el móvil.</p>
+          <div class="field">
+            <div class="label-row">
+              <label for="nt-title">Título</label>
+              <span id="nt-title-count" class="counter">0 / 60</span>
+            </div>
+            <input id="nt-title" name="title" maxlength="60" required data-field="title" aria-describedby="nt-title-count" placeholder="¡A por la semana!">
+          </div>
+          <div class="field">
+            <div class="label-row">
+              <label for="nt-body">Mensaje</label>
+              <span id="nt-body-count" class="counter">0 / 300</span>
+            </div>
+            <textarea id="nt-body" name="body" rows="4" maxlength="300" required data-field="body" aria-describedby="nt-body-count"></textarea>
+          </div>
+          <p id="notify-error" class="alert" role="alert" hidden></p>
+          <p id="notify-result" class="notice" role="status" hidden></p>
+          <div class="form-actions">
+            <button id="notify-send" type="submit" class="btn btn-primary">Enviar a Cris</button>
+            <button id="notify-clear" type="button" class="btn btn-ghost">Vaciar</button>
+          </div>
+          <div id="notify-confirm" class="confirm is-neutral" role="alertdialog" aria-labelledby="notify-confirm-text" hidden>
+            <p id="notify-confirm-text">Se enviará ahora al móvil de Cris.</p>
+            <div class="form-actions">
+              <button id="notify-confirm-yes" type="button" class="btn btn-primary">Sí, enviar</button>
+              <button id="notify-confirm-no" type="button" class="btn btn-ghost">Cancelar</button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel editor" aria-labelledby="notify-preview-title">
+        <h2 id="notify-preview-title" class="subtitle notify-preview-title">Vista previa</h2>
+        <div class="phone-shade" aria-hidden="true">
+          <div class="android-notif">
+            <div class="android-notif-head">
+              <span class="android-notif-icon">J</span>
+              <span>JCFit</span>
+              <span class="android-notif-dot">·</span>
+              <span>ahora</span>
+            </div>
+            <p id="preview-title" class="android-notif-title is-placeholder">Título del aviso</p>
+            <p id="preview-body" class="android-notif-body is-placeholder">Aquí va el mensaje.</p>
+          </div>
+        </div>
+        <p class="muted preview-note">Aproximada: cada móvil la pinta a su manera y puede recortar el mensaje.</p>
+      </section>
+    </div>
+
+    <section class="history-section" aria-labelledby="notify-history-title">
+      <h2 id="notify-history-title" class="title">Enviados</h2>
+      <p id="notify-history-status" class="muted" role="status"></p>
+      <ol id="notify-history" class="history"></ol>
+    </section>
+  </main>
+
+  <!-- Progreso de Cris -->
+  <main id="progress-view" class="page" hidden>
+    <div class="page-head">
+      <h1 class="display">Progreso de Cris</h1>
+      <p class="muted">Solo lectura: lo que Cris registra en la app.</p>
+    </div>
+
+    <section class="progress-section" aria-labelledby="measures-title">
+      <h2 id="measures-title" class="title">Medidas</h2>
+      <p id="measures-status" class="muted" role="status"></p>
+      <p id="measures-error" class="alert" role="alert" hidden></p>
+      <p id="measures-empty" class="empty" hidden>Cris todavía no ha registrado medidas.</p>
+      <div id="measures-content" hidden>
+        <ul id="measure-cards" class="stat-grid"></ul>
+        <div class="panel chart-panel">
+          <div class="chart-head">
+            <h3 id="chart-title" class="subtitle">Evolución</h3>
+            <div class="field field-inline">
+              <label for="chart-measure">Medida</label>
+              <select id="chart-measure"></select>
+            </div>
+          </div>
+          <div id="chart" class="chart"></div>
+        </div>
+        <div class="panel">
+          <h3 id="measure-table-title" class="subtitle">Registros</h3>
+          <div class="table-wrap" role="region" aria-labelledby="measure-table-title" tabindex="0">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Fecha</th>
+                  <th scope="col" class="is-num">Peso (kg)</th>
+                  <th scope="col" class="is-num">Grasa (%)</th>
+                  <th scope="col" class="is-num">Pecho (cm)</th>
+                  <th scope="col" class="is-num">Cintura (cm)</th>
+                  <th scope="col" class="is-num">Cadera (cm)</th>
+                  <th scope="col" class="is-num">Pierna (cm)</th>
+                  <th scope="col">Notas</th>
+                </tr>
+              </thead>
+              <tbody id="measure-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="progress-section" aria-labelledby="sessions-title">
+      <h2 id="sessions-title" class="title">Entrenos</h2>
+      <p id="sessions-status" class="muted" role="status"></p>
+      <p id="sessions-error" class="alert" role="alert" hidden></p>
+      <p id="sessions-empty" class="empty" hidden>Cris todavía no ha hecho ningún entreno.</p>
+      <ol id="session-list" class="session-list"></ol>
     </section>
   </main>
 </div>

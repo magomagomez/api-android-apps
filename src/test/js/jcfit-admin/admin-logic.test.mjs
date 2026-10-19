@@ -15,6 +15,7 @@ import {
     weekDays,
     DAY_NAMES,
     errorMessageFrom,
+    authFailureNotice,
 } from '../../../main/resources/static/jcfit-admin/admin-logic.js';
 
 const ID = 'dQw4w9WgXcQ';
@@ -232,6 +233,24 @@ describe('errorMessageFrom', () => {
     test('sin cuerpo útil da un mensaje genérico con el código', () => {
         assert.equal(errorMessageFrom(502, null), 'El servidor respondió con un error (502)');
         assert.equal(errorMessageFrom(500, { message: '   ' }), 'El servidor respondió con un error (500)');
+    });
+});
+
+describe('authFailureNotice', () => {
+    test('401: el message del servidor o el aviso de sesión caducada', () => {
+        assert.equal(authFailureNotice(401, { message: 'Falta la sesión o ha caducado; vuelve a entrar' }),
+            'Falta la sesión o ha caducado; vuelve a entrar');
+        assert.equal(authFailureNotice(401, null), 'Falta la sesión o ha caducado; vuelve a entrar');
+    });
+
+    test('403: la cuenta no es la del backoffice', () => {
+        assert.equal(authFailureNotice(403, { error: 'forbidden', message: 'Esta cuenta no tiene acceso aquí' }),
+            'Esta cuenta no tiene acceso al backoffice');
+    });
+
+    test('otros códigos no echan de la sesión', () => {
+        assert.equal(authFailureNotice(400, null), null);
+        assert.equal(authFailureNotice(503, null), null);
     });
 });
 

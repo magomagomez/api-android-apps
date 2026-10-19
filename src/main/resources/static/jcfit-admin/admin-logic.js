@@ -257,6 +257,21 @@ export function errorMessageFrom(status, body) {
     return message !== '' ? body.message : `El servidor respondió con un error (${status})`;
 }
 
+export const SESSION_EXPIRED = 'Falta la sesión o ha caducado; vuelve a entrar';
+export const NOT_ADMIN = 'Esta cuenta no tiene acceso al backoffice';
+
+/**
+ * El aviso con el que se vuelve al login tras una respuesta de `status`, o null si esa respuesta
+ * no cierra la sesión. 401: falta la sesión o ha caducado. 403: el token es de la cuenta de la app.
+ */
+export function authFailureNotice(status, body) {
+    if (status === 401) {
+        const message = body && typeof body.message === 'string' ? body.message.trim() : '';
+        return message !== '' ? body.message : SESSION_EXPIRED;
+    }
+    return status === 403 ? NOT_ADMIN : null;
+}
+
 // ---------- Utilidades ----------
 
 function error(field, message) {
