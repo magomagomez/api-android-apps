@@ -24,10 +24,10 @@ public class JcfitAuthController {
         this.authService = authService;
     }
 
-    @Operation(summary = "Log in: returns a Bearer token for every other jcfit-api route")
+    @Operation(summary = "Log in to the app: only its account; returns a Bearer token for the routes outside /admin")
     @PostMapping("/login")
     public JcfitLoginResponse login(@RequestBody JcfitLoginRequest request) {
-        return authService.login(request);
+        return authService.login(request, JcfitRole.APP);
     }
 
     @Operation(summary = "Log out: revokes the token of this request")
