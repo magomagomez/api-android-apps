@@ -41,7 +41,7 @@ class PeopleServiceTest {
     private static Map<String, Object> others(int id, String name, Integer day, Integer month,
                                               long wishes, long free, long mine) {
         return row("id", id, "display_name", name, "birthday_day", day, "birthday_month", month,
-                "wish_count", wishes, "free_count", free, "mine_count", mine);
+                "wish_count", wishes, "free_count", free, "mine_count", mine, "idea_count", 2L);
     }
 
     @Test
@@ -51,8 +51,9 @@ class PeopleServiceTest {
         List<PersonSummary> people = service.people(MAGOMEZ);
 
         assertThat(people).containsExactly(
-                new PersonSummary(2, "Cris", new Birthday(12, 11), 19, 8, 3, 1));
-        assertThat(jdbc.callsWith(OTHERS).get(0).args()).containsExactly(MAGOMEZ, MAGOMEZ);
+                new PersonSummary(2, "Cris", new Birthday(12, 11), 19, 8, 3, 1, 2));
+        assertThat(jdbc.callsWith(OTHERS).get(0).args()).containsExactly(MAGOMEZ, MAGOMEZ, MAGOMEZ);
+        assertThat(jdbc.callsWith(OTHERS).get(0).sql()).contains("d.author_user_id = ?");
         assertThat(jdbc.callsWith(OTHERS).get(0).sql())
                 .contains("i.status = 'ACTIVE'")
                 .contains("WHERE u.id <> ?");

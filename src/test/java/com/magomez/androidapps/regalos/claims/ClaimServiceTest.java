@@ -3,6 +3,8 @@ package com.magomez.androidapps.regalos.claims;
 import com.magomez.androidapps.regalos.config.RegalosConfig;
 import com.magomez.androidapps.regalos.config.RegalosException;
 import com.magomez.androidapps.regalos.config.RegalosFakeJdbc;
+import com.magomez.androidapps.regalos.ideas.IdeaDao;
+import com.magomez.androidapps.regalos.lists.ListDao;
 import com.magomez.androidapps.regalos.people.Birthday;
 import com.magomez.androidapps.regalos.people.PeopleService;
 import com.magomez.androidapps.regalos.people.Person;
@@ -50,7 +52,12 @@ class ClaimServiceTest {
     @BeforeEach
     void setUp() {
         jdbc = new RegalosFakeJdbc();
-        service = new ClaimService(new ClaimDao(jdbc), new PeopleService(new RegalosUserDao(jdbc), CLOCK));
+        service = newService();
+    }
+
+    private ClaimService newService() {
+        return new ClaimService(new ClaimDao(jdbc), new PeopleService(new RegalosUserDao(jdbc), CLOCK), new ListDao(jdbc),
+                new IdeaDao(jdbc));
     }
 
     /** A wish of Cris (birthday 12/11) with no claim. */
@@ -58,7 +65,8 @@ class ClaimServiceTest {
         Map<String, Object> row = new HashMap<>(row("id", id, "owner_user_id", CRIS, "title", title,
                 "url", null, "store", null, "price_cents", priceCents, "image_url", null, "notes", null,
                 "wanted_a_lot", false, "status", "ACTIVE",
-                "owner_name", "Cris", "owner_birthday_day", 12, "owner_birthday_month", 11));
+                "owner_name", "Cris", "owner_birthday_day", 12, "owner_birthday_month", 11, "list_id", null,
+                "list_name", null, "list_birthday_day", null, "list_birthday_month", null, "added_by_name", null));
         row.putAll(row("claim_state", null, "marked_by_user_id", null, "giver_user_id", null, "giver_name", null,
                 "item_edited_at", null));
         return row;
@@ -287,7 +295,7 @@ class ClaimServiceTest {
 
         jdbc.rows(ITEM_BY_ID);
         jdbc = new RegalosFakeJdbc();
-        service = new ClaimService(new ClaimDao(jdbc), new PeopleService(new RegalosUserDao(jdbc), CLOCK));
+        service = newService();
         assertRegalosError(() -> service.unclaim(MAGOMEZ, 42), HttpStatus.NOT_FOUND, "not_found");
     }
 

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
-/** The givers' side: wishes of others with their claims, and regalos_claims itself. */
+/** The givers' side: wishes of others and of shared lists with their claims, and regalos_claims itself. */
 @Repository
 public class ClaimDao {
 
@@ -19,15 +19,20 @@ public class ClaimDao {
                    i.wanted_a_lot, i.status,
                    o.display_name AS owner_name, o.birthday_day AS owner_birthday_day,
                    o.birthday_month AS owner_birthday_month,
+                   i.list_id, l.name AS list_name, l.birthday_day AS list_birthday_day,
+                   l.birthday_month AS list_birthday_month, ab.display_name AS added_by_name,
                    c.state AS claim_state, c.marked_by_user_id, c.giver_user_id,
                    COALESCE(g.display_name, c.giver_name) AS giver_name, c.item_edited_at
             FROM regalos_items i
-            JOIN regalos_users o ON o.id = i.owner_user_id
+            LEFT JOIN regalos_users o ON o.id = i.owner_user_id
+            LEFT JOIN regalos_lists l ON l.id = i.list_id
+            LEFT JOIN regalos_users ab ON ab.id = i.added_by_user_id
             LEFT JOIN regalos_claims c ON c.item_id = i.id
             LEFT JOIN regalos_users g ON g.id = c.giver_user_id
             """;
     private static final String ORDER = " ORDER BY i.created_at, i.id";
     private static final String ITEMS_OF = SELECT + " WHERE i.owner_user_id = ? AND i.status = 'ACTIVE'" + ORDER;
+    private static final String LIST_ITEMS = SELECT + " WHERE i.list_id = ? AND i.status = 'ACTIVE'" + ORDER;
     private static final String ITEM_BY_ID = SELECT + " WHERE i.id = ?";
     /** The gifts I give, plus those I noted for someone outside the app. */
     private static final String MY_CLAIMS = SELECT
@@ -54,9 +59,13 @@ public class ClaimDao {
 
     private static final RowMapper<ClaimRow> ROW = (rs, rowNum) -> {
         String state = rs.getString("claim_state");
-        return new ClaimRow(rs.getLong("id"), rs.getInt("owner_user_id"), rs.getString("owner_name"),
+        return new ClaimRow(rs.getLong("id"), rs.getObject("owner_user_id", Integer.class), rs.getString("owner_name"),
                 Birthday.ofColumns(rs.getObject("owner_birthday_day", Integer.class),
                         rs.getObject("owner_birthday_month", Integer.class)),
+                rs.getObject("list_id", Long.class), rs.getString("list_name"),
+                Birthday.ofColumns(rs.getObject("list_birthday_day", Integer.class),
+                        rs.getObject("list_birthday_month", Integer.class)),
+                rs.getString("added_by_name"),
                 rs.getString("title"), rs.getString("url"), rs.getString("store"),
                 rs.getObject("price_cents", Integer.class), rs.getString("image_url"), rs.getString("notes"),
                 rs.getBoolean("wanted_a_lot"), ItemStatus.valueOf(rs.getString("status")),
@@ -73,6 +82,10 @@ public class ClaimDao {
 
     List<ClaimRow> activeItemsOf(int ownerId) {
         return jdbcTemplate.query(ITEMS_OF, ROW, ownerId);
+    }
+
+    List<ClaimRow> activeItemsOfList(long listId) {
+        return jdbcTemplate.query(LIST_ITEMS, ROW, listId);
     }
 
     /** Whatever its status: callers decide what they may do with it. */

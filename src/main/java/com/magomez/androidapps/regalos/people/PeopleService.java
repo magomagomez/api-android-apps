@@ -51,13 +51,19 @@ public class PeopleService {
                 .sorted(Comparator.comparing(row -> person(row.id(), row.displayName(), row.birthday(), today),
                         BIRTHDAY_ORDER))
                 .map(row -> new PersonSummary(row.id(), row.displayName(), row.birthday(),
-                        daysUntil(row.birthday(), today), row.wishCount(), row.freeCount(), row.mineCount()))
+                        daysUntil(row.birthday(), today), row.wishCount(), row.freeCount(), row.mineCount(),
+                        row.ideaCount()))
                 .toList();
     }
 
     public Optional<Person> person(int id) {
         LocalDate today = today();
         return userDao.findMe(id).map(user -> person(user.id(), user.displayName(), user.birthday(), today));
+    }
+
+    /** Days until the next birthday, null without one; 0 on the day. */
+    public Integer daysUntil(Birthday birthday) {
+        return daysUntil(birthday, today());
     }
 
     /** For callers that already read the name and birthday with their own query. */

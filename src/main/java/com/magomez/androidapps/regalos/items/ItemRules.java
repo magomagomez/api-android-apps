@@ -8,7 +8,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /** Validation of a wish, the same limits as the CHECKs of regalos_items. */
-final class ItemRules {
+public final class ItemRules {
 
     static final int MAX_TITLE = 120;
     static final int MAX_URL = 2048;
@@ -23,7 +23,7 @@ final class ItemRules {
         throw new UnsupportedOperationException("Cannot instantiate utilities class");
     }
 
-    static ValidItem valid(ItemRequest request) {
+    public static ValidItem valid(ItemRequest request) {
         if (request == null) {
             throw RegalosException.badRequest("Faltan los datos del deseo");
         }
