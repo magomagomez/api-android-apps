@@ -7,8 +7,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import static com.magomez.androidapps.regalos.config.RegalosColumns.instant;
 
 /** The givers' side: wishes of others and of shared lists with their claims, and regalos_claims itself. */
 @Repository
@@ -16,7 +19,7 @@ public class ClaimDao {
 
     private static final String SELECT = """
             SELECT i.id, i.owner_user_id, i.title, i.url, i.store, i.price_cents, i.image_url, i.notes,
-                   i.wanted_a_lot, i.status,
+                   i.wanted_a_lot, i.status, i.photo_updated_at,
                    o.display_name AS owner_name, o.birthday_day AS owner_birthday_day,
                    o.birthday_month AS owner_birthday_month,
                    i.list_id, l.name AS list_name, l.birthday_day AS list_birthday_day,
@@ -71,7 +74,8 @@ public class ClaimDao {
                 rs.getBoolean("wanted_a_lot"), ItemStatus.valueOf(rs.getString("status")),
                 state == null ? null : ClaimState.valueOf(state),
                 rs.getObject("marked_by_user_id", Integer.class), rs.getObject("giver_user_id", Integer.class),
-                rs.getString("giver_name"), rs.getObject("item_edited_at") != null);
+                rs.getString("giver_name"), rs.getObject("item_edited_at") != null,
+                instant(rs.getObject("photo_updated_at", OffsetDateTime.class)));
     };
 
     private final JdbcTemplate jdbcTemplate;
@@ -110,7 +114,8 @@ public class ClaimDao {
         return jdbcTemplate.update(DELETE, itemId, editor, editor) > 0;
     }
 
-    void purgeDeletedItem(long itemId) {
-        jdbcTemplate.update(PURGE_DELETED_ITEM, itemId);
+    /** True when the wish was gone for good. */
+    boolean purgeDeletedItem(long itemId) {
+        return jdbcTemplate.update(PURGE_DELETED_ITEM, itemId) > 0;
     }
 }

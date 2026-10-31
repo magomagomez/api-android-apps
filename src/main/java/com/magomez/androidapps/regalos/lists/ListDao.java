@@ -137,10 +137,14 @@ public class ListDao {
         return updated;
     }
 
-    /** Like a wish of a letter (R5): kept as DELETED while someone has it claimed. */
-    boolean deleteItem(long listId, long itemId) {
-        return jdbcTemplate.update(SOFT_DELETE_ITEM, itemId, listId) > 0
-                || jdbcTemplate.update(HARD_DELETE_ITEM, itemId, listId) > 0;
+    /** Like a wish of a letter (R5): kept as DELETED while someone has it claimed... */
+    boolean softDeleteItem(long listId, long itemId) {
+        return jdbcTemplate.update(SOFT_DELETE_ITEM, itemId, listId) > 0;
+    }
+
+    /** ...and gone for good otherwise. */
+    boolean hardDeleteItem(long listId, long itemId) {
+        return jdbcTemplate.update(HARD_DELETE_ITEM, itemId, listId) > 0;
     }
 
     private static Integer day(Birthday birthday) {

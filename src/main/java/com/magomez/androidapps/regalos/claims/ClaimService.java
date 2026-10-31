@@ -8,6 +8,7 @@ import com.magomez.androidapps.regalos.items.ItemStatus;
 import com.magomez.androidapps.regalos.lists.ListDao;
 import com.magomez.androidapps.regalos.people.PeopleService;
 import com.magomez.androidapps.regalos.people.Person;
+import com.magomez.androidapps.regalos.photos.PhotoFiles;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Giving. The owner of a wish never gets past the first check of any method here, so nothing
@@ -37,12 +39,15 @@ public class ClaimService {
     private final PeopleService peopleService;
     private final ListDao listDao;
     private final IdeaDao ideaDao;
+    private final PhotoFiles photoFiles;
 
-    public ClaimService(ClaimDao claimDao, PeopleService peopleService, ListDao listDao, IdeaDao ideaDao) {
+    public ClaimService(ClaimDao claimDao, PeopleService peopleService, ListDao listDao, IdeaDao ideaDao,
+                        PhotoFiles photoFiles) {
         this.claimDao = claimDao;
         this.peopleService = peopleService;
         this.listDao = listDao;
         this.ideaDao = ideaDao;
+        this.photoFiles = photoFiles;
     }
 
     public PersonItems listOf(int meId, int userId) {
@@ -114,7 +119,11 @@ public class ClaimService {
             throw RegalosException.notFound("Nadie ha marcado este deseo");
         }
         if (row.status() == ItemStatus.DELETED) {
-            claimDao.purgeDeletedItem(itemId);
+            // Its owner removed it earlier (R5); without the claim nothing keeps it, nor its photo.
+            Optional<String> photo = photoFiles.ofItem(itemId);
+            if (claimDao.purgeDeletedItem(itemId)) {
+                photo.ifPresent(photoFiles::discard);
+            }
         }
     }
 
@@ -194,13 +203,13 @@ public class ClaimService {
                 row.editableBy(meId))
                 : null;
         return new OthersItem(row.id(), row.title(), row.url(), row.store(), row.priceCents(), row.imageUrl(),
-                row.notes(), row.wantedALot(), row.inList() ? row.addedByName() : null, claim);
+                row.notes(), row.wantedALot(), row.inList() ? row.addedByName() : null, claim, row.photoVersion());
     }
 
     private static MyClaim myClaim(ClaimRow row, int meId) {
         return new MyClaim(row.id(), row.title(), row.url(), row.store(), row.priceCents(), row.imageUrl(),
                 row.notes(), row.claimState(), new Giver(row.giverUserId(), row.giverName()), row.givenBy(meId),
-                notice(row));
+                notice(row), row.photoVersion());
     }
 
     private static Notice notice(ClaimRow row) {

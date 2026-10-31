@@ -11,6 +11,8 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.magomez.androidapps.regalos.config.RegalosColumns.instant;
+
 /**
  * regalos_ideas. Every statement filters by author_user_id: there is no way to read an idea
  * without being its author, so it cannot leak to the person it is for (R7).
@@ -19,13 +21,14 @@ import java.util.Optional;
 public class IdeaDao {
 
     private static final String COLUMNS = """
-            SELECT id, for_user_id, title, url, store, price_cents, notes, bought, created_at
+            SELECT id, for_user_id, title, url, store, price_cents, notes, bought, created_at, photo_updated_at
             """;
     private static final String FOR_PERSON = COLUMNS
             + " FROM regalos_ideas WHERE author_user_id = ? AND for_user_id = ? ORDER BY created_at, id";
     private static final String BY_ID = COLUMNS + " FROM regalos_ideas WHERE author_user_id = ? AND id = ?";
     private static final String ALL_MINE = """
             SELECT d.id, d.for_user_id, d.title, d.url, d.store, d.price_cents, d.notes, d.bought, d.created_at,
+                   d.photo_updated_at,
                    u.display_name AS for_name, u.birthday_day AS for_birthday_day, u.birthday_month AS for_birthday_month
             FROM regalos_ideas d
             JOIN regalos_users u ON u.id = d.for_user_id
@@ -46,7 +49,8 @@ public class IdeaDao {
     private static final RowMapper<Idea> IDEA = (rs, rowNum) -> new Idea(rs.getLong("id"), rs.getInt("for_user_id"),
             rs.getString("title"), rs.getString("url"), rs.getString("store"),
             rs.getObject("price_cents", Integer.class), rs.getString("notes"), rs.getBoolean("bought"),
-            rs.getObject("created_at", OffsetDateTime.class).toInstant());
+            rs.getObject("created_at", OffsetDateTime.class).toInstant(),
+            instant(rs.getObject("photo_updated_at", OffsetDateTime.class)));
     private static final RowMapper<IdeaWithPerson> WITH_PERSON = (rs, rowNum) -> new IdeaWithPerson(
             IDEA.mapRow(rs, rowNum), rs.getString("for_name"),
             Birthday.ofColumns(rs.getObject("for_birthday_day", Integer.class),

@@ -8,11 +8,13 @@ import com.magomez.androidapps.regalos.items.ItemRules;
 import com.magomez.androidapps.regalos.people.Birthday;
 import com.magomez.androidapps.regalos.people.PeopleService;
 import com.magomez.androidapps.regalos.people.Person;
+import com.magomez.androidapps.regalos.photos.PhotoFiles;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -32,11 +34,14 @@ public class ListService {
     private final ListDao listDao;
     private final ClaimService claimService;
     private final PeopleService peopleService;
+    private final PhotoFiles photoFiles;
 
-    public ListService(ListDao listDao, ClaimService claimService, PeopleService peopleService) {
+    public ListService(ListDao listDao, ClaimService claimService, PeopleService peopleService,
+                       PhotoFiles photoFiles) {
         this.listDao = listDao;
         this.claimService = claimService;
         this.peopleService = peopleService;
+        this.photoFiles = photoFiles;
     }
 
     /** The lists I am invited to, nearest birthday first. */
@@ -74,9 +79,12 @@ public class ListService {
         return detail(meId, listId);
     }
 
+    /** The list goes with its wishes, their claims and their photos. */
     public void delete(int meId, long listId) {
         requireCreator(meId, listId);
+        List<String> photos = photoFiles.ofList(listId);
         listDao.delete(listId);
+        photoFiles.discard(photos);
     }
 
     public void leave(int meId, long listId) {
@@ -103,9 +111,14 @@ public class ListService {
 
     public void deleteItem(int meId, long listId, long itemId) {
         requireMember(meId, listId);
-        if (!listDao.deleteItem(listId, itemId)) {
+        Optional<String> photo = photoFiles.ofItem(itemId);
+        if (listDao.softDeleteItem(listId, itemId)) {
+            return;
+        }
+        if (!listDao.hardDeleteItem(listId, itemId)) {
             throw RegalosException.notFound("El deseo no existe");
         }
+        photo.ifPresent(photoFiles::discard);
     }
 
     private ListRow requireMember(int meId, long listId) {

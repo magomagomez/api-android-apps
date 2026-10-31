@@ -11,6 +11,7 @@ import java.util.Map;
 import static com.magomez.androidapps.regalos.config.RegalosTestRows.assertRegalosError;
 import static com.magomez.androidapps.regalos.config.RegalosTestRows.row;
 import static com.magomez.androidapps.regalos.items.ItemRulesTest.request;
+import static com.magomez.androidapps.regalos.photos.FakePhotoStore.photoFiles;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** My letter: my own wishes, which never carry anything about who gives them (R1). */
@@ -33,12 +34,12 @@ class ItemServiceTest {
     @BeforeEach
     void setUp() {
         jdbc = new RegalosFakeJdbc();
-        service = new ItemService(new ItemDao(jdbc));
+        service = new ItemService(new ItemDao(jdbc), photoFiles(jdbc));
     }
 
     static Map<String, Object> item(long id, String title, String status) {
         return row("id", id, "title", title, "url", "https://www.amazon.es/dp/1", "store", "amazon.es",
-                "price_cents", 3450, "image_url", null, "notes", null, "wanted_a_lot", false, "status", status,
+                "price_cents", 3450, "image_url", null, "photo_updated_at", null, "notes", null, "wanted_a_lot", false, "status", status,
                 "created_at", CREATED, "updated_at", CREATED);
     }
 
@@ -112,7 +113,7 @@ class ItemServiceTest {
 
         jdbc.rows(MY_ITEM);
         jdbc = new RegalosFakeJdbc().updateCount(SET_STATUS, 0);
-        service = new ItemService(new ItemDao(jdbc));
+        service = new ItemService(new ItemDao(jdbc), photoFiles(jdbc));
         assertRegalosError(() -> service.received(CRIS, 42), HttpStatus.NOT_FOUND, "not_found");
     }
 

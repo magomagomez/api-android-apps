@@ -9,6 +9,8 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.magomez.androidapps.regalos.config.RegalosColumns.instant;
+
 /**
  * The owner's side of regalos_items. Nothing here reads regalos_claims: what the owner gets
  * cannot carry a claim (R1). The only write to it is the EDITED notice, which returns nothing.
@@ -17,7 +19,8 @@ import java.util.Optional;
 public class ItemDao {
 
     private static final String SELECT = """
-            SELECT id, title, url, store, price_cents, image_url, notes, wanted_a_lot, status, created_at, updated_at
+            SELECT id, title, url, store, price_cents, image_url, notes, wanted_a_lot, status, created_at, updated_at,
+                   photo_updated_at
             """;
     private static final String MINE_BY_STATUS = SELECT
             + " FROM regalos_items WHERE owner_user_id = ? AND status = ? ORDER BY created_at, id";
@@ -57,7 +60,8 @@ public class ItemDao {
             rs.getObject("price_cents", Integer.class), rs.getString("image_url"), rs.getString("notes"),
             rs.getBoolean("wanted_a_lot"), ItemStatus.valueOf(rs.getString("status")),
             rs.getObject("created_at", OffsetDateTime.class).toInstant(),
-            rs.getObject("updated_at", OffsetDateTime.class).toInstant());
+            rs.getObject("updated_at", OffsetDateTime.class).toInstant(),
+            instant(rs.getObject("photo_updated_at", OffsetDateTime.class)));
 
     private final JdbcTemplate jdbcTemplate;
 

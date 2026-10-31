@@ -18,6 +18,7 @@ import java.util.Map;
 
 import static com.magomez.androidapps.regalos.config.RegalosTestRows.assertRegalosError;
 import static com.magomez.androidapps.regalos.config.RegalosTestRows.row;
+import static com.magomez.androidapps.regalos.photos.FakePhotoStore.photoFiles;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Claims on the wishes of a shared list (R8, R9), and lists and ideas in my gifts. */
@@ -43,7 +44,7 @@ class SharedListClaimsTest {
     void setUp() {
         jdbc = new RegalosFakeJdbc();
         service = new ClaimService(new ClaimDao(jdbc), new PeopleService(new RegalosUserDao(jdbc), CLOCK),
-                new ListDao(jdbc), new IdeaDao(jdbc));
+                new ListDao(jdbc), new IdeaDao(jdbc), photoFiles(jdbc));
     }
 
     /** A wish of Leo's list (birthday 9/11), written by Javi, with no claim. */
@@ -51,7 +52,7 @@ class SharedListClaimsTest {
         Map<String, Object> row = new HashMap<>(row("id", id, "owner_user_id", null, "owner_name", null,
                 "owner_birthday_day", null, "owner_birthday_month", null, "list_id", LEO, "list_name", "Leo",
                 "list_birthday_day", 9, "list_birthday_month", 11, "added_by_name", "Javi"));
-        row.putAll(row("title", title, "url", null, "store", null, "price_cents", price, "image_url", null,
+        row.putAll(row("title", title, "url", null, "store", null, "price_cents", price, "image_url", null, "photo_updated_at", null,
                 "notes", null, "wanted_a_lot", false, "status", "ACTIVE", "claim_state", null, "marked_by_user_id", null,
                 "giver_user_id", null, "giver_name", null, "item_edited_at", null));
         return row;
@@ -105,7 +106,7 @@ class SharedListClaimsTest {
                     public boolean isMember(long listId, int userId) {
                         return userId == CRIS;
                     }
-                }, new IdeaDao(jdbc));
+                }, new IdeaDao(jdbc), photoFiles(jdbc));
         jdbc.rows(ITEM_BY_ID, listWish(50, "Cubos", 1890))
                 .rows(USER_BY_ID, row("id", MARIBEL, "username", "maribel", "display_name", "Maribel",
                         "birthday_day", null, "birthday_month", null));
@@ -121,10 +122,10 @@ class SharedListClaimsTest {
         jdbc.rows(MY_CLAIMS, claimedByMe(listWish(50, "Cubos", 1890), "BOUGHT"))
                 .rows(MY_IDEAS,
                         row("id", 7L, "for_user_id", JAVI, "title", "Gorra", "url", null, "store", null,
-                                "price_cents", 2200, "notes", null, "bought", false, "created_at", created,
+                                "price_cents", 2200, "notes", null, "bought", false, "created_at", created, "photo_updated_at", null,
                                 "for_name", "Javi", "for_birthday_day", 3, "for_birthday_month", 2),
                         row("id", 8L, "for_user_id", JAVI, "title", "Cena", "url", null, "store", null,
-                                "price_cents", 6000, "notes", null, "bought", true, "created_at", created,
+                                "price_cents", 6000, "notes", null, "bought", true, "created_at", created, "photo_updated_at", null,
                                 "for_name", "Javi", "for_birthday_day", 3, "for_birthday_month", 2));
 
         MyClaims mine = service.myClaims(CRIS);

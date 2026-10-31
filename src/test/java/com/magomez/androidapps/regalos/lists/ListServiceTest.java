@@ -20,6 +20,7 @@ import java.util.Map;
 
 import static com.magomez.androidapps.regalos.config.RegalosTestRows.assertRegalosError;
 import static com.magomez.androidapps.regalos.config.RegalosTestRows.row;
+import static com.magomez.androidapps.regalos.photos.FakePhotoStore.photoFiles;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -59,8 +60,8 @@ class ListServiceTest {
         jdbc = new RegalosFakeJdbc();
         PeopleService people = new PeopleService(new RegalosUserDao(jdbc), CLOCK);
         ListDao listDao = new ListDao(jdbc);
-        ClaimService claims = new ClaimService(new ClaimDao(jdbc), people, listDao, new IdeaDao(jdbc));
-        service = new ListService(listDao, claims, people);
+        ClaimService claims = new ClaimService(new ClaimDao(jdbc), people, listDao, new IdeaDao(jdbc), photoFiles(jdbc));
+        service = new ListService(listDao, claims, people, photoFiles(jdbc));
     }
 
     private static Map<String, Object> summary(long id, String name, Integer day, Integer month, int creator) {
@@ -202,7 +203,7 @@ class ListServiceTest {
     void anyMemberAddsAWishSignedWithTheirName() {
         leoOfJavi();
         jdbc.scalar(INSERT_ITEM, 50L).rows(ITEM_BY_ID, row("id", 50L, "owner_user_id", null, "list_id", LEO,
-                "title", "Cubos", "url", null, "store", null, "price_cents", 1890, "image_url", null, "notes", null,
+                "title", "Cubos", "url", null, "store", null, "price_cents", 1890, "image_url", null, "photo_updated_at", null, "notes", null,
                 "wanted_a_lot", false, "status", "ACTIVE", "owner_name", null, "owner_birthday_day", null,
                 "owner_birthday_month", null, "list_name", "Leo", "list_birthday_day", 9, "list_birthday_month", 11,
                 "added_by_name", "Cris", "claim_state", null, "marked_by_user_id", null, "giver_user_id", null,

@@ -22,6 +22,7 @@ import java.util.Map;
 
 import static com.magomez.androidapps.regalos.config.RegalosTestRows.assertRegalosError;
 import static com.magomez.androidapps.regalos.config.RegalosTestRows.row;
+import static com.magomez.androidapps.regalos.photos.FakePhotoStore.photoFiles;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -57,13 +58,13 @@ class ClaimServiceTest {
 
     private ClaimService newService() {
         return new ClaimService(new ClaimDao(jdbc), new PeopleService(new RegalosUserDao(jdbc), CLOCK), new ListDao(jdbc),
-                new IdeaDao(jdbc));
+                new IdeaDao(jdbc), photoFiles(jdbc));
     }
 
     /** A wish of Cris (birthday 12/11) with no claim. */
     private static Map<String, Object> wish(long id, String title, Integer priceCents) {
         Map<String, Object> row = new HashMap<>(row("id", id, "owner_user_id", CRIS, "title", title,
-                "url", null, "store", null, "price_cents", priceCents, "image_url", null, "notes", null,
+                "url", null, "store", null, "price_cents", priceCents, "image_url", null, "photo_updated_at", null, "notes", null,
                 "wanted_a_lot", false, "status", "ACTIVE",
                 "owner_name", "Cris", "owner_birthday_day", 12, "owner_birthday_month", 11, "list_id", null,
                 "list_name", null, "list_birthday_day", null, "list_birthday_month", null, "added_by_name", null));

@@ -15,6 +15,7 @@ import java.util.Map;
 
 import static com.magomez.androidapps.regalos.config.RegalosTestRows.assertRegalosError;
 import static com.magomez.androidapps.regalos.config.RegalosTestRows.row;
+import static com.magomez.androidapps.regalos.photos.FakePhotoStore.photoFiles;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** My ideas for someone else: only their author ever reads or changes them (R7). */
@@ -37,12 +38,12 @@ class IdeaServiceTest {
     @BeforeEach
     void setUp() {
         jdbc = new RegalosFakeJdbc();
-        service = new IdeaService(new IdeaDao(jdbc), new PeopleService(new RegalosUserDao(jdbc), CLOCK));
+        service = new IdeaService(new IdeaDao(jdbc), new PeopleService(new RegalosUserDao(jdbc), CLOCK), photoFiles(jdbc));
     }
 
     static Map<String, Object> idea(long id, String title, boolean bought) {
         return row("id", id, "for_user_id", JAVI, "title", title, "url", null, "store", null, "price_cents", 2200,
-                "notes", null, "bought", bought, "created_at", CREATED);
+                "notes", null, "bought", bought, "created_at", CREATED, "photo_updated_at", null);
     }
 
     private void javiExists() {

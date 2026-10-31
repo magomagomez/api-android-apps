@@ -1,5 +1,6 @@
 package com.magomez.androidapps.regalos.config;
 
+import com.magomez.androidapps.regalos.photos.PhotoStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -20,6 +21,8 @@ public class RegalosApiExceptionHandler {
 
     static final RegalosError BAD_REQUEST = new RegalosError("bad_request", "La petición no es válida");
     static final RegalosError SERVER_ERROR = new RegalosError("server_error", "Error interno, inténtalo más tarde");
+    static final RegalosError PHOTO_STORE_ERROR = new RegalosError("photo_store_error",
+            "No se ha podido guardar o leer la foto, inténtalo más tarde");
 
     @ExceptionHandler(RegalosException.class)
     public ResponseEntity<RegalosError> handle(RegalosException e) {
@@ -30,6 +33,12 @@ public class RegalosApiExceptionHandler {
             MissingServletRequestParameterException.class})
     public ResponseEntity<RegalosError> handleBadRequest(Exception e) {
         return json(HttpStatus.BAD_REQUEST, BAD_REQUEST);
+    }
+
+    /** Google Drive failed or refused: the photo store already logged why, without secrets. */
+    @ExceptionHandler(PhotoStoreException.class)
+    public ResponseEntity<RegalosError> handlePhotoStore(PhotoStoreException e) {
+        return json(HttpStatus.BAD_GATEWAY, PHOTO_STORE_ERROR);
     }
 
     @ExceptionHandler(DataAccessException.class)

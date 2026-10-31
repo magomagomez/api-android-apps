@@ -5,9 +5,11 @@ import com.magomez.androidapps.regalos.items.ItemRequest;
 import com.magomez.androidapps.regalos.items.ItemRules;
 import com.magomez.androidapps.regalos.items.ValidItem;
 import com.magomez.androidapps.regalos.people.PeopleService;
+import com.magomez.androidapps.regalos.photos.PhotoFiles;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 /** My ideas for other people. Someone else's idea answers like a missing one. */
 @Service
@@ -17,10 +19,12 @@ public class IdeaService {
 
     private final IdeaDao ideaDao;
     private final PeopleService peopleService;
+    private final PhotoFiles photoFiles;
 
-    public IdeaService(IdeaDao ideaDao, PeopleService peopleService) {
+    public IdeaService(IdeaDao ideaDao, PeopleService peopleService, PhotoFiles photoFiles) {
         this.ideaDao = ideaDao;
         this.peopleService = peopleService;
+        this.photoFiles = photoFiles;
     }
 
     public List<Idea> list(int meId, int forUserId) {
@@ -42,9 +46,11 @@ public class IdeaService {
     }
 
     public void delete(int meId, long id) {
+        Optional<String> photo = photoFiles.ofIdea(meId, id);
         if (!ideaDao.delete(meId, id)) {
             throw RegalosException.notFound(NOT_FOUND);
         }
+        photo.ifPresent(photoFiles::discard);
     }
 
     private void requireOther(int meId, int forUserId) {

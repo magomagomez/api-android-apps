@@ -13,7 +13,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
 import static com.magomez.androidapps.regalos.items.ItemServiceTest.item;
+import static com.magomez.androidapps.regalos.photos.FakePhotoStore.photoFiles;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -35,7 +40,7 @@ class OwnItemControllerTest {
         jdbc = new RegalosFakeJdbc();
         // Dates as timestamps, like the app's mapper: the fields themselves must ask for ISO-8601.
         ObjectMapper json = new ObjectMapper().registerModule(new JavaTimeModule());
-        mockMvc = MockMvcBuilders.standaloneSetup(new OwnItemController(new ItemService(new ItemDao(jdbc))))
+        mockMvc = MockMvcBuilders.standaloneSetup(new OwnItemController(new ItemService(new ItemDao(jdbc), photoFiles(jdbc))))
                 .setControllerAdvice(new RegalosApiExceptionHandler())
                 .setMessageConverters(new MappingJackson2HttpMessageConverter(json))
                 .build();
@@ -59,6 +64,18 @@ class OwnItemControllerTest {
                 .andExpect(jsonPath("$[0].status").value("ACTIVE"))
                 .andExpect(jsonPath("$[0].createdAt").value("2026-10-24T10:00:00Z"))
                 .andExpect(jsonPath("$[0].claim").doesNotExist());
+    }
+
+    @Test
+    void thePhotoVersionIsAnIsoDateAndNullWithoutPhoto() throws Exception {
+        Map<String, Object> withPhoto = new HashMap<>(item(42, "Kit de bonsái", "ACTIVE"));
+        withPhoto.put("photo_updated_at", OffsetDateTime.parse("2026-10-31T12:00:00Z"));
+        jdbc.rows(MY_ITEMS, withPhoto, item(43, "Libro", "ACTIVE"));
+
+        mockMvc.perform(as(get("/regalos-api/v1/me/items")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].photoVersion").value("2026-10-31T12:00:00Z"))
+                .andExpect(jsonPath("$[1].photoVersion").doesNotExist());
     }
 
     @Test

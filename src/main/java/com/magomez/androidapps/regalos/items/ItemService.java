@@ -1,9 +1,11 @@
 package com.magomez.androidapps.regalos.items;
 
 import com.magomez.androidapps.regalos.config.RegalosException;
+import com.magomez.androidapps.regalos.photos.PhotoFiles;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 /** My letter. Every answer is an {@link OwnItem}, which cannot say who gives a wish (R1). */
 @Service
@@ -12,9 +14,11 @@ public class ItemService {
     private static final String NOT_FOUND = "El deseo no existe";
 
     private final ItemDao itemDao;
+    private final PhotoFiles photoFiles;
 
-    public ItemService(ItemDao itemDao) {
+    public ItemService(ItemDao itemDao, PhotoFiles photoFiles) {
         this.itemDao = itemDao;
+        this.photoFiles = photoFiles;
     }
 
     /** ACTIVE by default; DELETED is never listed (to the owner it is simply gone). */
@@ -47,11 +51,19 @@ public class ItemService {
         return move(meId, id, ItemStatus.RECEIVED, ItemStatus.ACTIVE);
     }
 
-    /** R5: the same outcome whether someone had claimed it or not. */
+    /**
+     * R5: the same outcome whether someone had claimed it or not. A claimed wish keeps its photo
+     * for its giver; one that really goes takes its photo with it.
+     */
     public void delete(int meId, long id) {
-        if (!itemDao.softDelete(meId, id) && !itemDao.hardDelete(meId, id)) {
+        Optional<String> photo = photoFiles.ofItem(id);
+        if (itemDao.softDelete(meId, id)) {
+            return;
+        }
+        if (!itemDao.hardDelete(meId, id)) {
             throw RegalosException.notFound(NOT_FOUND);
         }
+        photo.ifPresent(photoFiles::discard);
     }
 
     /** Idempotent: a wish already in the target status is returned as it is. */
