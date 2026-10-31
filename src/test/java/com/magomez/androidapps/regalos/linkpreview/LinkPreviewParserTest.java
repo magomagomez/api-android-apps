@@ -84,6 +84,7 @@ class LinkPreviewParserTest {
                 <html><head><title>%s</title>
                 <meta property="og:image" content="javascript:alert(1)">
                 <meta name="twitter:image" content="data:image/png;base64,AAAA">
+                <meta property="og:image:secure_url" content="https://tienda.es/logo.svg?v=2">
                 </head></html>
                 """.formatted("x".repeat(300));
 

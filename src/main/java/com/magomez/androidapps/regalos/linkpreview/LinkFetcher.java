@@ -43,9 +43,11 @@ public class LinkFetcher {
     static final int MAX_BYTES = 1024 * 1024;
     static final int MAX_REDIRECTS = 4;
     static final Duration TIMEOUT = Duration.ofSeconds(4);
-    /** Who we are; some shops only fill their preview tags for clients that look like a browser. */
-    static final String USER_AGENT =
-            "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36 CorreoDeRegalos/1.0";
+    /**
+     * Who we are, honestly: a link previewer. A shop that turns such clients away simply gives no
+     * preview and the user types the wish; we never pretend to be a browser to get past it.
+     */
+    static final String USER_AGENT = "CorreoDeRegalos/1.0 (vista previa de enlaces; app privada de listas de deseos)";
 
     private static final Set<String> HTML = Set.of("text/html", "application/xhtml+xml");
     private static final Pattern IPV4_LITERAL = Pattern.compile("\\d{1,3}(\\.\\d{1,3}){3}");

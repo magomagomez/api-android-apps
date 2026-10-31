@@ -190,7 +190,8 @@ final class LinkPreviewParser {
                 URI link = page.resolve(new URI(candidate.trim().replace(" ", "%20")));
                 String scheme = link.getScheme() == null ? "" : link.getScheme().toLowerCase(Locale.ROOT);
                 if ((scheme.equals("http") || scheme.equals("https")) && link.getHost() != null
-                        && link.toString().length() <= MAX_URL) {
+                        && link.toString().length() <= MAX_URL
+                        && !isVector(link)) {
                     return link.toString();
                 }
             } catch (URISyntaxException | IllegalArgumentException e) {
@@ -198,6 +199,12 @@ final class LinkPreviewParser {
             }
         }
         return null;
+    }
+
+    /** SVG is usually a logo, and the app cannot draw it: better no picture than an empty polaroid. */
+    private static boolean isVector(URI link) {
+        String path = link.getPath() == null ? "" : link.getPath().toLowerCase(Locale.ROOT);
+        return path.endsWith(".svg") || path.endsWith(".svgz");
     }
 
     static String storeOf(URI page) {
