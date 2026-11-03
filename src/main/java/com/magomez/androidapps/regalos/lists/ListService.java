@@ -26,7 +26,7 @@ public class ListService {
 
     static final int MAX_NAME = 60;
 
-    private static final String NOT_FOUND = "La lista no existe";
+    private static final String NOT_FOUND = "La llista no existeix";
     private static final Comparator<ListSummary> BIRTHDAY_ORDER = Comparator
             .comparing(ListSummary::daysUntilBirthday, Comparator.nullsLast(Comparator.naturalOrder()))
             .thenComparing(ListSummary::name, String.CASE_INSENSITIVE_ORDER);
@@ -90,7 +90,7 @@ public class ListService {
     public void leave(int meId, long listId) {
         ListRow row = requireMember(meId, listId);
         if (row.createdById() == meId) {
-            throw RegalosException.badRequest("Quien creó la lista no puede salirse; si ya no hace falta, bórrala");
+            throw RegalosException.badRequest("Qui ha creat la llista no en pot sortir; si ja no cal, esborra-la");
         }
         listDao.removeMember(listId, meId);
     }
@@ -104,7 +104,7 @@ public class ListService {
     public OthersItem updateItem(int meId, long listId, long itemId, ItemRequest request) {
         requireMember(meId, listId);
         if (!listDao.updateItem(listId, itemId, ItemRules.valid(request))) {
-            throw RegalosException.notFound("El deseo no existe");
+            throw RegalosException.notFound("El desig no existeix");
         }
         return claimService.item(meId, itemId);
     }
@@ -116,7 +116,7 @@ public class ListService {
             return;
         }
         if (!listDao.hardDeleteItem(listId, itemId)) {
-            throw RegalosException.notFound("El deseo no existe");
+            throw RegalosException.notFound("El desig no existeix");
         }
         photo.ifPresent(photoFiles::discard);
     }
@@ -131,7 +131,7 @@ public class ListService {
     private ListRow requireCreator(int meId, long listId) {
         ListRow row = requireMember(meId, listId);
         if (row.createdById() != meId) {
-            throw RegalosException.forbidden("Solo quien creó la lista puede cambiarla o borrarla");
+            throw RegalosException.forbidden("Només qui ha creat la llista la pot canviar o esborrar");
         }
         return row;
     }
@@ -145,7 +145,7 @@ public class ListService {
     private static String name(ListRequest request) {
         String name = request == null || request.name() == null ? "" : request.name().trim();
         if (name.isEmpty() || name.length() > MAX_NAME) {
-            throw RegalosException.badRequest("El nombre de la lista debe tener entre 1 y " + MAX_NAME + " caracteres");
+            throw RegalosException.badRequest("El nom de la llista ha de tenir entre 1 i " + MAX_NAME + " caràcters");
         }
         return name;
     }
@@ -157,7 +157,7 @@ public class ListService {
         List<Integer> requested = request.memberIds() == null ? List.of() : request.memberIds();
         for (Integer id : requested) {
             if (id == null || (id != creatorId && peopleService.person(id).isEmpty())) {
-                throw RegalosException.badRequest("Esa persona no existe");
+                throw RegalosException.badRequest("Aquesta persona no existeix");
             }
             members.add(id);
         }

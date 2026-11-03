@@ -114,8 +114,8 @@ class ClaimServiceTest {
                     HttpStatus.FORBIDDEN, "forbidden");
             RegalosException delete = assertRegalosError(() -> service.unclaim(CRIS, 42),
                     HttpStatus.FORBIDDEN, "forbidden");
-            assertThat(put.getMessage()).isEqualTo("Es un deseo tuyo");
-            assertThat(delete.getMessage()).isEqualTo("Es un deseo tuyo");
+            assertThat(put.getMessage()).isEqualTo("És un desig teu");
+            assertThat(delete.getMessage()).isEqualTo("És un desig teu");
         }
         assertThat(jdbc.callsWith(INSERT)).isEmpty();
         assertThat(jdbc.callsWith(DELETE)).isEmpty();
@@ -226,7 +226,7 @@ class ClaimServiceTest {
         RegalosException e = assertRegalosError(() -> service.claim(MAGOMEZ, 42, me(ClaimState.RESERVED)),
                 HttpStatus.CONFLICT, "already_claimed");
 
-        assertThat(e.getMessage()).isEqualTo("Ya lo regala Alex");
+        assertThat(e.getMessage()).isEqualTo("Ja el regala Alex");
         assertThat(jdbc.callsWith(INSERT)).isEmpty();
         assertThat(jdbc.callsWith(UPDATE)).isEmpty();
     }

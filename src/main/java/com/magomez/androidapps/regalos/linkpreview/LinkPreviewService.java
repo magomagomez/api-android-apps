@@ -18,7 +18,7 @@ import java.util.Set;
 public class LinkPreviewService {
 
     private static final Set<String> WEB_SCHEMES = Set.of("http", "https");
-    private static final String NOT_A_LINK = "El enlace debe ser una dirección web (http o https)";
+    private static final String NOT_A_LINK = "L'enllaç ha de ser una adreça web (http o https)";
 
     private final LinkFetcher fetcher;
 
@@ -33,7 +33,7 @@ public class LinkPreviewService {
                     .map(page -> LinkPreviewParser.parse(page.html(), page.url()))
                     .orElseGet(() -> LinkPreviewParser.fromAddress(link));
         } catch (BlockedLinkException e) {
-            throw RegalosException.badRequest("Ese enlace no se puede leer");
+            throw RegalosException.badRequest("Aquest enllaç no es pot llegir");
         }
     }
 

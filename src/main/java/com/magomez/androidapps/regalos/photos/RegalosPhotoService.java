@@ -21,9 +21,9 @@ import java.util.Objects;
 @Service
 public class RegalosPhotoService {
 
-    private static final String ITEM_NOT_FOUND = "El deseo no existe";
-    private static final String IDEA_NOT_FOUND = "La idea no existe";
-    private static final String NO_PHOTO = "No tiene foto";
+    private static final String ITEM_NOT_FOUND = "El desig no existeix";
+    private static final String IDEA_NOT_FOUND = "La idea no existeix";
+    private static final String NO_PHOTO = "No té foto";
     private static final int NAME_SUFFIX_BYTES = 2;
 
     private final RegalosPhotoDao photoDao;
@@ -122,7 +122,7 @@ public class RegalosPhotoService {
 
     private RegalosPhotoDao.Slot listItem(int meId, long listId, long itemId) {
         if (!listDao.isMember(listId, meId)) {
-            throw RegalosException.notFound("La lista no existe");
+            throw RegalosException.notFound("La llista no existeix");
         }
         return photoDao.listItem(listId, itemId).orElseThrow(() -> RegalosException.notFound(ITEM_NOT_FOUND));
     }
@@ -163,7 +163,7 @@ public class RegalosPhotoService {
     private void requireStore() {
         if (!photoStore.isConfigured()) {
             throw new RegalosException(HttpStatus.SERVICE_UNAVAILABLE, "photos_unavailable",
-                    "Las fotos no están disponibles");
+                    "Les fotos no estan disponibles");
         }
     }
 

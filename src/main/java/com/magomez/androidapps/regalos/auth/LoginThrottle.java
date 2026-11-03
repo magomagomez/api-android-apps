@@ -40,7 +40,7 @@ public class LoginThrottle {
             Deque<Instant> times = failures.get(key);
             if (times != null && recentCount(times, since) >= MAX_FAILURES) {
                 throw new RegalosException(HttpStatus.TOO_MANY_REQUESTS, "too_many_attempts",
-                        "Demasiados intentos fallidos; espera 15 minutos y vuelve a probar");
+                        "Massa intents fallits; espera 15 minuts i torna-ho a provar");
             }
         }
     }

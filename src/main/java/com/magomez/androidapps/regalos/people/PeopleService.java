@@ -18,7 +18,7 @@ public class PeopleService {
             .comparing(Person::daysUntilBirthday, Comparator.nullsLast(Comparator.naturalOrder()))
             .thenComparing(Person::displayName, String.CASE_INSENSITIVE_ORDER);
 
-    private static final String NO_USER = "La cuenta no existe";
+    private static final String NO_USER = "El compte no existeix";
 
     private final RegalosUserDao userDao;
     private final Clock clock;
@@ -34,7 +34,7 @@ public class PeopleService {
 
     public Me updateMe(int meId, ProfileRequest request) {
         if (request == null) {
-            throw RegalosException.badRequest("Faltan los datos del perfil");
+            throw RegalosException.badRequest("Falten les dades del perfil");
         }
         String name = ProfileRules.displayName(request.displayName());
         Birthday birthday = Birthday.valid(request.birthday());

@@ -37,7 +37,7 @@ public final class PhotoImages {
 
     private static final Set<String> FORMATS = Set.of("jpeg", "png");
     private static final float QUALITY = 0.85f;
-    private static final String NOT_A_PHOTO = "El archivo no es una foto JPEG o PNG";
+    private static final String NOT_A_PHOTO = "El fitxer no és una foto JPEG o PNG";
 
     private PhotoImages() {
         throw new UnsupportedOperationException("Cannot instantiate utilities class");
@@ -55,7 +55,7 @@ public final class PhotoImages {
 
     static RegalosException tooLarge() {
         return new RegalosException(HttpStatus.PAYLOAD_TOO_LARGE, "photo_too_large",
-                "La foto ocupa más de " + MAX_BYTES / (1024 * 1024) + " MB");
+                "La foto ocupa més de " + MAX_BYTES / (1024 * 1024) + " MB");
     }
 
     private static BufferedImage decode(byte[] upload) {
@@ -72,7 +72,7 @@ public final class PhotoImages {
                 reader.setInput(in, true, true);
                 long pixels = (long) reader.getWidth(0) * reader.getHeight(0);
                 if (pixels <= 0 || pixels > MAX_PIXELS) {
-                    throw RegalosException.badRequest("La foto es demasiado grande");
+                    throw RegalosException.badRequest("La foto és massa gran");
                 }
                 BufferedImage image = reader.read(0);
                 if (image == null) {

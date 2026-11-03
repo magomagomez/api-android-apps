@@ -11,7 +11,7 @@ import java.time.temporal.ChronoUnit;
 public record Birthday(int day, int month) {
 
     private static final int FEBRUARY_29 = 29;
-    private static final String INVALID = "El cumpleaños no es una fecha válida";
+    private static final String INVALID = "L'aniversari no és una data vàlida";
 
     /** The same value when it is a real day of some year (the 29th of February included); null stays null. */
     public static Birthday valid(Birthday birthday) {

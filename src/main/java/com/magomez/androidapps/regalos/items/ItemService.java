@@ -11,7 +11,7 @@ import java.util.Optional;
 @Service
 public class ItemService {
 
-    private static final String NOT_FOUND = "El deseo no existe";
+    private static final String NOT_FOUND = "El desig no existeix";
 
     private final ItemDao itemDao;
     private final PhotoFiles photoFiles;
@@ -25,7 +25,7 @@ public class ItemService {
     public List<OwnItem> list(int meId, ItemStatus status) {
         ItemStatus wanted = status == null ? ItemStatus.ACTIVE : status;
         if (wanted == ItemStatus.DELETED) {
-            throw RegalosException.badRequest("Solo se pueden listar los deseos pendientes o recibidos");
+            throw RegalosException.badRequest("Només es poden llistar els desitjos pendents o rebuts");
         }
         return itemDao.findMine(meId, wanted);
     }

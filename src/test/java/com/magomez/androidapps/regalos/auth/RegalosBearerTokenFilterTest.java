@@ -23,7 +23,7 @@ class RegalosBearerTokenFilterTest {
     private static final String PEOPLE = "/regalos-api/v1/people";
     private static final String TOUCH = "UPDATE regalos_tokens SET last_used_at = now()";
     private static final String UNAUTHORIZED_BODY =
-            "{\"error\":\"unauthorized\",\"message\":\"Falta la sesión o ha caducado; vuelve a entrar\"}";
+            "{\"error\":\"unauthorized\",\"message\":\"Falta la sessió o ha caducat; torna a entrar\"}";
 
     private RegalosFakeJdbc jdbc;
 
@@ -132,7 +132,7 @@ class RegalosBearerTokenFilterTest {
         assertThat(chain.getRequest()).isNull();
         assertThat(response.getStatus()).isEqualTo(500);
         assertThat(response.getContentAsString())
-                .isEqualTo("{\"error\":\"server_error\",\"message\":\"Error interno, inténtalo más tarde\"}");
+                .isEqualTo("{\"error\":\"server_error\",\"message\":\"Error intern, torna-ho a provar més tard\"}");
     }
 
     private MockFilterChain run(MockHttpServletRequest request, MockHttpServletResponse response) throws Exception {

@@ -19,10 +19,10 @@ public class RegalosApiExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(RegalosApiExceptionHandler.class);
 
-    static final RegalosError BAD_REQUEST = new RegalosError("bad_request", "La petición no es válida");
-    static final RegalosError SERVER_ERROR = new RegalosError("server_error", "Error interno, inténtalo más tarde");
+    static final RegalosError BAD_REQUEST = new RegalosError("bad_request", "La petició no és vàlida");
+    static final RegalosError SERVER_ERROR = new RegalosError("server_error", "Error intern, torna-ho a provar més tard");
     static final RegalosError PHOTO_STORE_ERROR = new RegalosError("photo_store_error",
-            "No se ha podido guardar o leer la foto, inténtalo más tarde");
+            "No s'ha pogut desar o llegir la foto, torna-ho a provar més tard");
 
     @ExceptionHandler(RegalosException.class)
     public ResponseEntity<RegalosError> handle(RegalosException e) {

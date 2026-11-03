@@ -15,7 +15,7 @@ public final class ProfileRules {
     public static String displayName(String raw) {
         String name = raw == null ? "" : raw.trim();
         if (name.isEmpty() || name.length() > MAX_DISPLAY_NAME) {
-            throw RegalosException.badRequest("El nombre debe tener entre 1 y " + MAX_DISPLAY_NAME + " caracteres");
+            throw RegalosException.badRequest("El nom ha de tenir entre 1 i " + MAX_DISPLAY_NAME + " caràcters");
         }
         return name;
     }

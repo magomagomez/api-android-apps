@@ -33,7 +33,7 @@ public class RegalosAuthService {
     private static final Pattern USERNAME = Pattern.compile("[a-z0-9._-]{3,40}");
     private static final String USER_KEY = "user:";
     private static final String IP_KEY = "ip:";
-    private static final String INVALID_CREDENTIALS_MESSAGE = "Usuario o contraseña incorrectos";
+    private static final String INVALID_CREDENTIALS_MESSAGE = "Usuari o contrasenya incorrectes";
 
     private final RegalosUserDao userDao;
     private final RegalosTokenDao tokenDao;
@@ -67,16 +67,16 @@ public class RegalosAuthService {
         throttle.check(ipKey);
         if (request == null || !inviteMatches(request.inviteCode())) {
             throttle.failure(ipKey);
-            throw new RegalosException(HttpStatus.FORBIDDEN, "invalid_invite", "El código de invitación no es válido");
+            throw new RegalosException(HttpStatus.FORBIDDEN, "invalid_invite", "El codi d'invitació no és vàlid");
         }
         String username = username(request.username());
         if (!USERNAME.matcher(username).matches()) {
             throw RegalosException.badRequest(
-                    "El usuario debe tener entre 3 y 40 letras, números, puntos, guiones o guiones bajos");
+                    "L'usuari ha de tenir entre 3 i 40 lletres, números, punts, guions o guions baixos");
         }
         String password = request.password();
         if (password == null || password.length() < MIN_PASSWORD || password.length() > MAX_PASSWORD) {
-            throw RegalosException.badRequest("La contraseña debe tener al menos " + MIN_PASSWORD + " caracteres");
+            throw RegalosException.badRequest("La contrasenya ha de tenir com a mínim " + MIN_PASSWORD + " caràcters");
         }
         String displayName = ProfileRules.displayName(request.displayName());
         Birthday birthday = Birthday.valid(request.birthday());
@@ -84,7 +84,7 @@ public class RegalosAuthService {
         try {
             id = userDao.insert(username, displayName, hasher.hash(password), birthday);
         } catch (DuplicateKeyException e) {
-            throw new RegalosException(HttpStatus.CONFLICT, "username_taken", "Ese usuario ya existe; elige otro");
+            throw new RegalosException(HttpStatus.CONFLICT, "username_taken", "Aquest usuari ja existeix; tria'n un altre");
         }
         return new AuthResponse(openSession(id), new Me(id, username, displayName, birthday));
     }

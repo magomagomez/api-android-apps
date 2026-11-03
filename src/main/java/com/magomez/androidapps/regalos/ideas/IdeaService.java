@@ -15,7 +15,7 @@ import java.util.Optional;
 @Service
 public class IdeaService {
 
-    private static final String NOT_FOUND = "La idea no existe";
+    private static final String NOT_FOUND = "La idea no existeix";
 
     private final IdeaDao ideaDao;
     private final PeopleService peopleService;
@@ -55,17 +55,17 @@ public class IdeaService {
 
     private void requireOther(int meId, int forUserId) {
         if (forUserId == meId) {
-            throw RegalosException.forbidden("Tus ideas son para regalar a los demás");
+            throw RegalosException.forbidden("Les teves idees són per regalar als altres");
         }
         if (peopleService.person(forUserId).isEmpty()) {
-            throw RegalosException.notFound("Esa persona no existe");
+            throw RegalosException.notFound("Aquesta persona no existeix");
         }
     }
 
     /** The same limits as a wish (title, http(s) link, price, notes). */
     private static ValidItem valid(IdeaRequest request) {
         if (request == null) {
-            throw RegalosException.badRequest("Faltan los datos de la idea");
+            throw RegalosException.badRequest("Falten les dades de la idea");
         }
         return ItemRules.valid(new ItemRequest(request.title(), request.url(), request.store(), request.priceCents(),
                 null, request.notes(), false));

@@ -117,7 +117,7 @@ public class PhotoController {
             }
             return bytes;
         } catch (IOException e) {
-            throw RegalosException.badRequest("La foto no ha llegado entera");
+            throw RegalosException.badRequest("La foto no ha arribat sencera");
         }
     }
 }

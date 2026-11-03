@@ -30,8 +30,8 @@ public class ClaimService {
 
     static final int MAX_GIVER_NAME = 60;
 
-    private static final String ITEM_NOT_FOUND = "El deseo no existe";
-    private static final String OWN_WISH = "Es un deseo tuyo";
+    private static final String ITEM_NOT_FOUND = "El desig no existeix";
+    private static final String OWN_WISH = "És un desig teu";
     private static final String PERSON_KEY = "P";
     private static final String LIST_KEY = "L";
 
@@ -52,10 +52,10 @@ public class ClaimService {
 
     public PersonItems listOf(int meId, int userId) {
         if (userId == meId) {
-            throw RegalosException.forbidden("Tu carta se ve en «Mi carta»");
+            throw RegalosException.forbidden("La teva carta es veu a «La meva carta»");
         }
         Person person = peopleService.person(userId)
-                .orElseThrow(() -> RegalosException.notFound("Esa persona no existe"));
+                .orElseThrow(() -> RegalosException.notFound("Aquesta persona no existeix"));
         List<OthersItem> items = claimDao.activeItemsOf(userId).stream().map(row -> othersItem(row, meId)).toList();
         return new PersonItems(person, items);
     }
@@ -81,7 +81,7 @@ public class ClaimService {
             throw RegalosException.forbidden(OWN_WISH);
         }
         if (request == null || request.state() == null) {
-            throw RegalosException.badRequest("Falta si está reservado o comprado");
+            throw RegalosException.badRequest("Falta si està reservat o comprat");
         }
         ResolvedGiver giver = giver(meId, row, request.giver());
         if (!row.claimed()) {
@@ -110,13 +110,13 @@ public class ClaimService {
             throw RegalosException.forbidden(OWN_WISH);
         }
         if (!row.claimed()) {
-            throw RegalosException.notFound("Nadie ha marcado este deseo");
+            throw RegalosException.notFound("Ningú no ha marcat aquest desig");
         }
         if (!row.editableBy(meId)) {
-            throw RegalosException.forbidden("Solo puede quitarla quien la puso o a quien se la asignaron");
+            throw RegalosException.forbidden("Només la pot treure qui la va posar o a qui la van assignar");
         }
         if (!claimDao.delete(itemId, meId)) {
-            throw RegalosException.notFound("Nadie ha marcado este deseo");
+            throw RegalosException.notFound("Ningú no ha marcat aquest desig");
         }
         if (row.status() == ItemStatus.DELETED) {
             // Its owner removed it earlier (R5); without the claim nothing keeps it, nor its photo.
@@ -158,26 +158,26 @@ public class ClaimService {
 
     private ResolvedGiver giver(int meId, ClaimRow row, GiverRequest giver) {
         if (giver == null || giver.type() == null) {
-            throw RegalosException.badRequest("Falta quién lo regala");
+            throw RegalosException.badRequest("Falta qui el regala");
         }
         return switch (giver.type()) {
             case ME -> new ResolvedGiver(meId, null);
             case USER -> {
                 Integer userId = giver.userId();
                 if (userId == null) {
-                    throw RegalosException.badRequest("Falta a quién de la app se lo asignas");
+                    throw RegalosException.badRequest("Falta a qui de l'app l'assignes");
                 }
                 if (userId == meId) {
                     yield new ResolvedGiver(meId, null);
                 }
                 if (row.ownedBy(userId)) {
-                    throw RegalosException.badRequest("No se le puede asignar a quien lo pide");
+                    throw RegalosException.badRequest("No es pot assignar a qui el demana");
                 }
                 if (peopleService.person(userId).isEmpty()) {
-                    throw RegalosException.badRequest("Esa persona no existe");
+                    throw RegalosException.badRequest("Aquesta persona no existeix");
                 }
                 if (row.inList() && !listDao.isMember(row.listId(), userId)) {
-                    throw RegalosException.badRequest("Esa persona no está invitada a la lista");
+                    throw RegalosException.badRequest("Aquesta persona no està convidada a la llista");
                 }
                 yield new ResolvedGiver(userId, null);
             }
@@ -185,7 +185,7 @@ public class ClaimService {
                 String name = giver.name() == null ? "" : giver.name().trim();
                 if (name.isEmpty() || name.length() > MAX_GIVER_NAME) {
                     throw RegalosException.badRequest(
-                            "El nombre de quien lo regala debe tener entre 1 y " + MAX_GIVER_NAME + " caracteres");
+                            "El nom de qui el regala ha de tenir entre 1 i " + MAX_GIVER_NAME + " caràcters");
                 }
                 yield new ResolvedGiver(null, name);
             }
@@ -193,7 +193,7 @@ public class ClaimService {
     }
 
     private static RegalosException alreadyClaimed(ClaimRow row) {
-        String message = row.giverName() == null ? "Otra persona acaba de marcarlo" : "Ya lo regala " + row.giverName();
+        String message = row.giverName() == null ? "Una altra persona l'acaba de marcar" : "Ja el regala " + row.giverName();
         return new RegalosException(HttpStatus.CONFLICT, "already_claimed", message);
     }
 

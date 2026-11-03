@@ -117,7 +117,7 @@ class PhotoControllerTest {
                         .contentType(MediaType.IMAGE_JPEG).content(PhotoImagesTest.jpeg(30, 20)))
                 .andExpect(status().isBadGateway())
                 .andExpect(jsonPath("$.error").value("photo_store_error"))
-                .andExpect(jsonPath("$.message").value("No se ha podido guardar o leer la foto, inténtalo más tarde"));
+                .andExpect(jsonPath("$.message").value("No s'ha pogut desar o llegir la foto, torna-ho a provar més tard"));
     }
 
     @Test

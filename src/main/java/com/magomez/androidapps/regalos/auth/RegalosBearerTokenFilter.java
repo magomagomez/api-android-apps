@@ -38,9 +38,9 @@ public class RegalosBearerTokenFilter extends OncePerRequestFilter {
     private static final Set<String> PUBLIC_PATHS = Set.of(REGISTER_PATH, LOGIN_PATH);
     private static final Set<String> DOT_SEGMENTS = Set.of(".", "..");
     private static final String UNAUTHORIZED_BODY =
-            "{\"error\":\"unauthorized\",\"message\":\"Falta la sesión o ha caducado; vuelve a entrar\"}";
+            "{\"error\":\"unauthorized\",\"message\":\"Falta la sessió o ha caducat; torna a entrar\"}";
     private static final String SERVER_ERROR_BODY =
-            "{\"error\":\"server_error\",\"message\":\"Error interno, inténtalo más tarde\"}";
+            "{\"error\":\"server_error\",\"message\":\"Error intern, torna-ho a provar més tard\"}";
 
     private final RegalosAuthService authService;
 

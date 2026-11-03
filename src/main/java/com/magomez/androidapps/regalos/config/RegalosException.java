@@ -23,7 +23,7 @@ public class RegalosException extends RuntimeException {
         this.code = code;
     }
 
-    /** 404 with the given Spanish message, e.g. "El deseo no existe". */
+    /** 404 with the given Spanish message, e.g. "El desig no existeix". */
     public static RegalosException notFound(String message) {
         return new RegalosException(HttpStatus.NOT_FOUND, NOT_FOUND, message);
     }
