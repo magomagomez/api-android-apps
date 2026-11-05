@@ -46,6 +46,12 @@ public class RegalosPhotoDao {
             FROM regalos_items i LEFT JOIN regalos_claims c ON c.item_id = i.id
             WHERE i.id = ?
             """;
+    /** The photo of an idea for whoever sees it: its author or someone it is shared with, never whom it is for (R13). */
+    private static final String VIEWABLE_IDEA = """
+            SELECT d.photo_file_id FROM regalos_ideas d
+            WHERE d.id = ? AND d.for_user_id <> ? AND (d.author_user_id = ?
+              OR EXISTS (SELECT 1 FROM regalos_idea_shares s WHERE s.idea_id = d.id AND s.user_id = ?))
+            """;
     private static final String ITEM_FILE = "SELECT photo_file_id FROM regalos_items WHERE id = ?";
     private static final String LIST_FILES = """
             SELECT photo_file_id FROM regalos_items WHERE list_id = ? AND photo_file_id IS NOT NULL
@@ -97,6 +103,11 @@ public class RegalosPhotoDao {
 
     Optional<ViewableItem> viewableItem(long itemId) {
         return jdbcTemplate.query(VIEWABLE_ITEM, VIEWABLE, itemId).stream().findFirst();
+    }
+
+    /** An idea I may see, with its photo. */
+    Optional<Slot> viewableIdea(int meId, long ideaId) {
+        return jdbcTemplate.query(VIEWABLE_IDEA, SLOT, ideaId, meId, meId, meId).stream().findFirst();
     }
 
     /** The photo of a wish, whoever it belongs to: only for cleaning up after a delete. */

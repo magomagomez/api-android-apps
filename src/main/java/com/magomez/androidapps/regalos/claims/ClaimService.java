@@ -142,10 +142,10 @@ public class ClaimService {
                 totals.addClaim(row);
             }
         }
-        for (IdeaWithPerson mine : ideaDao.findAllMine(meId)) {
-            Idea idea = mine.idea();
+        for (IdeaWithPerson entry : ideaDao.findForMyGifts(meId)) {
+            Idea idea = entry.idea();
             groups.computeIfAbsent(PERSON_KEY + idea.forUserId(),
-                            key -> GroupBuilder.of(peopleService.person(idea.forUserId(), mine.forName(), mine.forBirthday())))
+                            key -> GroupBuilder.of(peopleService.person(idea.forUserId(), entry.forName(), entry.forBirthday())))
                     .ideas.add(idea);
             totals.addIdea(idea);
         }
@@ -225,7 +225,7 @@ public class ClaimService {
     private record ResolvedGiver(Integer userId, String name) {
     }
 
-    /** Sums of the gifts I give: claims given by me and my bought ideas. */
+    /** Sums of the gifts I give: claims given by me, my bought ideas and the shared ideas I give. */
     private static final class Totals {
         long spent;
         long pending;
@@ -243,11 +243,25 @@ public class ClaimService {
             }
         }
 
+        /**
+         * My idea counts once I bought it; one shared with me counts once I give it, like a claimed
+         * wish. My idea that someone else gives is theirs to count, not mine.
+         */
         void addIdea(Idea idea) {
-            if (idea.bought()) {
+            int price = idea.priceCents() == null ? 0 : idea.priceCents();
+            boolean iGiveIt = idea.claim() != null && idea.claim().mine();
+            if (idea.mine() && idea.bought() && idea.claim() == null) {
                 total++;
                 bought++;
-                spent += idea.priceCents() == null ? 0 : idea.priceCents();
+                spent += price;
+            } else if (iGiveIt) {
+                total++;
+                if (idea.claim().state() == ClaimState.BOUGHT) {
+                    bought++;
+                    spent += price;
+                } else {
+                    pending += price;
+                }
             }
         }
     }

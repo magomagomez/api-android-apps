@@ -29,7 +29,7 @@ class SharedListClaimsTest {
     private static final String IS_MEMBER = "FROM regalos_list_members WHERE list_id = ? AND user_id = ?";
     private static final String USER_BY_ID = "FROM regalos_users WHERE id = ?";
     private static final String MY_CLAIMS = "WHERE c.giver_user_id = ? OR (c.giver_user_id IS NULL";
-    private static final String MY_IDEAS = "WHERE d.author_user_id = ?";
+    private static final String MY_IDEAS = "WHERE d.for_user_id <> ? AND (d.author_user_id = ? OR c.user_id = ?)";
     private static final String INSERT = "INSERT INTO regalos_claims";
     private static final String DELETE = "DELETE FROM regalos_claims";
     private static final int CRIS = 1;
@@ -56,6 +56,17 @@ class SharedListClaimsTest {
                 "notes", null, "wanted_a_lot", false, "status", "ACTIVE", "claim_state", null, "marked_by_user_id", null,
                 "giver_user_id", null, "giver_name", null, "item_edited_at", null));
         return row;
+    }
+
+    private static Map<String, Object> myGiftIdea(long id, String title, int price, boolean bought, int authorId,
+                                                  String authorName, String claimState, Integer claimUser) {
+        Map<String, Object> idea = new HashMap<>(row("id", id, "for_user_id", JAVI, "title", title, "url", null,
+                "store", null, "price_cents", price, "notes", null, "bought", bought,
+                "created_at", OffsetDateTime.parse("2026-10-30T10:00:00Z"), "photo_updated_at", null));
+        idea.putAll(row("author_user_id", authorId, "author_name", authorName, "claim_state", claimState,
+                "claim_user_id", claimUser, "claim_user_name", claimUser == null ? null : "Alguien",
+                "for_name", "Javi", "for_birthday_day", 3, "for_birthday_month", 2));
+        return idea;
     }
 
     private static Map<String, Object> claimedByMe(Map<String, Object> wish, String state) {
@@ -118,23 +129,22 @@ class SharedListClaimsTest {
 
     @Test
     void myGiftsGroupListsAndPeopleAndAddMyBoughtIdeas() {
-        OffsetDateTime created = OffsetDateTime.parse("2026-10-30T10:00:00Z");
         jdbc.rows(MY_CLAIMS, claimedByMe(listWish(50, "Cubos", 1890), "BOUGHT"))
                 .rows(MY_IDEAS,
-                        row("id", 7L, "for_user_id", JAVI, "title", "Gorra", "url", null, "store", null,
-                                "price_cents", 2200, "notes", null, "bought", false, "created_at", created, "photo_updated_at", null,
-                                "for_name", "Javi", "for_birthday_day", 3, "for_birthday_month", 2),
-                        row("id", 8L, "for_user_id", JAVI, "title", "Cena", "url", null, "store", null,
-                                "price_cents", 6000, "notes", null, "bought", true, "created_at", created, "photo_updated_at", null,
-                                "for_name", "Javi", "for_birthday_day", 3, "for_birthday_month", 2));
+                        myGiftIdea(7, "Gorra", 2200, false, CRIS, "Cris", null, null),
+                        myGiftIdea(8, "Cena", 6000, true, CRIS, "Cris", null, null),
+                        // Shared with me by Maribel, and I give it: it counts like a claimed wish
+                        myGiftIdea(9, "Libro", 1000, false, MARIBEL, "Maribel", "RESERVED", CRIS),
+                        // Mine, but Javi's other friend gives it: theirs to count, not mine
+                        myGiftIdea(10, "Taza", 500, false, CRIS, "Cris", "BOUGHT", MARIBEL));
 
         MyClaims mine = service.myClaims(CRIS);
 
-        assertThat(jdbc.callsWith(MY_IDEAS).get(0).args()).containsExactly(CRIS);
+        assertThat(jdbc.callsWith(MY_IDEAS).get(0).args()).containsExactly(CRIS, CRIS, CRIS);
         assertThat(mine.spentCents()).isEqualTo(1890 + 6000);
-        assertThat(mine.pendingCents()).isZero();
+        assertThat(mine.pendingCents()).isEqualTo(1000);
         assertThat(mine.boughtCount()).isEqualTo(2);
-        assertThat(mine.totalCount()).isEqualTo(2);
+        assertThat(mine.totalCount()).isEqualTo(3);
         assertThat(mine.groups()).hasSize(2);
         ClaimGroup leo = mine.groups().get(0);
         assertThat(leo.list()).isEqualTo(new SharedListRef(LEO, "Leo", new com.magomez.androidapps.regalos.people.Birthday(9, 11), 10));
@@ -143,6 +153,6 @@ class SharedListClaimsTest {
         ClaimGroup javi = mine.groups().get(1);
         assertThat(javi.person().displayName()).isEqualTo("Javi");
         assertThat(javi.claims()).isEmpty();
-        assertThat(javi.ideas()).extracting(idea -> idea.title()).containsExactly("Gorra", "Cena");
+        assertThat(javi.ideas()).extracting(idea -> idea.title()).containsExactly("Gorra", "Cena", "Libro", "Taza");
     }
 }

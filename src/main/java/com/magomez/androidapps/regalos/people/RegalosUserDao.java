@@ -25,13 +25,14 @@ public class RegalosUserDao {
     private static final String UPDATE_PROFILE = """
             UPDATE regalos_users SET display_name = ?, birthday_day = ?, birthday_month = ? WHERE id = ?
             """;
-    /** Everybody but the caller, with the counts of their ACTIVE wishes and of the caller's ideas for them. */
+    /** Everybody but the caller, with the counts of their ACTIVE wishes and of the ideas for them the caller sees. */
     private static final String OTHERS = """
             SELECT u.id, u.display_name, u.birthday_day, u.birthday_month,
                    count(i.id) AS wish_count,
                    count(i.id) FILTER (WHERE i.id IS NOT NULL AND c.item_id IS NULL) AS free_count,
                    count(i.id) FILTER (WHERE c.giver_user_id = ?) AS mine_count,
-                   (SELECT count(*) FROM regalos_ideas d WHERE d.author_user_id = ? AND d.for_user_id = u.id) AS idea_count
+                   (SELECT count(*) FROM regalos_ideas d WHERE d.for_user_id = u.id AND (d.author_user_id = ?
+                       OR EXISTS (SELECT 1 FROM regalos_idea_shares s WHERE s.idea_id = d.id AND s.user_id = ?))) AS idea_count
             FROM regalos_users u
             LEFT JOIN regalos_items i ON i.owner_user_id = u.id AND i.status = 'ACTIVE'
             LEFT JOIN regalos_claims c ON c.item_id = i.id
@@ -76,7 +77,7 @@ public class RegalosUserDao {
     }
 
     List<PersonRow> findOthers(int meId) {
-        return jdbcTemplate.query(OTHERS, OTHER, meId, meId, meId);
+        return jdbcTemplate.query(OTHERS, OTHER, meId, meId, meId, meId);
     }
 
     private static Birthday birthday(Integer day, Integer month) {

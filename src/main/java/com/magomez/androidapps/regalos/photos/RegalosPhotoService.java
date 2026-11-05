@@ -98,10 +98,10 @@ public class RegalosPhotoService {
         return download(item.fileId());
     }
 
-    /** The photo of one of my ideas; nobody else's (R7). */
+    /** The photo of an idea, for its author and the people it is shared with; nobody else (R7, R13). */
     public byte[] ideaPhoto(int meId, long ideaId) {
         requireStore();
-        RegalosPhotoDao.Slot slot = photoDao.idea(meId, ideaId).orElseThrow(() -> RegalosException.notFound(IDEA_NOT_FOUND));
+        RegalosPhotoDao.Slot slot = photoDao.viewableIdea(meId, ideaId).orElseThrow(() -> RegalosException.notFound(IDEA_NOT_FOUND));
         return download(slot.fileId());
     }
 

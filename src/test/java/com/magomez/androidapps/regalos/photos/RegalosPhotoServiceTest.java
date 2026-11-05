@@ -34,6 +34,7 @@ class RegalosPhotoServiceTest {
     private static final String OWN = "SELECT photo_file_id FROM regalos_items WHERE id = ? AND owner_user_id = ?";
     private static final String LIST_ITEM = "SELECT photo_file_id FROM regalos_items WHERE id = ? AND list_id = ?";
     private static final String IDEA_SLOT = "SELECT photo_file_id FROM regalos_ideas WHERE id = ? AND author_user_id = ?";
+    private static final String VIEWABLE_IDEA = "SELECT d.photo_file_id FROM regalos_ideas d WHERE d.id = ? AND d.for_user_id <> ?";
     private static final String SET_OWN = "UPDATE regalos_items SET photo_file_id = ?, photo_updated_at = ? WHERE id = ? AND owner_user_id = ?";
     private static final String SET_LIST = "UPDATE regalos_items SET photo_file_id = ?, photo_updated_at = ? WHERE id = ? AND list_id = ?";
     private static final String SET_IDEA = "UPDATE regalos_ideas SET photo_file_id";
@@ -141,18 +142,21 @@ class RegalosPhotoServiceTest {
 
     @Test
     void someoneElsesIdeaPhotoDoesNotExist() {
-        // The author filter finds nothing for Javi, whose idea it is not (R7).
+        // The query finds nothing for Javi, the idea is for him and not shared with him (R7, R13).
         assertRegalosError(() -> service.ideaPhoto(JAVI, IDEA), HttpStatus.NOT_FOUND, "not_found");
 
-        assertThat(jdbc.callsWith(IDEA_SLOT).get(0).args()).containsExactly(IDEA, JAVI);
+        assertThat(jdbc.callsWith(VIEWABLE_IDEA).get(0).args()).containsExactly(IDEA, JAVI, JAVI, JAVI);
+        assertThat(jdbc.callsWith(VIEWABLE_IDEA).get(0).sql()).contains("EXISTS (SELECT 1 FROM regalos_idea_shares s");
     }
 
     @Test
     void myIdeaPhotoComesFromDrive() {
         store.files.put("idea-photo-id", new byte[]{7});
-        jdbc.rows(IDEA_SLOT, row("photo_file_id", "idea-photo-id"));
+        jdbc.rows(VIEWABLE_IDEA, row("photo_file_id", "idea-photo-id"));
 
         assertThat(service.ideaPhoto(CRIS, IDEA)).containsExactly(7);
+        // Alba, with whom it is shared, sees it too
+        assertThat(service.ideaPhoto(3, IDEA)).containsExactly(7);
     }
 
     @Test

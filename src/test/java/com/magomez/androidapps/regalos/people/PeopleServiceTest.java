@@ -52,7 +52,7 @@ class PeopleServiceTest {
 
         assertThat(people).containsExactly(
                 new PersonSummary(2, "Cris", new Birthday(12, 11), 19, 8, 3, 1, 2));
-        assertThat(jdbc.callsWith(OTHERS).get(0).args()).containsExactly(MAGOMEZ, MAGOMEZ, MAGOMEZ);
+        assertThat(jdbc.callsWith(OTHERS).get(0).args()).containsExactly(MAGOMEZ, MAGOMEZ, MAGOMEZ, MAGOMEZ);
         assertThat(jdbc.callsWith(OTHERS).get(0).sql()).contains("d.author_user_id = ?");
         assertThat(jdbc.callsWith(OTHERS).get(0).sql())
                 .contains("i.status = 'ACTIVE'")

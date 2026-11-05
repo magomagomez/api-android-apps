@@ -31,14 +31,14 @@ public class IdeaController {
         this.ideaService = ideaService;
     }
 
-    @Operation(summary = "My ideas for that person (403 for my own id)")
+    @Operation(summary = "My ideas for that person and those shared with me for them (403 for my own id)")
     @GetMapping("/people/{userId}/ideas")
     public List<Idea> list(@Parameter(hidden = true) @RequestAttribute(RegalosCurrentUser.ATTRIBUTE) RegalosCurrentUser me,
                            @PathVariable int userId) {
         return ideaService.list(me.id(), userId);
     }
 
-    @Operation(summary = "Note an idea for that person")
+    @Operation(summary = "Note an idea for that person, shared with whom I choose (never them)")
     @PostMapping("/people/{userId}/ideas")
     @ResponseStatus(HttpStatus.CREATED)
     public Idea create(@Parameter(hidden = true) @RequestAttribute(RegalosCurrentUser.ATTRIBUTE) RegalosCurrentUser me,
@@ -51,6 +51,21 @@ public class IdeaController {
     public Idea update(@Parameter(hidden = true) @RequestAttribute(RegalosCurrentUser.ATTRIBUTE) RegalosCurrentUser me,
                        @PathVariable long id, @RequestBody IdeaRequest request) {
         return ideaService.update(me.id(), id, request);
+    }
+
+    @Operation(summary = "Give an idea shared with me: RESERVED or BOUGHT (409 if someone else gives it or its author bought it)")
+    @PutMapping("/ideas/{id}/claim")
+    public Idea claim(@Parameter(hidden = true) @RequestAttribute(RegalosCurrentUser.ATTRIBUTE) RegalosCurrentUser me,
+                      @PathVariable long id, @RequestBody IdeaClaimRequest request) {
+        return ideaService.claim(me.id(), id, request);
+    }
+
+    @Operation(summary = "Stop giving an idea shared with me")
+    @DeleteMapping("/ideas/{id}/claim")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unclaim(@Parameter(hidden = true) @RequestAttribute(RegalosCurrentUser.ATTRIBUTE) RegalosCurrentUser me,
+                        @PathVariable long id) {
+        ideaService.unclaim(me.id(), id);
     }
 
     @Operation(summary = "Delete one of my ideas")
